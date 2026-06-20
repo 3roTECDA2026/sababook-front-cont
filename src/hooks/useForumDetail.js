@@ -17,12 +17,13 @@ const useForumDetail = (foroId) => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/foro/${foroId}`);
+        const res = await fetch(`${API_BASE_URL}/api/v1/foro/${foroId}/comentarios`);
         if (!res.ok) {
           throw new Error("Error al cargar el foro");
         }
         const data = await res.json();
         setForo(data);
+        console.log("Datos del foro desde API:", data);
       } catch (err) {
         setError(err.message);
         setForo(null);
