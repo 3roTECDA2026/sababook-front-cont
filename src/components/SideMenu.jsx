@@ -30,7 +30,9 @@ export default function SideMenu({ open, onClose, active = "Inicio" }) {
 
   let menuItems;
 
-  if (userRolId == '3') {
+  // ARREGLO: el rol_id de "Administrador" pasó de 3 a 5 al reordenar
+  // la tabla `rol` en la base de datos (Alumno=3, Docente=4, Administrador=5).
+  if (userRolId == '5') {
     // Menú para administradores
     menuItems = [
       { text: "Inicio", icon: <HomeIcon />, path: "/home" },

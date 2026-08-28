@@ -31,13 +31,33 @@ export const AuthProvider = ({ children }) => {
               userId: storedUserId,
               rol: localStorage.getItem('rol'),
             });
-          } else {
-            // Si el token no es válido, limpiar el localStorage
+          } else if (response.status === 401 || response.status === 403) {
+            // ARREGLO: solo desloguear si el token realmente es inválido o expiró.
+            // Antes, cualquier respuesta distinta de 2xx (incluyendo errores 500
+            // transitorios, por ejemplo un hiccup de conexión a la base de datos)
+            // hacía logout() y expulsaba al usuario de la sesión sin motivo real.
             logout();
+          } else {
+            // Error transitorio del servidor (500, etc.): NO desloguear.
+            // Mantenemos la sesión con los datos que ya teníamos en localStorage
+            // para no expulsar al usuario por una falla momentánea del backend/DB.
+            console.warn('Error temporal al validar sesión, se mantiene el token.');
+            setUser({
+              userId: storedUserId,
+              rol: localStorage.getItem('rol'),
+              nombre: localStorage.getItem('username'),
+            });
           }
         } catch (error) {
+          // ARREGLO: un error de red (backend caído, sin conexión, DNS, etc.)
+          // tampoco debería cerrar la sesión del usuario. Mantenemos el estado
+          // con lo último guardado en localStorage.
           console.error('Error al cargar datos del usuario:', error);
-          logout();
+          setUser({
+            userId: storedUserId,
+            rol: localStorage.getItem('rol'),
+            nombre: localStorage.getItem('username'),
+          });
         }
       }
       setLoading(false);

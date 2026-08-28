@@ -1,6 +1,7 @@
 import {
   Box,
-  Typography
+  Typography,
+  Button
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -67,7 +68,7 @@ export default function Home() {
       const filtrosCombinados = { ...currentFilters };
       if (queryNormalizada) filtrosCombinados.query = queryNormalizada;
       const resultados = await buscarLibros(filtrosCombinados);
-      setBooks(resultados);
+      setBooks(Array.isArray(resultados) ? resultados : []);
     } catch {
       setBooks([]);
     }
@@ -80,11 +81,31 @@ export default function Home() {
       const filtrosCombinados = { ...filtros };
       if (currentQuery) filtrosCombinados.query = normalizarTexto(currentQuery);
       const resultadosActualizados = await buscarLibros(filtrosCombinados);
-      setBooks(resultadosActualizados);
+      setBooks(Array.isArray(resultadosActualizados) ? resultadosActualizados : []);
     } catch {
       setBooks([]);
     }
   };
+
+  // NUEVO: Handler para volver al estado inicial (sin búsqueda ni filtros)
+  const handleBackToHome = async () => {
+    setCurrentQuery('');
+    setCurrentFilters({});
+    if (searchBarRef.current && typeof searchBarRef.current.clear === 'function') {
+      searchBarRef.current.clear();
+    }
+    try {
+      // Trae el listado completo de libros, sin filtros aplicados
+      const resultados = await buscarLibros({});
+      setBooks(Array.isArray(resultados) ? resultados : []);
+    } catch {
+      setBooks([]);
+    }
+  };
+
+  // Asegurar que books sea siempre un array seguro
+  const safeBooks = Array.isArray(books) ? books : [];
+  const featuredTarget = safeBooks.find((book) => book.titulo === "La gran ocasión");
 
   // --- RENDERIZADO ---
   return (
@@ -129,10 +150,9 @@ export default function Home() {
       {/* Recomendado semanal - Solo mostrar si no hay filtros aplicados */}
       {Object.keys(currentFilters).length === 0 && !currentQuery && (
         <FeaturedBookSection
-          // TODO: Cambiar libro recomendado dinámicamente y no MOCKEADO
-          featuredBook={books.find((book) => book.titulo === "La gran ocasión") || {}}
+          featuredBook={featuredTarget || {}}
           handleFavoriteToggle={handleFavoriteToggle}
-          isFavorite={isBookFavorite(books.find((book) => book.titulo === "La gran ocasión")?.libro_id)}
+          isFavorite={featuredTarget ? isBookFavorite(featuredTarget.libro_id) : false}
         />
       )}
 
@@ -152,6 +172,10 @@ export default function Home() {
             <Typography variant="h4" fontWeight="bold" color="secondary">
               {currentQuery ? 'Resultados de búsqueda' : 'Libros filtrados'}
             </Typography>
+            {/* NUEVO: Botón para volver al estado inicial de Home */}
+            <Button variant="outlined" color="secondary" onClick={handleBackToHome}>
+              Volver a Inicio
+            </Button>
           </Box>
         </>
       )}
@@ -165,20 +189,19 @@ export default function Home() {
         }}
       >
         {/* Mostrar mensaje si no hay libros */}
-        {books.length === 0 ? (
+        {safeBooks.length === 0 ? (
           <Typography variant="h6" color="text.secondary" sx={{ textAlign: "center", py: 4 }}>
             El libro que usted está buscando no se encuentra disponible
           </Typography>
         ) : (
-          /*Mapear la lista de libros destacados */
-          books.map((book) => (
+          /* Mapear la lista de libros */
+          safeBooks.map((book) => (
             <BookCard
               key={book.libro_id}
               image={book.portada_url}
               autor={book.autor}
               gender={book.genero}
               title={book.titulo}
-              // description={book.descripcion} // No se muestra en el home
               rating={book.calificacion_promedio}
               progress={book.progress}
               isFavorite={isBookFavorite(book.libro_id)}

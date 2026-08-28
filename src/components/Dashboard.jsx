@@ -46,10 +46,12 @@ const Dashboard = () => {
   const [openDeleteForumConfirm, setOpenDeleteForumConfirm] = useState(false);
   const [forumToDeleteId, setForumToDeleteId] = useState(null);
   // Mapeo de roles para la creación de usuarios
+  // ARREGLO: los rol_id cambiaron al reordenar la tabla `rol` en la base de datos
+  // (antes: alumno=1, docente=2, administrador=3; ahora: alumno=3, docente=4, administrador=5)
   const rolMapping = {
-    alumno: 1,
-    docente: 2,
-    administrador: 3,
+    alumno: 3,
+    docente: 4,
+    administrador: 5,
   };
 
   // --- FUNCIÓN FETCH PARA USUARIOS (READ) ---
