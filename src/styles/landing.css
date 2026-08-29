@@ -1,0 +1,174 @@
+.landing-hero {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #eaf2fc 0%, #c4e0f9 100%);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Nubes con movimiento lateral */
+.landing-hero::before {
+  content: "";
+  position: absolute;
+  top: 25px;
+  left: 20px;
+  width: 230px;
+  height: 70px;
+  background: rgba(135, 175, 205, 0.85);
+  border-radius: 50px;
+  box-shadow: 60px 18px 0 14px rgba(125, 165, 195, 0.8), 130px -8px 0 10px rgba(110, 150, 180, 0.7);
+  z-index: 1;
+  animation: moveCloudLeft 12s ease-in-out infinite alternate;
+}
+
+.landing-hero::after {
+  content: "";
+  position: absolute;
+  top: 25px;
+  right: 20px;
+  width: 210px;
+  height: 65px;
+  background: rgba(130, 170, 200, 0.85);
+  border-radius: 50px;
+  box-shadow: -60px 15px 0 12px rgba(120, 160, 190, 0.8), -130px -10px 0 10px rgba(105, 145, 175, 0.7);
+  z-index: 1;
+  animation: moveCloudRight 15s ease-in-out infinite alternate;
+}
+
+@keyframes moveCloudLeft {
+  0% { transform: translateX(0px); }
+  100% { transform: translateX(45px); }
+}
+
+@keyframes moveCloudRight {
+  0% { transform: translateX(0px); }
+  100% { transform: translateX(-45px); }
+}
+
+/* Cartel Bienvenido A más arriba y más grande */
+.landing-eyebrow {
+  font-family: sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 5px;
+  color: #123259;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-top: 20px;
+  margin-bottom: 12px;
+  z-index: 3;
+  text-align: center;
+}
+
+/* Barco apoyado sobre las olas amplias */
+.boat {
+  position: absolute;
+  bottom: 145px;
+  left: 22%;
+  width: 65px;
+  height: auto;
+  z-index: 3;
+  animation: boatFloat 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes boatFloat {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-7px) rotate(-3deg); }
+}
+
+/* Delfín 1 con movimiento de salto sobre el mar */
+.dolphin-1 {
+  position: absolute;
+  bottom: 175px;
+  right: 26%;
+  width: 52px;
+  height: auto;
+  z-index: 3;
+  animation: dolphinJump1 4s ease-in-out infinite;
+}
+
+@keyframes dolphinJump1 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-18px) rotate(-8deg); }
+}
+
+/* Delfín 2 con movimiento desfasado */
+.dolphin-2 {
+  position: absolute;
+  bottom: 125px;
+  right: 34%;
+  width: 44px;
+  height: auto;
+  z-index: 3;
+  opacity: 0.9;
+  animation: dolphinJump2 4.5s ease-in-out infinite;
+}
+
+@keyframes dolphinJump2 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(6deg); }
+}
+
+/* Mar más alto (ocupando más espacio vertical) con movimiento en el mismo lugar */
+.landing-waves-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 300px;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.wave-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 100%;
+}
+
+.wave-container svg {
+  width: 100vw;
+  height: 240px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.wave-back {
+  opacity: 0.75;
+  animation: waveSwellBack 5s ease-in-out infinite alternate;
+}
+
+.wave-front {
+  animation: waveSwellFront 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes waveSwellBack {
+  0% { transform: translateY(4px) scaleY(0.98); }
+  100% { transform: translateY(-8px) scaleY(1.05); }
+}
+
+@keyframes waveSwellFront {
+  0% { transform: translateY(0px) scaleY(1); }
+  100% { transform: translateY(-12px) scaleY(1.08); }
+}
+
+.landing-tagline {
+  position: absolute;
+  bottom: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #ffffff;
+  z-index: 4;
+  font-family: sans-serif;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  margin: 0;
+}
