@@ -4,10 +4,19 @@ import MenuIcon from "@mui/icons-material/Menu";
 import LogoImage from '../assets/logo.png';
 import { useNavigate, useLocation } from "react-router-dom";
 
-export default function AppHeader({ onMenuClick, title, subtitle }) {
+// 1. Creamos la interfaz para definir los tipos de las props
+interface AppHeaderProps {
+  onMenuClick: () => void; // Indicamos que es una función que no retorna nada
+  title?: string;          // Con el '?' indicamos que es opcional
+  subtitle?: string;       // También opcional
+}
+
+// 2. Le asignamos el tipo AppHeaderProps a los parámetros desestructurados
+export default function AppHeader({ onMenuClick, title, subtitle }: AppHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const showBackArrow = location.pathname !== "/home";
+
 
   return (
     <Box
