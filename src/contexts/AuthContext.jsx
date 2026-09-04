@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../environments/api';
 import { AuthContext } from './AuthContextDefinition';
+import { useNavigate } from 'react-router-dom';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
+  const navigate = useNavigate();
 
   // Cargar usuario desde localStorage al iniciar la aplicación
   useEffect(() => {
@@ -102,12 +104,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    setUser(null);
+    setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     localStorage.removeItem('rol');
     localStorage.removeItem('username');
-    setUser(null);
-    setToken(null);
+    navigate('/login');
+    
   };
 
   const updateUser = async (updatedData) => {
