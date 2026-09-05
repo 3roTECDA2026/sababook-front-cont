@@ -4,6 +4,8 @@ import { Box, Button, styled, Typography } from '@mui/material';
 
 import NavButton from './NavButton'; 
 import SearchBar from './SearchBar'; 
+import ReadingStreak from './ReadingStreak';
+
 const titleMap = {
     users: 'Usuarios',
     books: 'Libros',
