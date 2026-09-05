@@ -18,6 +18,7 @@ export const useBookOpinion = (libroId) => {
         comentario: op.comentario,
         calificacion: op.calificacion,
         usuario: {
+          usuario_id: op.usuario_id,
           nombre: op.usuario_nombre || "Usuario",
           rol: op.usuario_rol || "Lector",
         },

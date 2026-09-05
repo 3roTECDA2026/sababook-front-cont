@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Divider, useTheme } from "@mui/material";
+import { Box, Divider, useTheme, Tooltip } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import AppHeader from "../components/AppHeader";
@@ -27,6 +27,7 @@ const BookDetailsPage = () => {
 
   const { book, loading: bookLoading, error: bookError } = useBookDetails(id);
   const { opinions, setOpinions, loading: opinionsLoading, error: opinionsError } = useBookOpinion(id);
+  const yaOpino = opinions.some((op) => op.usuario.usuario_id === user.usuario_id);
 
   const authorStyle = {
     fontWeight: 900,
@@ -88,22 +89,27 @@ const BookDetailsPage = () => {
 
         <BookDescription book={book} />
 
-        <NavButton
-          onClick={handleCommentClick}
-          variant="contained"
-          sx={{
-            width: "100%",
-            p: "12px 20px",
-            bgcolor: ORANGE_COLOR + " !important",
-            color: "white",
-            fontWeight: "bold",
-            borderRadius: "8px !important",
-            boxShadow: `0 4px 10px rgba(255, 102, 51, 0.4)`,
-            "&:hover": { bgcolor: "#cc4800 !important" },
-          }}
-        >
-          Comentar
-        </NavButton>
+        <Tooltip title={yaOpino ? "Ya dejaste tu opinión sobre este libro" : ""}>
+          <span>
+            <NavButton
+              onClick={handleCommentClick}
+              variant="contained"
+              sx={{
+                width: "100%",
+                p: "12px 20px",
+                bgcolor: ORANGE_COLOR + " !important",
+                color: "white",
+                fontWeight: "bold",
+                borderRadius: "8px !important",
+                boxShadow: `0 4px 10px rgba(255, 102, 51, 0.4)`,
+                "&:hover": { bgcolor: "#cc4800 !important" },
+              }}
+              disabled={yaOpino}
+            >
+              Comentar
+            </NavButton>
+          </span>
+        </Tooltip>
 
         <Divider sx={{ my: 3 }} />
 

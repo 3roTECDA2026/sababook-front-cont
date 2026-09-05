@@ -20,11 +20,12 @@ const StyledNavButton = styled(Button)(({ theme }) => ({
  * @param {string} props.children
  * @param {function} props.onClick
  */
-const NavButton = ({ children, onClick }) => {
+const NavButton = ({ children, onClick, ...rest }) => {
   return (
     <StyledNavButton
       variant="contained"
       onClick={onClick}
+      {...rest}
     >
       {children}
     </StyledNavButton>
