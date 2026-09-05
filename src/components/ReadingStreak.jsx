@@ -1,38 +1,70 @@
 import React from 'react';
+import { Box, Typography, Paper, Tooltip } from '@mui/material';
 
 export const ReadingStreak = ({ rachaActual = 3, recordRacha = 7 }) => {
   const diasSemana = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
   return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 max-w-sm">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-gray-800 text-sm">Racha de Lectura</h3>
-        <span className="text-xl" role="img" aria-label="fuego">🔥</span>
-      </div>
+    <Paper 
+      elevation={1} 
+      sx={{ 
+        p: 2.5, 
+        borderRadius: 4, 
+        border: '1px solid', 
+        borderColor: 'grey.100', 
+        maxWidth: 320, 
+        bgcolor: 'background.paper' 
+      }}
+    >
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={1.5}>
+        <Typography variant="subtitle2" fontWeight="bold" color="text.primary">
+          Racha de Lectura
+        </Typography>
+        <Typography variant="h6" role="img" aria-label="fuego">🔥</Typography>
+      </Box>
 
-      <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-3xl font-extrabold text-orange-500">{rachaActual}</span>
-        <span className="text-gray-500 text-xs font-medium">días consecutivos</span>
-      </div>
+      <Box display="flex" alignItems="baseline" gap={1} mb={0.5}>
+        <Typography variant="h3" fontWeight="900" color="warning.main">
+          {rachaActual}
+        </Typography>
+        <Typography variant="caption" fontWeight="medium" color="text.secondary">
+          días consecutivos
+        </Typography>
+      </Box>
 
-      <p className="text-xs text-gray-400 mb-4">
-        Récord histórico: <strong className="text-gray-600">{recordRacha} días</strong>
-      </p>
+      <Typography variant="caption" color="text.disabled" display="block" mb={2}>
+        Récord histórico: <strong style={{ color: '#666' }}>{recordRacha} días</strong>
+      </Typography>
 
       {/* Indicadores de días de la semana */}
-      <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+      <Box 
+        display="flex" 
+        justifyContent="space-between" 
+        alignItems="center" 
+        pt={1.5} 
+        borderTop={1} 
+        borderColor="grey.100"
+      >
         {diasSemana.map((dia, index) => (
-          <div key={index} className="flex flex-col items-center gap-1">
-            <span className="text-[10px] text-gray-400 font-semibold">{dia}</span>
-            <div 
-              className={`w-3 h-3 rounded-full ${
-                index < rachaActual ? 'bg-orange-500 shadow-sm' : 'bg-gray-200'
-              }`} 
-            />
-          </div>
+          <Tooltip title={`Día ${index + 1}`} key={index} arrow>
+            <Box display="flex" flex={1} flexDirection="col" alignItems="center" gap={0.5} textAlign="center">
+              <Typography variant="caption" fontSize={10} color="text.disabled" fontWeight="bold">
+                {dia}
+              </Typography>
+              <Box 
+                sx={{ 
+                  width: 12, 
+                  height: 12, 
+                  borderRadius: '50%', 
+                  bgcolor: index < rachaActual ? 'warning.main' : 'grey.200',
+                  boxShadow: index < rachaActual ? 1 : 0
+                }} 
+              />
+            </Box>
+          </Tooltip>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Paper>
   );
 };
 
