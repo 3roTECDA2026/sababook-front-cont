@@ -10,6 +10,7 @@ import AppHeader from "../components/AppHeader";
 import BookCard from "../components/BookCard";
 import FeaturedBookSection from "../components/FeaturedBookSection";
 import FilterChips from "../components/FilterChips";
+import ReadingStreak from "../components/ReadingStreak";
 import SearchBar from "../components/SearchBar";
 import SideMenu from "../components/SideMenu";
 import WelcomeModal from "../components/WelcomeModal";
@@ -135,6 +136,7 @@ export default function Home() {
           isFavorite={isBookFavorite(books.find((book) => book.titulo === "La gran ocasión")?.libro_id)}
         />
       )}
+     
 
       {/* Título para la lista de libros cuando no hay filtros */}
       {Object.keys(currentFilters).length === 0 && !currentQuery && (

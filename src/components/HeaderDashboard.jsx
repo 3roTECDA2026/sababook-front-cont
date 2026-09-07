@@ -3,7 +3,8 @@ import React from 'react';
 import { Box, Button, styled, Typography } from '@mui/material';
 
 import NavButton from './NavButton'; 
-import SearchBar from './SearchBar'; 
+import SearchBar from './SearchBar';
+
 const titleMap = {
     users: 'Usuarios',
     books: 'Libros',
