@@ -7,7 +7,7 @@ import StarIcon from '@mui/icons-material/Star';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 // Importar el tema global
-import theme from '../theme/theme';
+import theme from '../../theme/theme';
 
 export interface RatingSubmitData {
   rating: number;

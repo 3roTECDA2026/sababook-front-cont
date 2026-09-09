@@ -8,8 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import ForumIcon from '@mui/icons-material/Forum';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 
-import AppHeader from '../components/AppHeader';
-import SideMenu from '../components/SideMenu';
+import AppHeader from '../components/layout/AppHeader';
+import SideMenu from '../components/layout/SideMenu';
 import type { Forum } from '../types';
 
 interface ForoItemProps {

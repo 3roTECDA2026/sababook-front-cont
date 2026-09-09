@@ -16,8 +16,8 @@ import {
   Button,
 } from '@mui/material';
 import ForumIcon from '@mui/icons-material/Forum';
-import AppHeader from '../components/AppHeader';
-import SideMenu from '../components/SideMenu';
+import AppHeader from '../components/layout/AppHeader';
+import SideMenu from '../components/layout/SideMenu';
 import useForumDetail from '../hooks/useForumDetail';
 import { useAuth } from '../hooks/useAuth';
 import { API_BASE_URL } from '../environments/api';

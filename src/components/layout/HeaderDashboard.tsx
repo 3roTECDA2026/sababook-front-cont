@@ -2,7 +2,7 @@
 import React from 'react';
 import { Box, Button, styled, Typography } from '@mui/material';
 
-import NavButton from './NavButton';
+import NavButton from '../ui/NavButton';
 
 export type DashboardView = 'users' | 'books' | 'forums' | 'forumCommentsAdmin';
 

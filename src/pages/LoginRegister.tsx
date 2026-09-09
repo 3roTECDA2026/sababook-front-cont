@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { styled } from '@mui/system';
-import Login from '../components/Login';
+import Login from '../components/ui/Login';
 import logoImage from '../assets/logo.png';
-import LoginForm from '../components/LoginForm';
-import type { LoginCredentials } from '../components/LoginForm';
+import LoginForm from '../components/forms/LoginForm';
+import type { LoginCredentials } from '../components/forms/LoginForm';
 import Register from '../components/auth/Register';
 import { useAuth } from '../hooks/useAuth';
 

@@ -1,7 +1,7 @@
 // src/components/ForumForm.tsx
 import React, { useState, useEffect, FormEvent } from 'react';
 import { Box, TextField, Button, Paper, Typography } from '@mui/material';
-import type { Forum } from '../types';
+import type { Forum } from '../../types';
 
 interface ForumFormData {
   titulo: string;

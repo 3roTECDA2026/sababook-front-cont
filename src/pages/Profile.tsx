@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Box, Button, styled, Avatar, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
-import AppHeader from '../components/AppHeader';
-import SideMenu from '../components/SideMenu';
-import UserProfileForm from '../components/UserProfileForm';
+import AppHeader from '../components/layout/AppHeader';
+import SideMenu from '../components/layout/SideMenu';
+import UserProfileForm from '../components/forms/UserProfileForm';
 import { useAuth } from '../hooks/useAuth';
 
 const StyledButton = styled(Button)(({ theme }) => ({

@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Typography, Rating, useTheme } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
-import type { Book } from '../types';
+import type { Book } from '../../types';
 
 const ORANGE_COLOR = '#FF6633';
 

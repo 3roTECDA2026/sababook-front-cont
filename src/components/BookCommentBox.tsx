@@ -2,7 +2,7 @@
 import React, { Dispatch, SetStateAction } from 'react';
 import { Box, Typography, Rating } from '@mui/material';
 import type { Theme } from '@mui/material';
-import NavButton from './NavButton';
+import NavButton from './ui/NavButton';
 import { API_BASE_URL } from '../environments/api';
 import type { User, Opinion } from '../types';
 

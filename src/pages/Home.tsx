@@ -3,14 +3,14 @@ import { Box, Typography } from '@mui/material';
 import { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import AppHeader from '../components/AppHeader';
-import BookCard from '../components/BookCard';
-import FeaturedBookSection from '../components/FeaturedBookSection';
-import FilterChips from '../components/FilterChips';
-import SearchBar from '../components/SearchBar';
-import type { SearchBarHandle } from '../components/SearchBar';
-import SideMenu from '../components/SideMenu';
-import WelcomeModal from '../components/WelcomeModal';
+import AppHeader from '../components/layout/AppHeader';
+import BookCard from '../components/ui/BookCard';
+import FilterChips from '../components/ui/FilterChips';
+import SearchBar from '../components/ui/SearchBar';
+import type { SearchBarHandle } from '../components/ui/SearchBar';
+import SideMenu from '../components/layout/SideMenu';
+import FeaturedBookSection from '../components/ui/FeaturedBookSection';
+import WelcomeModal from '../components/ui/WelcomeModal';
 
 // Importaciones de Servicios
 import { buscarLibros } from '../services/apiService';

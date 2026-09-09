@@ -1,7 +1,8 @@
 // src/components/BookListSection.tsx
 import { Box, Typography } from '@mui/material';
 import BookCard from './BookCard';
-import type { Book } from '../types';
+import type { Book } from '../../types';
+
 
 type BookWithExtras = Book & {
   id?: number;
