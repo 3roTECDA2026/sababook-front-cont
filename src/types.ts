@@ -111,3 +111,10 @@ export interface ForumDetailComment {
   usuario_nombre: string;
   usuario_avatar: string | null;
 }
+
+export interface TriviaQuestion {
+  id: number;
+  pregunta: string;
+  opciones: string[];
+  correcta: number;
+}

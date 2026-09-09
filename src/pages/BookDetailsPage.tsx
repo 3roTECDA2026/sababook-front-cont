@@ -13,6 +13,7 @@ import BookDetailsHeader from '../components/BookDetailsHeader';
 import BookCommentBox from '../components/BookCommentBox';
 import BookOpinionList from '../components/BookOpinionList';
 import BookDescription from '../components/BookDescription';
+import BookTriviaSection from '../components/BookTriviaSection';
 
 const ORANGE_COLOR = '#FF6633';
 
@@ -90,6 +91,13 @@ const BookDetailsPage = () => {
         <Divider sx={{ my: 3 }} />
 
         <BookDescription book={book} />
+
+        {user?.rol === '2' && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            <BookTriviaSection />
+          </>
+        )}
 
         <NavButton
           onClick={handleCommentClick}
