@@ -92,7 +92,7 @@ const BookDetailsPage = () => {
 
         <BookDescription book={book} />
 
-        {user?.rol === '2' && (
+        {String(user?.rol) === '2' && (
           <>
             <Divider sx={{ my: 3 }} />
             <BookTriviaSection />
