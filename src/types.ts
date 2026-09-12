@@ -9,6 +9,7 @@ export interface Book {
   descripcion: string;
   portada_url: string;
   calificacion_promedio: number;
+  estado_lectura?: 'general' | 'quiero-leer' | 'leyendo' | 'leido';
 }
 
 export interface Medal {

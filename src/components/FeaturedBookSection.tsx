@@ -2,6 +2,7 @@
 import { Box, Typography } from '@mui/material';
 import BookCard from './BookCard';
 import type { FeaturedBook } from '../types';
+import type { ReadingStatus } from '../hooks/useReadingStatus';
 // import LibroImage from '../assets/libro.jpg'
 
 type FeaturedBookData = Partial<FeaturedBook> & {
@@ -12,9 +13,11 @@ type FeaturedBookData = Partial<FeaturedBook> & {
 
 interface FeaturedBookSectionProps {
   featuredBook: FeaturedBookData;
-  handleFavoriteToggle: (libroId: number) => void;
+  handleFavoriteToggle: (libroId: number) => boolean | Promise<boolean>;
   isFavorite: boolean;
   handleVerMas: (libroId: number | null | undefined) => void;
+  readingStatus: ReadingStatus;
+  onReadingStatusChange: (status: ReadingStatus) => void;
 }
 
 export default function FeaturedBookSection({
@@ -22,6 +25,8 @@ export default function FeaturedBookSection({
   handleFavoriteToggle,
   isFavorite,
   handleVerMas,
+  readingStatus,
+  onReadingStatusChange,
 }: FeaturedBookSectionProps) {
   //const bookId = featuredBook.id || featuredBook.libro_id;
 
@@ -40,11 +45,14 @@ export default function FeaturedBookSection({
           gender={featuredBook.genero}
           rating={featuredBook.calificacion_promedio || featuredBook.rating}
           isFavorite={isFavorite}
-          onFavoriteToggle={() =>
-            featuredBook.libro_id && handleFavoriteToggle(featuredBook.libro_id)
-          }
+          onFavoriteToggle={() => {
+            if (!featuredBook.libro_id) return false;
+            return handleFavoriteToggle(featuredBook.libro_id);
+          }}
           // bookId={bookId}
           libro_id={featuredBook.libro_id}
+          readingStatus={readingStatus}
+          onReadingStatusChange={onReadingStatusChange}
           onVerMas={() => handleVerMas(featuredBook.libro_id)}
         />
       </Box>
