@@ -47,6 +47,8 @@ const InsigniaUnica = ({ insignia }: InsigniaUnicaProps) => {
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 2,
+        opacity: insignia.obtenida ? 1 : 0.45,
+        filter: insignia.obtenida ? 'none' : 'grayscale(100%)',
       }}
     >
       {/* Ícono de la Insignia */}

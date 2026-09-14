@@ -9,7 +9,7 @@ import InsigniaUnica from '../components/InsigniaUnica';
 
 // Importa el hook de autenticación
 import { useAuth } from '../hooks/useAuth';
-import { getUserMedals } from '../services/apiService';
+import { getCatalogoMedals } from '../services/apiService';
 import type { Medal } from '../types';
 
 const Insignias = () => {
@@ -30,7 +30,7 @@ const Insignias = () => {
     useEffect(() => {
     if (user?.usuario_id) {
       setCargando(true);
-      getUserMedals(user.usuario_id)
+      getCatalogoMedals(user.usuario_id)
         .then((medals) => {
           setInsigniasUsuario(Array.isArray(medals) ? medals : []);
         })

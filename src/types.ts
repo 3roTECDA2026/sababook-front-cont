@@ -16,6 +16,8 @@ export interface Medal {
   nombre: string;
   descripcion: string;
   tipo_accion: string;
+  obtenida?: boolean;
+  fecha_obtenida?: string | null;
 }
 
 export interface BookFilters {
