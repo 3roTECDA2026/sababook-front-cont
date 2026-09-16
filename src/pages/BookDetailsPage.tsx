@@ -13,6 +13,7 @@ import BookDetailsHeader from '../components/BookDetailsHeader';
 import BookCommentBox from '../components/BookCommentBox';
 import BookOpinionList from '../components/BookOpinionList';
 import BookDescription from '../components/BookDescription';
+import TriviaPlaySection from '../components/TriviaPlaySection';
 
 const ORANGE_COLOR = '#FF6633';
 
@@ -71,7 +72,12 @@ const BookDetailsPage = () => {
       <SideMenu open={menuOpen} onClose={handleMenuClose} active="Inicio" />
 
       <Box sx={{ pt: 0 }}>
-        <BookDetailsHeader book={book} coverImageSrc={coverImageSrc} authorStyle={authorStyle} />
+        <BookDetailsHeader
+          book={book}
+          coverImageSrc={coverImageSrc}
+          authorStyle={authorStyle}
+          actions={<TriviaPlaySection bookId={book.libro_id} />}
+        />
 
         {showCommentBox && user && (
           <BookCommentBox

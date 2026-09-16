@@ -15,6 +15,7 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import AppHeader from '../components/AppHeader';
 import SideMenu from '../components/SideMenu';
 import BookTriviaSection from '../components/BookTriviaSection';
+import EvaluationResponsesDialog from '../components/EvaluationResponsesDialog';
 import { useBookData } from '../hooks/useBookData';
 import { API_BASE_URL } from '../environments/api';
 import type { Book, Evaluacion, TriviaModo } from '../types';
@@ -37,7 +38,22 @@ const TriviaPage = () => {
   const [evaluationBook, setEvaluationBook] = useState<Book | null>(null);
   const [deadline, setDeadline] = useState('');
 
+  const [responsesOpen, setResponsesOpen] = useState(false);
+  const [responsesEvaluationId, setResponsesEvaluationId] = useState<number | null>(null);
+
   const handleMenuClose = () => setMenuOpen(false);
+
+  const openResponses = async (book: Book) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/libro/${book.libro_id}`);
+      const evaluaciones: Evaluacion[] = await res.json();
+      setResponsesEvaluationId(evaluaciones.length > 0 ? evaluaciones[0].evaluationId : null);
+    } catch (err) {
+      console.error('Error cargando evaluaciones:', err);
+      setResponsesEvaluationId(null);
+    }
+    setResponsesOpen(true);
+  };
 
   const openOrResumeEvaluation = async (book: Book) => {
     setEvaluationBusy(true);
@@ -155,7 +171,7 @@ const TriviaPage = () => {
                     variant="outlined"
                     size="small"
                     className={styles.responsesButton}
-                    disabled
+                    onClick={() => openResponses(book)}
                   >
                     Respuestas
                   </Button>
@@ -189,7 +205,12 @@ const TriviaPage = () => {
         </>
       )}
 
-      <Dialog open={evaluationDialogOpen} onClose={() => setEvaluationDialogOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={evaluationDialogOpen}
+        onClose={() => setEvaluationDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Nueva evaluación</DialogTitle>
         <DialogContent>
           <Typography variant="body2" mb={2}>
@@ -214,6 +235,12 @@ const TriviaPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <EvaluationResponsesDialog
+        open={responsesOpen}
+        onClose={() => setResponsesOpen(false)}
+        evaluationId={responsesEvaluationId}
+      />
     </div>
   );
 };
