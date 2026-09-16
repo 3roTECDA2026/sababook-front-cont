@@ -1,16 +1,16 @@
 // src/pages/MyForums.tsx
 import { Avatar, Box, CircularProgress, IconButton, Typography } from '@mui/material';
 import { useState } from 'react';
-import { useForums } from '../hooks/useForum';
-import theme from '../theme/theme';
+import { useForums } from '@/hooks/useForum';
+import theme from '@/theme/theme';
 import { useNavigate } from 'react-router-dom';
 
 import ForumIcon from '@mui/icons-material/Forum';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 
-import AppHeader from '../components/layout/AppHeader';
-import SideMenu from '../components/layout/SideMenu';
-import type { Forum } from '../types';
+import AppHeader from '@/components/layout/AppHeader';
+import SideMenu from '@/components/layout/SideMenu';
+import type { Forum } from '@/types';
 
 interface ForoItemProps {
   foro: Forum;

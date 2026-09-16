@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { API_BASE_URL } from '../environments/api';
+import { API_BASE_URL } from '@/environments/api';
 import MenuIcon from '@mui/icons-material/Menu';
 import moment from 'moment';
 import 'moment/locale/es';
-import type { Book } from '../types';
+import type { Book } from '@/types';
 
 moment.locale('es');
 

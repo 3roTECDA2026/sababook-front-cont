@@ -3,24 +3,24 @@ import { Box, Typography } from '@mui/material';
 import { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import AppHeader from '../components/layout/AppHeader';
-import BookCard from '../components/ui/BookCard';
-import FilterChips from '../components/ui/FilterChips';
-import SearchBar from '../components/ui/SearchBar';
-import type { SearchBarHandle } from '../components/ui/SearchBar';
-import SideMenu from '../components/layout/SideMenu';
-import FeaturedBookSection from '../components/ui/FeaturedBookSection';
-import WelcomeModal from '../components/ui/WelcomeModal';
+import AppHeader from '@/components/layout/AppHeader';
+import BookCard from '@/components/ui/BookCard';
+import FilterChips from '@/components/ui/FilterChips';
+import SearchBar from '@/components/ui/SearchBar';
+import type { SearchBarHandle } from '@/components/ui/SearchBar';
+import SideMenu from '@/components/layout/SideMenu';
+import FeaturedBookSection from '@/components/ui/FeaturedBookSection';
+import WelcomeModal from '@/components/ui/WelcomeModal';
 
 // Importaciones de Servicios
-import { buscarLibros } from '../services/apiService';
-import { normalizarTexto } from '../utils/normalize';
+import { buscarLibros } from '@/services/apiService';
+import { normalizarTexto } from '@/utils/normalize';
 
 // Importaciones de Lógica (Custom Hooks)
-import { useAuth } from '../hooks/useAuth';
-import { useBookData } from '../hooks/useBookData'; // NUEVO: Lógica de carga de libros
-import { useFavorites } from '../hooks/useFavorites'; // Lógica de manejo de favoritos
-import type { Book, BookFilters } from '../types';
+import { useAuth } from '@/hooks/useAuth';
+import { useBookData } from '@/hooks/useBookData'; // NUEVO: Lógica de carga de libros
+import { useFavorites } from '@/hooks/useFavorites'; // Lógica de manejo de favoritos
+import type { Book, BookFilters } from '@/types';
 
 export default function Home() {
   // --- Estados de UI ---

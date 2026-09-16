@@ -1,7 +1,7 @@
 // src/hooks/useForum.ts
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import type { Forum } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { Forum } from '@/types';
 
 export const useForums = () => {
   const [forums, setForums] = useState<Forum[]>([]);

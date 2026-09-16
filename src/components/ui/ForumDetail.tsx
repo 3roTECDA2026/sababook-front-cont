@@ -1,6 +1,6 @@
 // src/components/ForumDetail.tsx
-import useForumDetail from '../../hooks/useForumDetail';
-import type { ForumDetail as ForumDetailType } from '../../types';
+import useForumDetail from '@/hooks/useForumDetail';
+import type { ForumDetail as ForumDetailType } from '@/types';
 
 interface ForumDetailProps {
   foroId: number | string | undefined;

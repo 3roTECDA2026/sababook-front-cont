@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { styled } from '@mui/system';
-import Login from '../components/ui/Login';
-import logoImage from '../assets/logo.png';
-import LoginForm from '../components/forms/LoginForm';
-import type { LoginCredentials } from '../components/forms/LoginForm';
-import Register from '../components/auth/Register';
-import { useAuth } from '../hooks/useAuth';
+import Login from '@/components/ui/Login';
+import logoImage from '@/assets/logo.png';
+import LoginForm from '@/components/forms/LoginForm';
+import type { LoginCredentials } from '@/components/forms/LoginForm';
+import Register from '@/components/auth/Register';
+import { useAuth } from '@/hooks/useAuth';
 
 const StyledPageContainer = styled(Box)(({ theme }) => ({
   display: 'flex',

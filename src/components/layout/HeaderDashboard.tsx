@@ -1,8 +1,7 @@
 // src/components/HeaderDashboard.tsx
 import React from 'react';
 import { Box, Button, styled, Typography } from '@mui/material';
-
-import NavButton from '../ui/NavButton';
+import NavButton from '@/components/ui/NavButton';
 
 export type DashboardView = 'users' | 'books' | 'forums' | 'forumCommentsAdmin';
 

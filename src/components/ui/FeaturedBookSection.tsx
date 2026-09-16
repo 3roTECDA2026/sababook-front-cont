@@ -1,7 +1,7 @@
 // src/components/FeaturedBookSection.tsx
 import { Box, Typography } from '@mui/material';
 import BookCard from './BookCard';
-import type { FeaturedBook } from '../../types';
+import type { FeaturedBook } from '@/types';
 // import LibroImage from '../assets/libro.jpg'
 
 type FeaturedBookData = Partial<FeaturedBook> & {

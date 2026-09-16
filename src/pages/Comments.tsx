@@ -5,10 +5,10 @@ import { useState } from 'react';
 // Iconos de MUI
 import StarIcon from '@mui/icons-material/Star';
 
-import AppHeader from '../components/layout/AppHeader';
-import RatingAndCommentForm from '../components/forms/RatingAndCommentForm';
-import type { RatingSubmitData } from '../components/forms/RatingAndCommentForm';
-import SideMenu from '../components/layout/SideMenu';
+import AppHeader from '@/components/layout/AppHeader';
+import RatingAndCommentForm from '@/components/forms/RatingAndCommentForm';
+import type { RatingSubmitData } from '@/components/forms/RatingAndCommentForm';
+import SideMenu from '@/components/layout/SideMenu';
 
 // --- CONFIGURACIÓN DE TEMA ---
 const theme = createTheme({

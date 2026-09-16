@@ -1,8 +1,8 @@
 // src/components/FilterChips.tsx
 import { useState, MouseEvent } from 'react';
 import { Stack, Chip, Menu, MenuItem } from '@mui/material';
-import { buscarLibros } from '../../services/apiService';
-import type { Book, BookFilters } from '../../types';
+import { buscarLibros } from '@/services/apiService';
+import type { Book, BookFilters } from '@/types';
 
 interface FilterData {
   id: string;

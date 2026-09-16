@@ -2,9 +2,9 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import { Outlet } from 'react-router-dom';
-import Dashboard from '../components/Dashboard';
-import AppHeader from '../components/layout/AppHeader';
-import SideMenu from '../components/layout/SideMenu';
+import Dashboard from '@/components/Dashboard';
+import AppHeader from '@/components/layout/AppHeader';
+import SideMenu from '@/components/layout/SideMenu';
 
 const DashboardPage = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);

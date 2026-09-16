@@ -32,8 +32,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { API_BASE_URL } from '../environments/api';
-import type { Book, OpinionAPI } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { Book, OpinionAPI } from '@/types';
 
 const StyledTableContainer = styled(Paper)(({ theme }) => ({
   borderRadius: '16px',

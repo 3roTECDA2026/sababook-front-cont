@@ -17,7 +17,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import type { Book } from '../../types';
+import type { Book } from '@/types';
 
 // Se eliminan imports relacionados con la API, Dialogs, Snackbar, y useNavigate
 import EditIcon from '@mui/icons-material/Edit';
