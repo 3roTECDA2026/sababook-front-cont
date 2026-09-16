@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader'; 
 import SideMenu from '../components/SideMenu';
 import UserProfileForm from '../components/UserProfileForm';
+import ReadingGoalsSection from '../components/ReadingGoalsSection';
 import { useAuth } from '../hooks/useAuth'; 
 
 const StyledButton = styled(Button)(({ theme }) => ({
@@ -117,6 +118,11 @@ const Profile = () => {
             {userEmail}
           </Typography>
         </Box>
+
+        {/* SECCIÓN DE METAS DE LECTURA */}
+         <Box sx={{ width: '100%', maxWidth: '450px', margin: '0 auto' }}>
+          <ReadingGoalsSection />
+         </Box>
 
         {/* CONTENEDOR DE BOTONES */}
         <Box 
