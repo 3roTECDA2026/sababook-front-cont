@@ -23,6 +23,7 @@ import type { UserFormData } from './forms/UserForm';
 import ForumForm from './forms/ForumForm';
 import BookForm from './forms/BookForm';
 import GoalForm from './GoalForm';
+import ModerationAdmin from './ModerationAdmin';
 import { API_BASE_URL } from '@/environments/api';
 import type { Book, Forum, User, ReadingGoal } from '@/types';
 import UserTable from './tables/UserTable';
@@ -598,6 +599,8 @@ const Dashboard = () => {
             }}
           />
         );
+      case 'moderation':
+        return <ModerationAdmin />;
       default:
         return null;
     }

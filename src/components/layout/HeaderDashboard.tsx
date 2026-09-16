@@ -3,13 +3,14 @@ import React from 'react';
 import { Box, Button, styled, Typography } from '@mui/material';
 import NavButton from '@/components/ui/NavButton';
 
-export type DashboardView = 'users' | 'books' | 'forums' | 'goals' | 'forumCommentsAdmin';
+export type DashboardView = 'users' | 'books' | 'forums' | 'goals' | 'forumCommentsAdmin' | 'moderation';
 
 const titleMap: Partial<Record<DashboardView, string>> = {
   users: 'Usuarios',
   books: 'Libros',
   forums: 'Foros',
   goals: 'Metas de Lectura',
+  moderation: 'Moderación IA',
 };
 
 // 1. Estilo para el botón de "Agregar"
@@ -65,6 +66,9 @@ const HeaderDashboard = ({
         <NavButton onClick={() => onNavigate('forums')} isActive={activeView === 'forums'}>
           Foros
         </NavButton>
+        <NavButton onClick={() => onNavigate('moderation')} isActive={activeView === 'moderation'}>
+          Moderación IA
+        </NavButton>
       </Box>
 
       {/* 2. BARRA DE ACCIONES (SearchBar y Botón Agregar) */}
@@ -84,7 +88,9 @@ const HeaderDashboard = ({
         <Typography variant="h4" fontWeight="bold" sx={{ color: '#555555', mb: 2 }}>
           {currentTitle}
         </Typography>
-        <StyledAddButton onClick={onAddClick}>{getAddButtonText(activeView)}</StyledAddButton>
+        {activeView !== 'moderation' && (
+          <StyledAddButton onClick={onAddClick}>{getAddButtonText(activeView)}</StyledAddButton>
+        )}
       </Box>
     </Box>
   );
