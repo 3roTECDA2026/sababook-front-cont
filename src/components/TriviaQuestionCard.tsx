@@ -1,7 +1,20 @@
 // src/components/TriviaQuestionCard.tsx
-import { Box, Typography, IconButton, useTheme } from '@mui/material';
+import { Box, Typography, IconButton, Chip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import type { TriviaQuestion } from '../types';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import moment from 'moment';
+import 'moment/locale/es';
+import type { TriviaQuestion, TriviaFormato } from '../types';
+import styles from '../styles/trivia.module.css';
+
+moment.locale('es');
+
+const FORMAT_LABELS: Record<TriviaFormato, string> = {
+  multiple: 'Opción múltiple',
+  truefalse: 'Verdadero/Falso',
+  conexion: 'Conexión de nodos',
+  completar: 'Completar el texto',
+};
 
 interface TriviaQuestionCardProps {
   question: TriviaQuestion;
@@ -10,20 +23,30 @@ interface TriviaQuestionCardProps {
 }
 
 const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardProps) => {
-  const theme = useTheme();
+  const renderCloze = () => {
+    const parts = (question.texto ?? '').split('{blank}');
+    const answers = question.respuestas ?? [];
+    return (
+      <>
+        {parts.map((part, i) => (
+          <span key={i}>
+            {part}
+            {i < answers.length && (
+              <strong className={styles.qAnswer}>
+                {' '}[{i + 1}] {answers[i]}
+              </strong>
+            )}
+          </span>
+        ))}
+      </>
+    );
+  };
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        borderRadius: '12px',
-        bgcolor: theme.palette.grey[100],
-        border: `1px solid ${theme.palette.grey[300]}`,
-      }}
-    >
-      <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={1}>
-        <Typography variant="body2" fontWeight="bold">
-          {index + 1}. {question.pregunta}
+    <Box className={question.modo === 'evaluacion' ? styles.qCardEval : styles.qCard}>
+      <Box className={styles.qCardHeader}>
+        <Typography variant="body2" className={styles.qCardText}>
+          {index + 1}. {question.formato === 'completar' ? 'Completá el texto' : question.pregunta}
         </Typography>
         {onDelete && (
           <IconButton size="small" onClick={() => onDelete(question.id)} aria-label="Eliminar pregunta">
@@ -31,18 +54,55 @@ const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardPro
           </IconButton>
         )}
       </Box>
-      <Box mt={1}>
-        {question.opciones.map((opcion, optionIndex) => (
-          <Typography
-            key={optionIndex}
-            variant="body2"
-            color={optionIndex === question.correcta ? 'success.main' : 'text.secondary'}
-          >
-            {String.fromCharCode(65 + optionIndex)}. {opcion}
-            {optionIndex === question.correcta ? ' (correcta)' : ''}
-          </Typography>
-        ))}
+
+      <Box display="flex" alignItems="center" gap={1} mt={1}>
+        <Chip label={FORMAT_LABELS[question.formato]} size="small" variant="outlined" />
+        {question.modo === 'evaluacion' && (
+          <Chip
+            icon={<EventNoteIcon />}
+            label={
+              question.fechaLimite
+                ? `Evaluación · límite ${moment(question.fechaLimite).format('DD/MM/YYYY')}`
+                : 'Evaluación'
+            }
+            size="small"
+            className={styles.qEvalChip}
+          />
+        )}
       </Box>
+
+      {question.formato === 'conexion' && (
+        <Box className={styles.qOptions}>
+          {(question.pares ?? []).map((par, optionIndex) => (
+            <Typography key={optionIndex} variant="body2" className={styles.qOption}>
+              {String.fromCharCode(65 + optionIndex)}. {par.izquierda} → {par.derecha}
+            </Typography>
+          ))}
+        </Box>
+      )}
+
+      {question.formato === 'completar' && (
+        <Box className={styles.qOptions}>
+          <Typography variant="body2" className={styles.qOption}>
+            {renderCloze()}
+          </Typography>
+        </Box>
+      )}
+
+      {(question.formato === 'multiple' || question.formato === 'truefalse') && (
+        <Box className={styles.qOptions}>
+          {(question.opciones ?? []).map((opcion, optionIndex) => (
+            <Typography
+              key={optionIndex}
+              variant="body2"
+              className={optionIndex === question.correcta ? styles.qOptionCorrect : styles.qOption}
+            >
+              {String.fromCharCode(65 + optionIndex)}. {opcion}
+              {optionIndex === question.correcta ? ' (correcta)' : ''}
+            </Typography>
+          ))}
+        </Box>
+      )}
     </Box>
   );
 };
