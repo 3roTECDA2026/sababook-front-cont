@@ -174,7 +174,7 @@
 }
 
 .buttonTop {
-  margin: 12px 0 24px;
+  margin: 20px 0 28px !important;
 }
 
 .buttonDisabled:disabled {

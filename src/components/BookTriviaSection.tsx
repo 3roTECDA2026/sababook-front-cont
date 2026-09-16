@@ -15,25 +15,25 @@ moment.locale('es');
 
 interface BookTriviaSectionProps {
   book: Book;
-  modo?: TriviaModo;
-  fechaLimite?: string | null;
-  evaluacionId?: number | null;
+  mode?: TriviaModo;
+  deadline?: string | null;
+  evaluationId?: number | null;
 }
 
 const BookTriviaSection = ({
   book,
-  modo = 'trivia',
-  fechaLimite = null,
-  evaluacionId = null,
+  mode = 'trivia',
+  deadline = null,
+  evaluationId = null,
 }: BookTriviaSectionProps) => {
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const isEvaluation = modo === 'evaluacion';
+  const isEvaluation = mode === 'evaluacion';
   const evaluationEnded =
-    isEvaluation && fechaLimite
-      ? moment(`${fechaLimite}T23:59:59`).isBefore(moment())
+    isEvaluation && deadline
+      ? moment(`${deadline}T23:59:59`).isBefore(moment())
       : false;
 
   const loadQuestions = () => {
@@ -44,8 +44,8 @@ const BookTriviaSection = ({
         setQuestions(
           data.filter(
             (question) =>
-              question.modo === modo &&
-              (modo !== 'evaluacion' || question.evaluacion_id === evaluacionId),
+              question.mode === mode &&
+              (mode !== 'evaluacion' || question.evaluationId === evaluationId),
           ),
         );
       })
@@ -58,7 +58,7 @@ const BookTriviaSection = ({
   useEffect(() => {
     loadQuestions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [book.libro_id, modo, evaluacionId]);
+  }, [book.libro_id, mode, evaluationId]);
 
   const handleAdd = (input: Omit<TriviaQuestion, 'id'>) => {
     const token = localStorage.getItem('token');
@@ -68,7 +68,7 @@ const BookTriviaSection = ({
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ libro_id: book.libro_id, evaluacion_id: evaluacionId, ...input }),
+      body: JSON.stringify({ bookId: book.libro_id, evaluationId, ...input }),
     })
       .then(async (res) => {
         if (!res.ok) {
@@ -109,7 +109,7 @@ const BookTriviaSection = ({
           <EventNoteIcon className={styles.evalBannerIcon} />
           <Typography variant="body2">
             <b>Modo evaluación</b> — límite:{' '}
-            {fechaLimite ? moment(fechaLimite).format('DD/MM/YYYY') : 'sin fecha'}.
+            {deadline ? moment(deadline).format('DD/MM/YYYY') : 'sin fecha'}.
             {evaluationEnded && ' La fecha límite ya pasó: la evaluación finalizó.'}
           </Typography>
         </div>
@@ -160,8 +160,8 @@ const BookTriviaSection = ({
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onAdd={handleAdd}
-        modo={modo}
-        fechaLimite={fechaLimite}
+        mode={mode}
+        deadline={deadline}
       />
     </div>
   );

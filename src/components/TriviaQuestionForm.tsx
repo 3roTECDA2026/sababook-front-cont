@@ -26,26 +26,26 @@ interface TriviaQuestionFormProps {
   open: boolean;
   onClose: () => void;
   onAdd: (question: TriviaQuestionInput) => void;
-  modo?: TriviaModo;
-  fechaLimite?: string | null;
+  mode?: TriviaModo;
+  deadline?: string | null;
 }
 
 const TriviaQuestionForm = ({
   open,
   onClose,
   onAdd,
-  modo = 'trivia',
-  fechaLimite = null,
+  mode = 'trivia',
+  deadline = null,
 }: TriviaQuestionFormProps) => {
-  const isEvaluation = modo === 'evaluacion';
+  const isEvaluation = mode === 'evaluacion';
 
-  const [formato, setFormato] = useState<TriviaFormato>('multiple');
-  const [enunciado, setEnunciado] = useState('');
-  const [opciones, setOpciones] = useState<string[]>(Array.from({ length: MULTIPLE_COUNT }, () => ''));
-  const [correcta, setCorrecta] = useState(-1);
-  const [pares, setPares] = useState<TriviaPar[]>([{ izquierda: '', derecha: '' }]);
-  const [texto, setTexto] = useState('');
-  const [respuestas, setRespuestas] = useState<string[]>(['']);
+  const [format, setFormat] = useState<TriviaFormato>('multiple');
+  const [question, setQuestion] = useState('');
+  const [options, setOptions] = useState<string[]>(Array.from({ length: MULTIPLE_COUNT }, () => ''));
+  const [correct, setCorrect] = useState(-1);
+  const [pairs, setPairs] = useState<TriviaPar[]>([{ left: '', right: '' }]);
+  const [text, setText] = useState('');
+  const [answers, setAnswers] = useState<string[]>(['']);
   const [addedCount, setAddedCount] = useState(0);
 
   const formatOptions: { value: TriviaFormato; label: string }[] = [
@@ -57,69 +57,69 @@ const TriviaQuestionForm = ({
     formatOptions.push({ value: 'completar', label: 'Completar el texto' });
   }
 
-  const isTrueFalse = () => formato === 'truefalse';
+  const isTrueFalse = () => format === 'truefalse';
 
   const resetForm = () => {
-    setEnunciado('');
-    setOpciones(isTrueFalse() ? [...TRUE_FALSE_OPTIONS] : Array.from({ length: MULTIPLE_COUNT }, () => ''));
-    setCorrecta(-1);
+    setQuestion('');
+    setOptions(isTrueFalse() ? [...TRUE_FALSE_OPTIONS] : Array.from({ length: MULTIPLE_COUNT }, () => ''));
+    setCorrect(-1);
   };
 
   const handleSetFormat = (_event: React.MouseEvent<HTMLElement>, value: string | null) => {
     if (!value) return;
-    setFormato(value as TriviaFormato);
+    setFormat(value as TriviaFormato);
     if (value === 'truefalse') {
-      setOpciones([...TRUE_FALSE_OPTIONS]);
+      setOptions([...TRUE_FALSE_OPTIONS]);
     } else {
-      setOpciones(Array.from({ length: MULTIPLE_COUNT }, () => ''));
+      setOptions(Array.from({ length: MULTIPLE_COUNT }, () => ''));
     }
-    setCorrecta(-1);
+    setCorrect(-1);
   };
 
-  const handleOpcionChange = (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
-    setOpciones((prev) => {
+  const handleOptionChange = (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
+    setOptions((prev) => {
       const next = [...prev];
       next[index] = event.target.value;
       return next;
     });
   };
 
-  const handleCorrectaToggle = (index: number) => () => {
-    setCorrecta((prev) => (prev === index ? -1 : index));
+  const handleCorrectToggle = (index: number) => () => {
+    setCorrect((prev) => (prev === index ? -1 : index));
   };
 
-  const handleParChange = (index: number, field: keyof TriviaPar) => (
+  const handlePairChange = (index: number, field: keyof TriviaPar) => (
     event: ChangeEvent<HTMLInputElement>,
   ) => {
-    setPares((prev) => {
+    setPairs((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: event.target.value };
       return next;
     });
   };
 
-  const addPar = () => {
-    setPares((prev) => [...prev, { izquierda: '', derecha: '' }]);
+  const addPair = () => {
+    setPairs((prev) => [...prev, { left: '', right: '' }]);
   };
 
-  const removePar = (index: number) => () => {
-    setPares((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  const removePair = (index: number) => () => {
+    setPairs((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
   };
 
   const blanksCount = (value: string) => (value.match(/\{blank\}/g) || []).length;
 
-  const syncRespuestas = (value: string) => {
+  const syncAnswers = (value: string) => {
     const count = blanksCount(value);
-    setRespuestas((prev) => Array.from({ length: count }, (_, i) => prev[i] ?? ''));
+    setAnswers((prev) => Array.from({ length: count }, (_, i) => prev[i] ?? ''));
   };
 
-  const handleTextoChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setTexto(event.target.value);
-    syncRespuestas(event.target.value);
+  const handleTextChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setText(event.target.value);
+    syncAnswers(event.target.value);
   };
 
-  const updateRespuesta = (index: number, value: string) => {
-    setRespuestas((prev) => {
+  const updateAnswer = (index: number, value: string) => {
+    setAnswers((prev) => {
       const next = [...prev];
       next[index] = value;
       return next;
@@ -127,73 +127,73 @@ const TriviaQuestionForm = ({
   };
 
   const handleSubmit = () => {
-    if (formato === 'multiple' || formato === 'truefalse') {
-      if (!enunciado.trim()) {
+    if (format === 'multiple' || format === 'truefalse') {
+      if (!question.trim()) {
         alert('Escribí el enunciado de la pregunta.');
         return;
       }
-      if (opciones.some((opcion) => !opcion.trim())) {
+      if (options.some((option) => !option.trim())) {
         alert('Completá todas las opciones.');
         return;
       }
-      if (correcta < 0) {
+      if (correct < 0) {
         alert('Marcá cuál es la respuesta correcta.');
         return;
       }
 
       onAdd({
-        pregunta: enunciado.trim(),
-        modo,
-        formato,
-        fechaLimite: isEvaluation ? fechaLimite : null,
-        opciones: opciones.map((opcion) => opcion.trim()),
-        correcta,
+        question: question.trim(),
+        mode,
+        format,
+        deadline: isEvaluation ? deadline : null,
+        options: options.map((option) => option.trim()),
+        correctAnswer: correct,
       });
-    } else if (formato === 'conexion') {
-      const validPairs = pares.filter((par) => par.izquierda.trim() && par.derecha.trim());
+    } else if (format === 'conexion') {
+      const validPairs = pairs.filter((pair) => pair.left.trim() && pair.right.trim());
       if (validPairs.length < 2) {
         alert('Completá al menos 2 pares para armar la conexión de nodos.');
         return;
       }
 
       onAdd({
-        pregunta: enunciado.trim() || 'Conectá cada elemento de la izquierda con su par',
-        modo,
-        formato,
-        fechaLimite: isEvaluation ? fechaLimite : null,
-        pares: validPairs.map((par) => ({
-          izquierda: par.izquierda.trim(),
-          derecha: par.derecha.trim(),
+        question: question.trim() || 'Conectá cada elemento de la izquierda con su par',
+        mode,
+        format,
+        deadline: isEvaluation ? deadline : null,
+        pairs: validPairs.map((pair) => ({
+          left: pair.left.trim(),
+          right: pair.right.trim(),
         })),
       });
     } else {
-      if (!texto.trim()) {
+      if (!text.trim()) {
         alert('Escribí el texto con los espacios a completar.');
         return;
       }
-      if (blanksCount(texto) === 0) {
+      if (blanksCount(text) === 0) {
         alert(`Marcá los espacios vacíos con ${BLANK_MARKER}.`);
         return;
       }
-      if (respuestas.some((respuesta) => !respuesta.trim())) {
+      if (answers.some((answer) => !answer.trim())) {
         alert('Completá todas las respuestas del texto.');
         return;
       }
 
       onAdd({
-        pregunta: '',
-        modo,
-        formato,
-        fechaLimite: isEvaluation ? fechaLimite : null,
-        texto: texto.trim(),
-        respuestas: respuestas.map((respuesta) => respuesta.trim()),
+        question: '',
+        mode,
+        format,
+        deadline: isEvaluation ? deadline : null,
+        text: text.trim(),
+        answers: answers.map((answer) => answer.trim()),
       });
     }
 
     resetForm();
-    setPares([{ izquierda: '', derecha: '' }]);
-    setTexto('');
-    setRespuestas(['']);
+    setPairs([{ left: '', right: '' }]);
+    setText('');
+    setAnswers(['']);
     setAddedCount((prev) => prev + 1);
   };
 
@@ -208,7 +208,7 @@ const TriviaQuestionForm = ({
           Formato de pregunta
         </Typography>
         <ToggleButtonGroup
-          value={formato}
+          value={format}
           exclusive
           onChange={handleSetFormat}
           fullWidth
@@ -222,18 +222,18 @@ const TriviaQuestionForm = ({
           ))}
         </ToggleButtonGroup>
 
-        {isEvaluation && (formato === 'conexion' || formato === 'completar') && (
+        {isEvaluation && (format === 'conexion' || format === 'completar') && (
           <Typography variant="caption" color="success.main" display="block" mt={1}>
             Formato exclusivo del modo evaluación.
           </Typography>
         )}
 
-        {(formato === 'multiple' || formato === 'truefalse') && (
+        {(format === 'multiple' || format === 'truefalse') && (
           <>
             <TextField
               label="Pregunta"
-              value={enunciado}
-              onChange={(event) => setEnunciado(event.target.value)}
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
               fullWidth
               size="small"
               multiline
@@ -246,17 +246,17 @@ const TriviaQuestionForm = ({
                 Marcá la opción correcta
               </Typography>
 
-              {opciones.map((opcion, index) => (
+              {options.map((option, index) => (
                 <Box key={index} display="flex" alignItems="center" mt={1.5}>
                   <Checkbox
-                    checked={correcta === index}
-                    onChange={handleCorrectaToggle(index)}
+                    checked={correct === index}
+                    onChange={handleCorrectToggle(index)}
                     size="small"
                     className={styles.checkboxOrange}
                   />
                   <TextField
-                    value={opcion}
-                    onChange={isTrueFalse() ? undefined : handleOpcionChange(index)}
+                    value={option}
+                    onChange={isTrueFalse() ? undefined : handleOptionChange(index)}
                     disabled={isTrueFalse()}
                     fullWidth
                     size="small"
@@ -268,18 +268,18 @@ const TriviaQuestionForm = ({
           </>
         )}
 
-        {formato === 'conexion' && (
+        {format === 'conexion' && (
           <Box mt={2}>
             <Typography variant="caption" color="text.secondary" display="block" mb={1}>
               Armá los pares de nodos que deben conectarse
             </Typography>
 
-            {pares.map((par, index) => (
+            {pairs.map((pair, index) => (
               <Box key={index} display="flex" alignItems="center" gap={1} mt={1.5}>
                 <TextField
                   label={`Elemento ${index + 1}`}
-                  value={par.izquierda}
-                  onChange={handleParChange(index, 'izquierda')}
+                  value={pair.left}
+                  onChange={handlePairChange(index, 'left')}
                   size="small"
                   fullWidth
                   placeholder="Ej: Autor"
@@ -287,16 +287,16 @@ const TriviaQuestionForm = ({
                 <Typography variant="body2">↔</Typography>
                 <TextField
                   label={`Se conecta con ${index + 1}`}
-                  value={par.derecha}
-                  onChange={handleParChange(index, 'derecha')}
+                  value={pair.right}
+                  onChange={handlePairChange(index, 'right')}
                   size="small"
                   fullWidth
                   placeholder="Ej: Obra"
                 />
                 <IconButton
                   size="small"
-                  onClick={removePar(index)}
-                  disabled={pares.length <= 1}
+                  onClick={removePair(index)}
+                  disabled={pairs.length <= 1}
                   aria-label="Quitar par"
                 >
                   <CloseIcon fontSize="small" />
@@ -304,18 +304,18 @@ const TriviaQuestionForm = ({
               </Box>
             ))}
 
-            <Button size="small" startIcon={<AddIcon />} onClick={addPar} sx={{ mt: 1 }}>
+            <Button size="small" startIcon={<AddIcon />} onClick={addPair} sx={{ mt: 1 }}>
               Agregar par
             </Button>
           </Box>
         )}
 
-        {formato === 'completar' && (
+        {format === 'completar' && (
           <Box mt={2}>
             <TextField
               label="Texto con espacios"
-              value={texto}
-              onChange={handleTextoChange}
+              value={text}
+              onChange={handleTextChange}
               fullWidth
               size="small"
               multiline
@@ -325,12 +325,12 @@ const TriviaQuestionForm = ({
               helperText={`Usá ${BLANK_MARKER} para cada espacio que el alumno deba completar.`}
             />
 
-            {Array.from({ length: blanksCount(texto) }).map((_, index) => (
+            {Array.from({ length: blanksCount(text) }).map((_, index) => (
               <TextField
                 key={index}
                 label={`Respuesta ${index + 1}`}
-                value={respuestas[index] ?? ''}
-                onChange={(event) => updateRespuesta(index, event.target.value)}
+                value={answers[index] ?? ''}
+                onChange={(event) => updateAnswer(index, event.target.value)}
                 fullWidth
                 size="small"
                 margin="normal"

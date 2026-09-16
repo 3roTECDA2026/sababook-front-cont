@@ -117,33 +117,33 @@ export type TriviaModo = 'trivia' | 'evaluacion';
 export type TriviaFormato = 'multiple' | 'truefalse' | 'conexion' | 'completar';
 
 export interface TriviaPar {
-  izquierda: string;
-  derecha: string;
+  left: string;
+  right: string;
 }
 
 export interface TriviaQuestion {
   id: number;
-  modo: TriviaModo;
-  formato: TriviaFormato;
-  pregunta: string;
-  fechaLimite?: string | null;
-  evaluacion_id?: number | null;
-  opciones?: string[];
-  correcta?: number;
-  pares?: TriviaPar[];
-  texto?: string;
-  respuestas?: string[];
+  mode: TriviaModo;
+  format: TriviaFormato;
+  question: string;
+  deadline?: string | null;
+  evaluationId?: number | null;
+  options?: string[];
+  correctAnswer?: number;
+  pairs?: TriviaPar[];
+  text?: string;
+  answers?: string[];
 }
 
 export interface Evaluacion {
-  evaluacion_id: number;
-  libro_id: number;
-  fecha_limite: string | null;
-  fecha_creacion: string;
-  cantidad_preguntas: number;
+  evaluationId: number;
+  bookId: number;
+  deadline: string | null;
+  createdAt: string;
+  questionCount: number;
 }
 
 export interface EvaluacionDetalle {
-  evaluacion: Evaluacion;
-  preguntas: TriviaQuestion[];
+  evaluation: Evaluacion;
+  questions: TriviaQuestion[];
 }

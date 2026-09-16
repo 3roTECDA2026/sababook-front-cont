@@ -24,8 +24,8 @@ interface TriviaQuestionCardProps {
 
 const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardProps) => {
   const renderCloze = () => {
-    const parts = (question.texto ?? '').split('{blank}');
-    const answers = question.respuestas ?? [];
+    const parts = (question.text ?? '').split('{blank}');
+    const answers = question.answers ?? [];
     return (
       <>
         {parts.map((part, i) => (
@@ -43,10 +43,10 @@ const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardPro
   };
 
   return (
-    <Box className={question.modo === 'evaluacion' ? styles.qCardEval : styles.qCard}>
+    <Box className={question.mode === 'evaluacion' ? styles.qCardEval : styles.qCard}>
       <Box className={styles.qCardHeader}>
         <Typography variant="body2" className={styles.qCardText}>
-          {index + 1}. {question.formato === 'completar' ? 'Completá el texto' : question.pregunta}
+          {index + 1}. {question.format === 'completar' ? 'Completá el texto' : question.question}
         </Typography>
         {onDelete && (
           <IconButton size="small" onClick={() => onDelete(question.id)} aria-label="Eliminar pregunta">
@@ -56,13 +56,13 @@ const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardPro
       </Box>
 
       <Box display="flex" alignItems="center" gap={1} mt={1}>
-        <Chip label={FORMAT_LABELS[question.formato]} size="small" variant="outlined" />
-        {question.modo === 'evaluacion' && (
+        <Chip label={FORMAT_LABELS[question.format]} size="small" variant="outlined" />
+        {question.mode === 'evaluacion' && (
           <Chip
             icon={<EventNoteIcon />}
             label={
-              question.fechaLimite
-                ? `Evaluación · límite ${moment(question.fechaLimite).format('DD/MM/YYYY')}`
+              question.deadline
+                ? `Evaluación · límite ${moment(question.deadline).format('DD/MM/YYYY')}`
                 : 'Evaluación'
             }
             size="small"
@@ -71,17 +71,17 @@ const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardPro
         )}
       </Box>
 
-      {question.formato === 'conexion' && (
+      {question.format === 'conexion' && (
         <Box className={styles.qOptions}>
-          {(question.pares ?? []).map((par, optionIndex) => (
+          {(question.pairs ?? []).map((pair, optionIndex) => (
             <Typography key={optionIndex} variant="body2" className={styles.qOption}>
-              {String.fromCharCode(65 + optionIndex)}. {par.izquierda} → {par.derecha}
+              {String.fromCharCode(65 + optionIndex)}. {pair.left} → {pair.right}
             </Typography>
           ))}
         </Box>
       )}
 
-      {question.formato === 'completar' && (
+      {question.format === 'completar' && (
         <Box className={styles.qOptions}>
           <Typography variant="body2" className={styles.qOption}>
             {renderCloze()}
@@ -89,16 +89,16 @@ const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardPro
         </Box>
       )}
 
-      {(question.formato === 'multiple' || question.formato === 'truefalse') && (
+      {(question.format === 'multiple' || question.format === 'truefalse') && (
         <Box className={styles.qOptions}>
-          {(question.opciones ?? []).map((opcion, optionIndex) => (
+          {(question.options ?? []).map((option, optionIndex) => (
             <Typography
               key={optionIndex}
               variant="body2"
-              className={optionIndex === question.correcta ? styles.qOptionCorrect : styles.qOption}
+              className={optionIndex === question.correctAnswer ? styles.qOptionCorrect : styles.qOption}
             >
-              {String.fromCharCode(65 + optionIndex)}. {opcion}
-              {optionIndex === question.correcta ? ' (correcta)' : ''}
+              {String.fromCharCode(65 + optionIndex)}. {option}
+              {optionIndex === question.correctAnswer ? ' (correcta)' : ''}
             </Typography>
           ))}
         </Box>

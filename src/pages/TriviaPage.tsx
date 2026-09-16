@@ -22,9 +22,9 @@ import styles from '../styles/trivia.module.css';
 
 interface TriviaSelection {
   book: Book;
-  modo: TriviaModo;
-  fechaLimite: string | null;
-  evaluacionId: number | null;
+  mode: TriviaModo;
+  deadline: string | null;
+  evaluationId: number | null;
 }
 
 const TriviaPage = () => {
@@ -32,15 +32,15 @@ const TriviaPage = () => {
   const [selection, setSelection] = useState<TriviaSelection | null>(null);
   const { books, loading } = useBookData();
 
-  const [evalDialogOpen, setEvalDialogOpen] = useState(false);
-  const [evalBusy, setEvalBusy] = useState(false);
-  const [evalBook, setEvalBook] = useState<Book | null>(null);
-  const [evalDate, setEvalDate] = useState('');
+  const [evaluationDialogOpen, setEvaluationDialogOpen] = useState(false);
+  const [evaluationBusy, setEvaluationBusy] = useState(false);
+  const [evaluationBook, setEvaluationBook] = useState<Book | null>(null);
+  const [deadline, setDeadline] = useState('');
 
   const handleMenuClose = () => setMenuOpen(false);
 
-  const openOrResumeEval = async (book: Book) => {
-    setEvalBusy(true);
+  const openOrResumeEvaluation = async (book: Book) => {
+    setEvaluationBusy(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/libro/${book.libro_id}`);
       const evaluaciones: Evaluacion[] = await res.json();
@@ -49,27 +49,27 @@ const TriviaPage = () => {
         const evaluacion = evaluaciones[0];
         setSelection({
           book,
-          modo: 'evaluacion',
-          fechaLimite: evaluacion.fecha_limite,
-          evaluacionId: evaluacion.evaluacion_id,
+          mode: 'evaluacion',
+          deadline: evaluacion.deadline,
+          evaluationId: evaluacion.evaluationId,
         });
         return;
       }
 
-      setEvalBook(book);
-      setEvalDate('');
-      setEvalDialogOpen(true);
+      setEvaluationBook(book);
+      setDeadline('');
+      setEvaluationDialogOpen(true);
     } catch (err) {
       console.error('Error cargando evaluaciones:', err);
       alert('No se pudieron cargar las evaluaciones del libro.');
     } finally {
-      setEvalBusy(false);
+      setEvaluationBusy(false);
     }
   };
 
-  const enterEvalMode = async () => {
-    if (!evalBook) return;
-    if (!evalDate) {
+  const enterEvaluationMode = async () => {
+    if (!evaluationBook) return;
+    if (!deadline) {
       alert('Elegí una fecha límite para la evaluación.');
       return;
     }
@@ -82,7 +82,7 @@ const TriviaPage = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ libro_id: evalBook.libro_id, fecha_limite: evalDate }),
+        body: JSON.stringify({ bookId: evaluationBook.libro_id, deadline }),
       });
       if (!res.ok) {
         throw new Error('No se pudo crear la evaluación.');
@@ -90,14 +90,14 @@ const TriviaPage = () => {
       const evaluacion: Evaluacion = await res.json();
 
       setSelection({
-        book: evalBook,
-        modo: 'evaluacion',
-        fechaLimite: evaluacion.fecha_limite,
-        evaluacionId: evaluacion.evaluacion_id,
+        book: evaluationBook,
+        mode: 'evaluacion',
+        deadline: evaluacion.deadline,
+        evaluationId: evaluacion.evaluationId,
       });
-      setEvalDialogOpen(false);
-      setEvalBook(null);
-      setEvalDate('');
+      setEvaluationDialogOpen(false);
+      setEvaluationBook(null);
+      setDeadline('');
     } catch (err) {
       console.error('Error creando evaluación:', err);
       alert(err instanceof Error ? err.message : 'No se pudo crear la evaluación.');
@@ -105,7 +105,7 @@ const TriviaPage = () => {
   };
 
   const selectBook = (book: Book) => {
-    setSelection({ book, modo: 'trivia', fechaLimite: null, evaluacionId: null });
+    setSelection({ book, mode: 'trivia', deadline: null, evaluationId: null });
   };
 
   return (
@@ -146,8 +146,8 @@ const TriviaPage = () => {
                     size="small"
                     className={styles.evalButton}
                     startIcon={<EventNoteIcon />}
-                    disabled={evalBusy}
-                    onClick={() => openOrResumeEval(book)}
+                    disabled={evaluationBusy}
+                    onClick={() => openOrResumeEvaluation(book)}
                   >
                     Evaluación
                   </Button>
@@ -171,45 +171,45 @@ const TriviaPage = () => {
           <div className={styles.selectedHeader}>
             <Typography variant="subtitle2" className={styles.subtitle}>
               Libro seleccionado: <b>{selection.book.titulo}</b>
-              {selection.modo === 'evaluacion' &&
-                selection.fechaLimite &&
-                ` · límite: ${selection.fechaLimite}`}
+              {selection.mode === 'evaluacion' &&
+                selection.deadline &&
+                ` · límite: ${selection.deadline}`}
             </Typography>
             <Typography component="span" className={styles.changeLink} onClick={() => setSelection(null)}>
               Cambiar libro
             </Typography>
           </div>
           <BookTriviaSection
-            key={`${selection.book.libro_id}-${selection.modo}-${selection.evaluacionId ?? 'n'}`}
+            key={`${selection.book.libro_id}-${selection.mode}-${selection.evaluationId ?? 'n'}`}
             book={selection.book}
-            modo={selection.modo}
-            fechaLimite={selection.fechaLimite}
-            evaluacionId={selection.evaluacionId}
+            mode={selection.mode}
+            deadline={selection.deadline}
+            evaluationId={selection.evaluationId}
           />
         </>
       )}
 
-      <Dialog open={evalDialogOpen} onClose={() => setEvalDialogOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={evaluationDialogOpen} onClose={() => setEvaluationDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Nueva evaluación</DialogTitle>
         <DialogContent>
           <Typography variant="body2" mb={2}>
-            Generá preguntas de evaluación para <b>{evalBook?.titulo}</b>. Elegí la fecha límite:
+            Generá preguntas de evaluación para <b>{evaluationBook?.titulo}</b>. Elegí la fecha límite:
             al pasar esa fecha la evaluación termina.
           </Typography>
           <TextField
             type="date"
             label="Fecha límite"
-            value={evalDate}
-            onChange={(event) => setEvalDate(event.target.value)}
+            value={deadline}
+            onChange={(event) => setDeadline(event.target.value)}
             fullWidth
             InputLabelProps={{ shrink: true }}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEvalDialogOpen(false)} color="inherit">
+          <Button onClick={() => setEvaluationDialogOpen(false)} color="inherit">
             Cancelar
           </Button>
-          <Button variant="contained" className={styles.buttonOrange} onClick={enterEvalMode}>
+          <Button variant="contained" className={styles.buttonOrange} onClick={enterEvaluationMode}>
             Crear evaluación
           </Button>
         </DialogActions>
