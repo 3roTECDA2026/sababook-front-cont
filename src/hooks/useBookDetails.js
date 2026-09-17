@@ -10,7 +10,10 @@ export const useBookDetails = (id) => {
     if (!id) return;
     setLoading(true);
 
-    fetch(`${API_BASE_URL}/api/v1/libros/${id}`)
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    fetch(`${API_BASE_URL}/api/v1/libros/${id}`, { signal })
       .then((res) => {
         if (!res.ok) throw new Error("No se encontró el libro.");
         return res.json();
@@ -20,9 +23,12 @@ export const useBookDetails = (id) => {
         setLoading(false);
       })
       .catch((err) => {
+        if (err.name === 'AbortError') return;
         setError(err.message);
         setLoading(false);
       });
+
+    return () => controller.abort();
   }, [id]);
 
   return { book, loading, error };

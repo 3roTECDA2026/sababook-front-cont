@@ -28,14 +28,20 @@ const Insignias = () => {
 
   useEffect(() => {
     if (user?.usuario_id) {
-      getUserMedals(user.usuario_id)
+      const controller = new AbortController();
+      getUserMedals(user.usuario_id, controller.signal)
         .then((medals) => {
-          
+
           // Si el endpoint devuelve un array de strings o de objetos, ajusta aquí
           setInsigniasUsuario(Array.isArray(medals) ? medals : []);
           console.log(medals, user);
         })
-        .catch(() => setInsigniasUsuario([]));
+        .catch((err) => {
+          if (err.name === 'AbortError') return;
+          setInsigniasUsuario([]);
+        });
+
+      return () => controller.abort();
     }
   }, [user?.usuario_id]);
 

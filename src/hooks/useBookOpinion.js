@@ -6,10 +6,10 @@ export const useBookOpinion = (libroId) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchOpinions = async () => {
+  const fetchOpinions = async (signal) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/opinion/libro/${libroId}`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/opinion/libro/${libroId}`, { signal });
       if (!res.ok) throw new Error("Error al cargar opiniones.");
       const data = await res.json();
 
@@ -27,6 +27,7 @@ export const useBookOpinion = (libroId) => {
 
       setOpinions(transformed);
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error(err);
       setError(err.message);
     } finally {
@@ -35,7 +36,9 @@ export const useBookOpinion = (libroId) => {
   };
 
   useEffect(() => {
-    fetchOpinions();
+    const controller = new AbortController();
+    fetchOpinions(controller.signal);
+    return () => controller.abort();
   }, [libroId]);
 
   return { opinions, setOpinions, loading, error };

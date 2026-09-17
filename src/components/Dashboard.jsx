@@ -53,14 +53,15 @@ const Dashboard = () => {
   };
 
   // --- FUNCIÓN FETCH PARA USUARIOS (READ) ---
-  const fetchUsers = async () => {
+  const fetchUsers = async (signal) => {
     try {
       setUserLoading(true);
       setUserError(null);
       const token = localStorage.getItem('token');
 
       const res = await fetch(`${API_BASE_URL}/api/v1/user`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal
       });
       if (!res.ok) {
         if (res.status === 403) throw new Error("Acceso denegado. No tienes permisos para ver esta página.");
@@ -69,6 +70,7 @@ const Dashboard = () => {
       const data = await res.json();
       setUsers(data);
     } catch (err) {
+      if (err.name === 'AbortError') return;
       setUserError(err.message);
     } finally {
       setUserLoading(false);
@@ -76,7 +78,7 @@ const Dashboard = () => {
   };
 
   // --- FUNCIÓN FETCH PARA LIBROS 
-  const fetchBooks = async () => {
+  const fetchBooks = async (signal) => {
     try {
       setBooksLoading(true);
       setBooksError(null);
@@ -84,7 +86,8 @@ const Dashboard = () => {
       if (!token) throw new Error("No autenticado.");
 
       const res = await fetch(`${API_BASE_URL}/api/v1/libros`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal
       });
       if (!res.ok) {
         if (res.status === 403) throw new Error("Acceso denegado.");
@@ -93,6 +96,7 @@ const Dashboard = () => {
       const data = await res.json();
       setBooks(data);
     } catch (err) {
+      if (err.name === 'AbortError') return;
       setBooksError(err.message);
     } finally {
       setBooksLoading(false);
@@ -100,13 +104,14 @@ const Dashboard = () => {
   };
 
   // --- FUNCIÓN FETCH PARA FOROS 
-  const fetchForums = async () => {
+  const fetchForums = async (signal) => {
     try {
       setForumsLoading(true);
       setForumsError(null);
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE_URL}/api/v1/foro`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal
       });
 
       if (!res.ok) {
@@ -117,6 +122,7 @@ const Dashboard = () => {
       const data = await res.json();
       setForums(data);
     } catch (err) {
+      if (err.name === 'AbortError') return;
       setForumsError(err.message);
     } finally {
       setForumsLoading(false);
@@ -126,15 +132,20 @@ const Dashboard = () => {
   // --- useEffect para Cargar Datos ---
 
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     if (activeView === 'users') {
-      fetchUsers();
+      fetchUsers(signal);
     } else if (activeView === 'books') {
-      fetchBooks();
+      fetchBooks(signal);
     } else if (activeView === 'forums') {
-      fetchForums();
+      fetchForums(signal);
     }
     setUserError(null);
     setBooksError(null);
+
+    return () => controller.abort();
   }, [activeView]);
 
   // --- UI HANDLERS ---

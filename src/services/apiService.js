@@ -76,6 +76,6 @@ export async function getLibroById(libroId) {
  * @param {number|string} userId - ID del usuario
  * @returns {Promise<Array>} Lista de medallas
  */
-export async function getUserMedals(userId) {
-  return await apiRequest(`/medal/${userId}`);
+export async function getUserMedals(userId, signal = undefined) {
+  return await apiRequest(`/medal/${userId}`, { signal });
 }
