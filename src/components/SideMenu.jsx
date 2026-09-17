@@ -21,6 +21,7 @@ import ForumIcon from "@mui/icons-material/Forum";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import LogoutIcon from "@mui/icons-material/Logout";
+import LocalCafeIcon from "@mui/icons-material/LocalCafe";
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function SideMenu({ open, onClose, active = "Inicio" }) {
@@ -35,6 +36,7 @@ export default function SideMenu({ open, onClose, active = "Inicio" }) {
     menuItems = [
       { text: "Inicio", icon: <HomeIcon />, path: "/home" },
       { text: "Perfil", icon: <PersonIcon />, path: "/perfil" },
+      { text: "Café Literario", icon: <LocalCafeIcon />, path: "/cafes" },
       { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
     ];
   } else {
@@ -43,10 +45,12 @@ export default function SideMenu({ open, onClose, active = "Inicio" }) {
       { text: "Inicio", icon: <HomeIcon />, path: "/home" },
       { text: "Perfil", icon: <PersonIcon />, path: "/perfil" },
       { text: "Favoritos", icon: <FavoriteIcon />, path: "/favoritos" },
+      { text: "Café Literario", icon: <LocalCafeIcon />, path: "/cafes" },
       { text: "Foros", icon: <ForumIcon />, path: "/foros" },
       { text: "Insignias", icon: <EmojiEventsIcon />, path: "/insignias" },
     ];
   }
+
   
   // Nota: El item 'Salir' se maneja fuera del mapeo
 

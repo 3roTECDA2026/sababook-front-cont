@@ -79,3 +79,52 @@ export async function getLibroById(libroId) {
 export async function getUserMedals(userId, signal = undefined) {
   return await apiRequest(`/medal/${userId}`, { signal });
 }
+
+// ========== FUNCIONES PARA CAFÉS LITERARIOS ==========
+
+/**
+ * Obtener todos los Cafés Literarios
+ */
+export async function getCafesLiterarios(usuarioId = null, signal = undefined) {
+  const query = usuarioId ? `?usuario_id=${usuarioId}` : '';
+  return await apiRequest(`/cafes${query}`, { signal });
+}
+
+
+/**
+ * Obtener detalle de un Café Literario por ID
+ */
+export async function getCafeById(cafeId, usuarioId = null) {
+  const query = usuarioId ? `?usuario_id=${usuarioId}` : '';
+  return await apiRequest(`/cafes/${cafeId}${query}`);
+}
+
+/**
+ * Crear un nuevo Café Literario (Docente / Admin)
+ */
+export async function crearCafeLiterario(data) {
+  return await apiRequest('/cafes', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+/**
+ * Confirmar o alternar asistencia a un Café Literario
+ */
+export async function toggleAsistenciaCafe(cafeId, usuarioId, estado = 'confirmado') {
+  return await apiRequest(`/cafes/${cafeId}/asistencia`, {
+    method: 'POST',
+    body: JSON.stringify({ usuario_id: usuarioId, estado })
+  });
+}
+
+/**
+ * Registrar voto post-lectura (¿Te gustó el libro?)
+ */
+export async function votarCafeLiterario(cafeId, usuarioId, voto) {
+  return await apiRequest(`/cafes/${cafeId}/voto`, {
+    method: 'POST',
+    body: JSON.stringify({ usuario_id: usuarioId, voto })
+  });
+}

@@ -15,6 +15,8 @@ import Insignias from "./pages/Insignias";
 import ForumDetailsPage from "./pages/ForumDetailsPage";
 import BookCommentsAdmin from "./components/BookCommentsAdmin";
 import ForumCommentsAdmin from "./components/ForumCommentsAdmin";
+import CafesLiterarios from "./pages/CafesLiterarios";
+
 
 // Importación de Ruta Protegida
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -96,6 +98,13 @@ function App() {
           <Insignias />
         </ProtectedRoute>
       } />
+
+      <Route path="/cafes" element={
+        <ProtectedRoute>
+          <CafesLiterarios />
+        </ProtectedRoute>
+      } />
+
 
       {/* Ruta 404 debe ir al final */}
       <Route path="*" element={<div>Página no encontrada (404)</div>} />
