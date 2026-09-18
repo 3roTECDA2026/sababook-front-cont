@@ -1,5 +1,5 @@
 // src/contexts/AuthContext.tsx
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, ReactNode, useCallback } from 'react';
 import { API_BASE_URL } from '../environments/api';
 import { AuthContext, AuthContextType, AuthResult } from './AuthContextDefinition';
 import type { User } from '../types';
@@ -8,10 +8,28 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Función auxiliar para parsear JSON de forma segura
+const parseJsonResponse = async (response: Response) => {
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return await response.json();
+  }
+  return null;
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [token, setToken] = useState<string | null>(null);
+
+  const logout = useCallback((): void => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('rol');
+    localStorage.removeItem('username');
+    setUser(null);
+    setToken(null);
+  }, []);
 
   // Cargar usuario desde localStorage al iniciar la aplicación
   useEffect(() => {
@@ -22,7 +40,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (storedToken && storedUserId) {
         setToken(storedToken);
         try {
-          // Obtener los datos del usuario desde la API
           const response = await fetch(`${API_BASE_URL}/api/v1/user/${storedUserId}`, {
             headers: {
               Authorization: `Bearer ${storedToken}`,
@@ -31,14 +48,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           });
 
           if (response.ok) {
-            const userData = await response.json();
-            setUser({
-              ...userData,
-              userId: storedUserId,
-              rol: localStorage.getItem('rol'),
-            });
+            const userData = await parseJsonResponse(response);
+            if (userData) {
+              setUser({
+                ...userData,
+                userId: storedUserId,
+                rol: localStorage.getItem('rol'),
+              });
+            }
           } else {
-            // Si el token no es válido, limpiar el localStorage
             logout();
           }
         } catch (error) {
@@ -50,7 +68,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [logout]);
 
   const login = async (email: string, password: string): Promise<AuthResult> => {
     try {
@@ -60,17 +78,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         body: JSON.stringify({ email, contrasena: password }),
       });
 
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al iniciar sesión');
+        const errorMsg = data?.error || data?.message || `Error en el servidor (${response.status})`;
+        throw new Error(errorMsg);
       }
 
-      // Guardar los datos básicos
+      if (!data?.token || !data?.userId) {
+        throw new Error('Respuesta de autenticación incompleta.');
+      }
+
+      // Guardar datos en localStorage
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.userId);
       localStorage.setItem('rol', data.rol);
-
       setToken(data.token);
 
       // Obtener el perfil completo del usuario
@@ -81,16 +103,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
       });
 
-      const profileData = await profileResponse.json();
+      const profileData = await parseJsonResponse(profileResponse);
 
       if (!profileResponse.ok) {
-        throw new Error(profileData.error || 'No se pudo obtener el perfil del usuario');
+        const profileError = profileData?.error || 'No se pudo obtener el perfil del usuario';
+        throw new Error(profileError);
       }
 
-      // Guardar el nombre en localStorage
-      localStorage.setItem('username', profileData.nombre);
+      if (profileData?.nombre) {
+        localStorage.setItem('username', profileData.nombre);
+      }
 
-      // Actualizar el estado del usuario
       setUser({
         ...profileData,
         userId: data.userId,
@@ -101,19 +124,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const errorMessage = message.includes('Failed to fetch')
-        ? 'No se pudo conectar con el servidor. ¿Está en ejecución?'
+        ? 'No se pudo conectar con el servidor backend.'
         : message;
       return { success: false, error: errorMessage };
     }
-  };
-
-  const logout = (): void => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('rol');
-    localStorage.removeItem('username');
-    setUser(null);
-    setToken(null);
   };
 
   const updateUser = async (updatedData: Partial<User>): Promise<AuthResult> => {
@@ -128,20 +142,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         body: JSON.stringify(updatedData),
       });
 
-      if (response.ok) {
-        const userData = await response.json();
-        setUser({
-          ...user,
-          ...userData,
-        });
-        // Actualizar localStorage si es necesario
+      const userData = await parseJsonResponse(response);
+
+      if (response.ok && userData) {
+        setUser((prevUser) => (prevUser ? { ...prevUser, ...userData } : userData));
         if (userData.nombre) {
           localStorage.setItem('username', userData.nombre);
         }
         return { success: true };
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al actualizar el usuario');
+        const errorMsg = userData?.error || 'Error al actualizar el usuario';
+        throw new Error(errorMsg);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

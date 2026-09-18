@@ -1,6 +1,8 @@
 // src/pages/Home.tsx
-import { Box, Typography } from '@mui/material';
-import { useEffect, useState, useRef } from 'react';
+import { Box, Typography, Button, Stack } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import RecommendationIcon from '@mui/icons-material/AutoAwesome';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import AppHeader from '../components/AppHeader';
@@ -11,6 +13,7 @@ import SearchBar from '../components/SearchBar';
 import type { SearchBarHandle } from '../components/SearchBar';
 import SideMenu from '../components/SideMenu';
 import WelcomeModal from '../components/WelcomeModal';
+import { CrearListaModal } from '../components/CrearListaModal';
 
 // Importaciones de Servicios
 import { buscarLibros } from '../services/apiService';
@@ -18,35 +21,85 @@ import { normalizarTexto } from '../utils/normalize';
 
 // Importaciones de Lógica (Custom Hooks)
 import { useAuth } from '../hooks/useAuth';
-import { useBookData } from '../hooks/useBookData'; // NUEVO: Lógica de carga de libros
-import { useFavorites } from '../hooks/useFavorites'; // Lógica de manejo de favoritos
+import { useBookData } from '../hooks/useBookData';
+import { useFavorites } from '../hooks/useFavorites';
 import type { Book, BookFilters } from '../types';
 
 export default function Home() {
   // --- Estados de UI ---
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isWelcomeModalOpen, setWelcomeModalOpen] = useState<boolean>(false);
+  const [isCrearListaOpen, setCrearListaOpen] = useState<boolean>(false);
+  const [tipoInicialModal, setTipoInicialModal] = useState<'RECOMENDADA' | 'PUBLIC'>('PUBLIC');
+  
+  // Estado para almacenar dinámicamente el libro recomendado
+  const [libroRecomendado, setLibroRecomendado] = useState<Book | undefined>(undefined);
+
   const [currentFilters, setCurrentFilters] = useState<BookFilters>({});
   const [currentQuery, setCurrentQuery] = useState<string>('');
   const searchBarRef = useRef<SearchBarHandle>(null);
   const location = useLocation();
   const { user } = useAuth();
 
-  // --- LÓGICA DE DATOS: Llamada a Custom Hooks ---
-  // 1. Hook para cargar los datos y manejar sus estados
-  const { books, setBooks, featuredBook } = useBookData();
-
-  // 2. Hook para manejar la interacción de favoritos
+  // --- LÓGICA DE DATOS ---
+  const { books, setBooks } = useBookData();
   const { toggleFavorite, isBookFavorite } = useFavorites();
 
-  // Handler para toggle de favoritos
   const handleFavoriteToggle = async (libro_id: number) => {
     const isFavorite = isBookFavorite(libro_id);
     await toggleFavorite(libro_id, isFavorite);
   };
-  // -----------------------------------------------
 
-  // --- Lógica de Modal de Bienvenida  ---
+  // Función para obtener la última recomendación guardada desde la API
+  const obtenerUltimaRecomendacion = useCallback(async () => {
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      const res = await fetch(`${baseUrl}/api/v1/lists`, { headers });
+      if (res.ok) {
+        const listas = await res.json();
+        
+        // Buscar la lista con tipo RECOMENDACION (la primera es la más nueva por orderBy: desc)
+        const recomendacion = listas.find(
+          (l: any) => l.tipo === 'RECOMENDACION' || l.tipo === 'RECOMENDADA'
+        );
+
+        if (recomendacion && recomendacion.libros && recomendacion.libros.length > 0) {
+          const rawBook = recomendacion.libros[0];
+          
+          // Mapear el libro al formato que espera FeaturedBookSection
+          setLibroRecomendado({
+            libro_id: rawBook.libro_id ?? rawBook.id,
+            titulo: rawBook.titulo ?? rawBook.title ?? 'Sin título',
+            autor: rawBook.autor ?? rawBook.author ?? '',
+            genero: rawBook.genero ?? rawBook.genre ?? 'Recomendado',
+            portada_url: rawBook.portada_url ?? rawBook.portadaUrl ?? rawBook.portada ?? '',
+            calificacion_promedio: rawBook.calificacion_promedio ?? rawBook.rating ?? 5.0,
+            descripcion: rawBook.descripcion ?? recomendacion.descripcion,
+          } as Book);
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar la recomendación principal:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    obtenerUltimaRecomendacion();
+  }, [obtenerUltimaRecomendacion]);
+
+  // Si no hay recomendación en base de datos aún, toma el primer libro disponible de la lista como fallback
+  useEffect(() => {
+    if (!libroRecomendado && books.length > 0) {
+      setLibroRecomendado(books[0]);
+    }
+  }, [books, libroRecomendado]);
+
   useEffect(() => {
     const state = location.state as { fromLogin?: boolean } | null;
     if (state?.fromLogin && user) {
@@ -61,7 +114,6 @@ export default function Home() {
     setCurrentQuery(query);
     try {
       const queryNormalizada = normalizarTexto(query);
-      // Combina los filtros actuales y la búsqueda
       const filtrosCombinados: BookFilters = { ...currentFilters };
       if (queryNormalizada) filtrosCombinados.query = queryNormalizada;
       const resultados = await buscarLibros(filtrosCombinados);
@@ -74,7 +126,6 @@ export default function Home() {
   const handleFilterChange = async (_resultados: Book[], filtros: BookFilters) => {
     setCurrentFilters(filtros);
     try {
-      // Combina los filtros nuevos y la búsqueda actual
       const filtrosCombinados: BookFilters = { ...filtros };
       if (currentQuery) filtrosCombinados.query = normalizarTexto(currentQuery);
       const resultadosActualizados = await buscarLibros(filtrosCombinados);
@@ -84,9 +135,11 @@ export default function Home() {
     }
   };
 
-  const recomendado: Book | undefined = books.find((book) => book.titulo === 'La gran ocasión');
+  const abrirModalConTipo = (tipo: 'RECOMENDADA' | 'PUBLIC') => {
+    setTipoInicialModal(tipo);
+    setCrearListaOpen(true);
+  };
 
-  // --- RENDERIZADO ---
   return (
     <Box
       py={2}
@@ -111,11 +164,20 @@ export default function Home() {
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} active="Inicio" />
       <WelcomeModal open={isWelcomeModalOpen} onClose={handleCloseWelcomeModal} user={user} />
 
+      {/* Modal dinámico para Crear Lista o Recomendar */}
+      <CrearListaModal
+        open={isCrearListaOpen}
+        {...({ tipoInicial: tipoInicialModal } as any)}
+        onClose={() => setCrearListaOpen(false)}
+        onListaCreada={() => {
+          obtenerUltimaRecomendacion(); // 👈 RECARGA LA PORTADA DEL RECOMENDADO DINÁMICAMENTE
+        }}
+      />
+
       <Box mb={2}>
         <SearchBar ref={searchBarRef} onSearch={handleSearch} />
       </Box>
 
-      {/* Chips de filtros - Siempre visibles */}
       <FilterChips
         onFilterChange={handleFilterChange}
         onClearSearch={() => {
@@ -126,35 +188,79 @@ export default function Home() {
         }}
       />
 
-      {/* Recomendado semanal - Solo mostrar si no hay filtros aplicados */}
-      {Object.keys(currentFilters).length === 0 && !currentQuery && (
+      {/* Recomendado dinámico */}
+      {Object.keys(currentFilters).length === 0 && !currentQuery && libroRecomendado && (
         <FeaturedBookSection
-          // TODO: Cambiar libro recomendado dinámicamente y no MOCKEADO
-          featuredBook={recomendado || {}}
+          featuredBook={libroRecomendado}
           handleFavoriteToggle={handleFavoriteToggle}
-          isFavorite={isBookFavorite(recomendado?.libro_id ?? -1)}
+          isFavorite={isBookFavorite(libroRecomendado.libro_id ?? -1)}
           handleVerMas={() => {}}
         />
       )}
 
-      {/* Título para la lista de libros cuando no hay filtros */}
+      {/* TÍTULO LISTADO DE LIBROS CON BOTONES DE ACCIÓN */}
       {Object.keys(currentFilters).length === 0 && !currentQuery && (
-        <Box mt={3} mb={3}>
+        <Box
+          mt={4}
+          mb={3}
+          p={2.5}
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: 2,
+            backgroundColor: 'background.paper',
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0px 2px 8px rgba(0,0,0,0.04)',
+          }}
+        >
           <Typography variant="h4" fontWeight="bold" color="secondary">
             Listado de libros
           </Typography>
+
+          <Stack direction="row" spacing={1.5} flexWrap="wrap">
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<RecommendationIcon />}
+              onClick={() => abrirModalConTipo('RECOMENDADA')}
+              sx={{
+                borderRadius: 2,
+                fontWeight: 'bold',
+                textTransform: 'none',
+              }}
+            >
+              Recomendar
+            </Button>
+
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={() => abrirModalConTipo('PUBLIC')}
+              sx={{
+                borderRadius: 2,
+                fontWeight: 'bold',
+                textTransform: 'none',
+                boxShadow: 2,
+              }}
+            >
+              Crear Lista
+            </Button>
+          </Stack>
         </Box>
       )}
 
-      {/* Resultados de búsqueda/filtros - Mostrar si hay búsqueda o filtros aplicados */}
+      {/* Resultados de búsqueda/filtros */}
       {(currentQuery || Object.keys(currentFilters).length > 0) && (
-        <>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mt={3} mb={1}>
-            <Typography variant="h4" fontWeight="bold" color="secondary">
-              {currentQuery ? 'Resultados de búsqueda' : 'Libros filtrados'}
-            </Typography>
-          </Box>
-        </>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mt={3} mb={2}>
+          <Typography variant="h4" fontWeight="bold" color="secondary">
+            {currentQuery ? 'Resultados de búsqueda' : 'Libros filtrados'}
+          </Typography>
+        </Box>
       )}
 
       <Box
@@ -165,13 +271,11 @@ export default function Home() {
           gap: 4,
         }}
       >
-        {/* Mostrar mensaje si no hay libros */}
         {books.length === 0 ? (
           <Typography variant="h6" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
             El libro que usted está buscando no se encuentra disponible
           </Typography>
         ) : (
-          /*Mapear la lista de libros destacados */
           books.map((book) => (
             <BookCard
               key={book.libro_id}
@@ -179,7 +283,6 @@ export default function Home() {
               autor={book.autor}
               gender={book.genero}
               title={book.titulo}
-              // description={book.descripcion} // No se muestra en el home
               rating={book.calificacion_promedio}
               isFavorite={isBookFavorite(book.libro_id)}
               libro_id={book.libro_id}
