@@ -2,6 +2,7 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { API_BASE_URL } from '../environments/api';
 import { AuthContext, AuthContextType, AuthResult } from './AuthContextDefinition';
+import { useNavigate } from 'react-router-dom';
 import type { User } from '../types';
 
 interface AuthProviderProps {
@@ -12,6 +13,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [token, setToken] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Cargar usuario desde localStorage al iniciar la aplicación
   useEffect(() => {
@@ -114,6 +116,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem('username');
     setUser(null);
     setToken(null);
+    navigate('/login');
   };
 
   const updateUser = async (updatedData: Partial<User>): Promise<AuthResult> => {
