@@ -138,7 +138,10 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
         </Box>
 
         <Box textAlign="center" pb={2}>
-          <ListItemButton onClick={() => setConfirmOpen(true)}>
+          <ListItemButton onClick={() => {
+             onClose();           // cierra el Drawer ya
+             setConfirmOpen(true)
+            }}>
             <ListItemIcon sx={{ color: '#4b2c15' }}>
               <LogoutIcon />
             </ListItemIcon>
@@ -151,6 +154,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       <Dialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
+        disableRestoreFocus
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
