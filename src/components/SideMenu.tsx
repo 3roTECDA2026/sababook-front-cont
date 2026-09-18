@@ -79,7 +79,11 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
         open={open}
         onClose={onClose}
         transitionDuration={400}
-        slotProps={{
+       ModalProps={{
+          disableEnforceFocus: true,
+         
+        }}
+        slotProps= {{
           paper: {
             sx: {
               width: 240,
@@ -111,7 +115,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
                     sx={{
                       borderRadius: 3,
                       bgcolor: isActive ? '#ff8a00' : 'transparent',
-                      color: isActive ? '#fff' : '#4b2c15',
+                      color: isActive ? '#837878' : '#4b2c15',
                       '&:hover': {
                         bgcolor: isActive ? '#ff9e2a' : 'rgba(0,0,0,0.04)',
                       },
