@@ -112,3 +112,39 @@ export interface ForumDetailComment {
   usuario_nombre: string;
   usuario_avatar: string | null;
 }
+
+export type TriviaModo = 'trivia' | 'evaluacion';
+
+export type TriviaFormato = 'multiple' | 'truefalse' | 'conexion' | 'completar';
+
+export interface TriviaPar {
+  left: string;
+  right: string;
+}
+
+export interface TriviaQuestion {
+  id: number;
+  mode: TriviaModo;
+  format: TriviaFormato;
+  question: string;
+  deadline?: string | null;
+  evaluationId?: number | null;
+  options?: string[];
+  correctAnswer?: number;
+  pairs?: TriviaPar[];
+  text?: string;
+  answers?: string[];
+}
+
+export interface Evaluacion {
+  evaluationId: number;
+  bookId: number;
+  deadline: string | null;
+  createdAt: string;
+  questionCount: number;
+}
+
+export interface EvaluacionDetalle {
+  evaluation: Evaluacion;
+  questions: TriviaQuestion[];
+}

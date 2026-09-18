@@ -1,0 +1,276 @@
+/* src/styles/trivia.module.css
+ * Estilos modulares y reutilizables para el módulo de Trivia / Evaluación.
+ */
+
+:root {
+  --trivia-orange: #ff6633;
+  --trivia-orange-dark: #cc4800;
+  --trivia-orange-soft: rgba(255, 102, 51, 0.08);
+  --trivia-bg-soft: #fff3e0;
+  --trivia-border: #e0e0e0;
+  --trivia-grey-bg: #f5f5f5;
+  --trivia-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --trivia-text-secondary: rgba(0, 0, 0, 0.6);
+  --trivia-success: #2e7d32;
+  --trivia-error: #d32f2f;
+}
+
+/* Contenedor principal de la página */
+.page {
+  width: 100%;
+  max-width: 1000px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 16px 8px;
+  background-color: #ffffff;
+}
+
+/* Títulos de sección */
+.sectionTitle {
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.sectionHeader {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.subtitle,
+.emptyText {
+  color: var(--trivia-text-secondary);
+}
+
+/* Cabecera con el libro seleccionado */
+.selectedHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.changeLink {
+  color: var(--trivia-orange);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Lista de libros */
+.bookList {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.bookRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bookItem {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: var(--trivia-shadow);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background-color 0.2s ease;
+}
+
+.bookItem:hover {
+  background-color: var(--trivia-orange-soft);
+}
+
+.bookCover {
+  width: 48px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.bookInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.bookTitle {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.bookMeta {
+  color: var(--trivia-text-secondary);
+  font-size: 0.875rem;
+}
+
+.bookIcon {
+  color: var(--trivia-orange);
+  flex-shrink: 0;
+}
+
+/* Botón para entrar en modo evaluación */
+.evalButton {
+  color: var(--trivia-orange) !important;
+  border: 1px solid var(--trivia-orange) !important;
+  font-weight: 700;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.evalButton:hover {
+  background-color: var(--trivia-orange-soft) !important;
+  border-color: var(--trivia-orange) !important;
+}
+
+.responsesButton {
+  border: 1px solid var(--trivia-border) !important;
+  font-weight: 700;
+  text-transform: none;
+  white-space: nowrap;
+  color: var(--trivia-text-secondary) !important;
+}
+
+/* Banner de modo evaluación */
+.evalBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: var(--trivia-bg-soft);
+  border: 1px solid var(--trivia-orange);
+  margin-bottom: 16px;
+}
+
+.evalBannerIcon {
+  color: var(--trivia-orange);
+  flex-shrink: 0;
+}
+
+/* Botones naranjas reutilizables */
+.buttonOrange {
+  background-color: var(--trivia-orange) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 10px rgba(255, 102, 51, 0.4) !important;
+  text-transform: none !important;
+}
+
+.buttonOrange:hover {
+  background-color: var(--trivia-orange-dark) !important;
+}
+
+.buttonTop {
+  margin: 20px 0 28px !important;
+}
+
+.buttonDisabled:disabled {
+  background-color: #bfbfbf !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.endedText {
+  color: var(--trivia-error);
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+}
+
+/* Lista de preguntas */
+.qList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* Tarjeta de pregunta */
+.qCard {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--trivia-border);
+  background-color: var(--trivia-grey-bg);
+}
+
+.qCardEval {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--trivia-orange);
+  background-color: var(--trivia-bg-soft);
+}
+
+.qCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.qCardText {
+  font-weight: 700;
+}
+
+.qEvalChip {
+  background-color: var(--trivia-orange) !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.qOptions {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qOption {
+  color: var(--trivia-text-secondary);
+  font-size: 0.875rem;
+}
+
+.qOptionCorrect {
+  color: var(--trivia-success);
+  font-size: 0.875rem;
+}
+
+.qAnswer {
+  color: var(--trivia-success);
+  font-weight: 700;
+}
+
+/* Modal del formulario de pregunta */
+.formModal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 520px;
+  max-width: 92vw;
+  max-height: 80vh;
+  overflow: auto;
+  background-color: #fff;
+  box-shadow:
+    0px 11px 15px -7px rgba(0, 0, 0, 0.2),
+    0px 24px 38px 3px rgba(0, 0, 0, 0.14),
+    0px 9px 46px 8px rgba(0, 0, 0, 0.12);
+  padding: 32px;
+  border-radius: 8px;
+}
+
+.checkboxOrange.Mui-checked {
+  color: var(--trivia-orange) !important;
+}
