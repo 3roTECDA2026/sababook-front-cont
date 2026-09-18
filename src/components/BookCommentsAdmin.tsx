@@ -97,10 +97,12 @@ const BookCommentsAdmin = () => {
 
   // Fetch del libro y sus comentarios
   useEffect(() => {
-    fetchBookAndComments();
+    const controller = new AbortController();
+    fetchBookAndComments(controller.signal);
+    return () => controller.abort();
   }, [bookId]);
 
-  const fetchBookAndComments = async () => {
+  const fetchBookAndComments = async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
     const token = localStorage.getItem('token');
@@ -109,6 +111,7 @@ const BookCommentsAdmin = () => {
       // Fetch información del libro
       const bookRes = await fetch(`${API_BASE_URL}/api/v1/libros/${bookId}`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal,
       });
 
       if (!bookRes.ok) throw new Error('Error al cargar el libro');
@@ -118,12 +121,14 @@ const BookCommentsAdmin = () => {
       // Fetch comentarios del libro
       const commentsRes = await fetch(`${API_BASE_URL}/api/v1/opinion/libro/${bookId}`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal,
       });
 
       if (!commentsRes.ok) throw new Error('Error al cargar los comentarios');
       const commentsData: OpinionAPI[] = await commentsRes.json();
       setComments(commentsData);
     } catch (err) {
+      if ((err as { name?: string })?.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : String(err);
       console.error('Error:', err);
       setError(message);

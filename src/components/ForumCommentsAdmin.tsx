@@ -138,6 +138,8 @@ const ForumCommentsAdmin = () => {
 
   // Fetch info del foro
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchForum = async () => {
       setLoadingForum(true);
       setErrorForum(null);
@@ -147,6 +149,7 @@ const ForumCommentsAdmin = () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/v1/foro/${foroId}`, {
           headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
         });
 
         if (!res.ok) {
@@ -158,6 +161,7 @@ const ForumCommentsAdmin = () => {
 
         setForumInfo(data);
       } catch (err) {
+        if ((err as { name?: string })?.name === 'AbortError') return;
         const message = err instanceof Error ? err.message : String(err);
         console.error('🚨 ERROR FETCH FORO:', err);
         setErrorForum(message);
@@ -167,6 +171,7 @@ const ForumCommentsAdmin = () => {
     };
 
     fetchForum();
+    return () => controller.abort();
   }, [foroId]);
 
   // Editar comentario

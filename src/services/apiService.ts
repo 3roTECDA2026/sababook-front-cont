@@ -1,6 +1,6 @@
 // src/services/apiService.ts
 import { API_BASE_URL } from '../environments/api';
-import type { Book, Medal, BookFilters } from '../types';
+import type { Book, Medal, BookFilters, CafeLiterario } from '../types';
 
 /**
  * Función genérica para hacer peticiones HTTP
@@ -71,13 +71,79 @@ export async function getLibroById(libroId: number): Promise<Book> {
 /**
  * Obtener medallas de un usuario
  */
-export async function getUserMedals(userId: number | string): Promise<Medal[]> {
-  return await apiRequest<Medal[]>(`/medal/${userId}`);
+export async function getUserMedals(userId: number | string, signal?: AbortSignal): Promise<Medal[]> {
+  return await apiRequest<Medal[]>(`/medal/${userId}`, { signal });
+}
+
+// ========== FUNCIONES PARA CAFÉS LITERARIOS ==========
+
+/**
+ * Obtener todos los Cafés Literarios (opcionalmente con estado personal del usuario)
+ */
+export async function getCafesLiterarios(
+  usuarioId: number | null = null,
+  signal?: AbortSignal
+): Promise<CafeLiterario[]> {
+  const query = usuarioId ? `?usuario_id=${usuarioId}` : '';
+  return await apiRequest<CafeLiterario[]>(`/cafes${query}`, { signal });
+}
+
+/**
+ * Obtener detalle de un Café Literario por ID
+ */
+export async function getCafeById(cafeId: number, usuarioId: number | null = null): Promise<CafeLiterario> {
+  const query = usuarioId ? `?usuario_id=${usuarioId}` : '';
+  return await apiRequest<CafeLiterario>(`/cafes/${cafeId}${query}`);
+}
+
+/**
+ * Crear un nuevo Café Literario (Docente / Admin)
+ */
+export async function crearCafeLiterario(data: {
+  titulo: string;
+  descripcion: string;
+  libro_id: string | number;
+  fecha_evento: string;
+  lugar: string;
+  docente_id: number;
+}): Promise<{ cafe_id: number; foro_id: number }> {
+  return await apiRequest('/cafes', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Confirmar o alternar asistencia a un Café Literario
+ */
+export async function toggleAsistenciaCafe(
+  cafeId: number,
+  usuarioId: number,
+  estado = 'confirmado'
+): Promise<{ mensaje: string; estado: string | null }> {
+  return await apiRequest(`/cafes/${cafeId}/asistencia`, {
+    method: 'POST',
+    body: JSON.stringify({ usuario_id: usuarioId, estado }),
+  });
+}
+
+/**
+ * Registrar voto post-lectura (¿Te gustó el libro?)
+ */
+export async function votarCafeLiterario(
+  cafeId: number,
+  usuarioId: number,
+  voto: boolean
+): Promise<{ mensaje: string; voto: { voto_id: number; cafe_id: number; usuario_id: number; voto: boolean } }> {
+  return await apiRequest(`/cafes/${cafeId}/voto`, {
+    method: 'POST',
+    body: JSON.stringify({ usuario_id: usuarioId, voto }),
+  });
 }
 
 /**
  * Obtener el catálogo completo de insignias de un usuario (obtenidas + no obtenidas)
  */
-export async function getCatalogoMedals(userId: number | string): Promise<Medal[]> {
-  return await apiRequest<Medal[]>(`/medal/catalog/${userId}`);
+export async function getCatalogoMedals(userId: number | string, signal?: AbortSignal): Promise<Medal[]> {
+  return await apiRequest<Medal[]>(`/medal/catalog/${userId}`, { signal });
 }

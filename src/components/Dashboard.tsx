@@ -81,7 +81,7 @@ const Dashboard = () => {
   };
 
   // --- FUNCIÓN FETCH PARA USUARIOS (READ) ---
-  const fetchUsers = async () => {
+  const fetchUsers = async (signal?: AbortSignal) => {
     try {
       setUserLoading(true);
       setUserError(null);
@@ -89,6 +89,7 @@ const Dashboard = () => {
 
       const res = await fetch(`${API_BASE_URL}/api/v1/user`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal,
       });
       if (!res.ok) {
         if (res.status === 403)
@@ -98,6 +99,7 @@ const Dashboard = () => {
       const data: User[] = await res.json();
       setUsers(data);
     } catch (err) {
+      if ((err as { name?: string })?.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : String(err);
       setUserError(message);
     } finally {
@@ -106,7 +108,7 @@ const Dashboard = () => {
   };
 
   // --- FUNCIÓN FETCH PARA LIBROS
-  const fetchBooks = async () => {
+  const fetchBooks = async (signal?: AbortSignal) => {
     try {
       setBooksLoading(true);
       setBooksError(null);
@@ -115,6 +117,7 @@ const Dashboard = () => {
 
       const res = await fetch(`${API_BASE_URL}/api/v1/libros`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal,
       });
       if (!res.ok) {
         if (res.status === 403) throw new Error('Acceso denegado.');
@@ -123,6 +126,7 @@ const Dashboard = () => {
       const data: Book[] = await res.json();
       setBooks(data);
     } catch (err) {
+      if ((err as { name?: string })?.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : String(err);
       setBooksError(message);
     } finally {
@@ -131,13 +135,14 @@ const Dashboard = () => {
   };
 
   // --- FUNCIÓN FETCH PARA FOROS
-  const fetchForums = async () => {
+  const fetchForums = async (signal?: AbortSignal) => {
     try {
       setForumsLoading(true);
       setForumsError(null);
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE_URL}/api/v1/foro`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal,
       });
 
       if (!res.ok) {
@@ -148,6 +153,7 @@ const Dashboard = () => {
       const data: Forum[] = await res.json();
       setForums(data);
     } catch (err) {
+      if ((err as { name?: string })?.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : String(err);
       setForumsError(message);
     } finally {
@@ -158,15 +164,20 @@ const Dashboard = () => {
   // --- useEffect para Cargar Datos ---
 
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     if (activeView === 'users') {
-      fetchUsers();
+      fetchUsers(signal);
     } else if (activeView === 'books') {
-      fetchBooks();
+      fetchBooks(signal);
     } else if (activeView === 'forums') {
-      fetchForums();
+      fetchForums(signal);
     }
     setUserError(null);
     setBooksError(null);
+
+    return () => controller.abort();
   }, [activeView]);
 
   // --- UI HANDLERS ---

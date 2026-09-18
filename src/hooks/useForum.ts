@@ -9,7 +9,10 @@ export const useForums = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/v1/foro`)
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    fetch(`${API_BASE_URL}/api/v1/foro`, { signal })
       .then((res) => {
         if (!res.ok) throw new Error('Error al cargar los foros');
         return res.json();
@@ -19,11 +22,14 @@ export const useForums = () => {
         setLoading(false);
       })
       .catch((err) => {
+        if (err.name === 'AbortError') return;
         const message = err instanceof Error ? err.message : String(err);
         console.error(err);
         setError(message);
         setLoading(false);
       });
+
+    return () => controller.abort();
   }, []);
 
   return { forums, loading, error };

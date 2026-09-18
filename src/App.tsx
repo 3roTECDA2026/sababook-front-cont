@@ -16,6 +16,7 @@ import Insignias from './pages/Insignias';
 import ForumDetailsPage from './pages/ForumDetailsPage';
 import BookCommentsAdmin from './components/BookCommentsAdmin';
 import ForumCommentsAdmin from './components/ForumCommentsAdmin';
+import CafesLiterarios from './pages/CafesLiterarios';
 
 // Importación de Ruta Protegida
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -127,6 +128,15 @@ function App() {
         element={
           <ProtectedRoute>
             <Insignias />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/cafes"
+        element={
+          <ProtectedRoute>
+            <CafesLiterarios />
           </ProtectedRoute>
         }
       />

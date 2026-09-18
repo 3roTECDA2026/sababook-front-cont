@@ -8,10 +8,10 @@ export const useBookOpinion = (libroId: number | string | undefined) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchOpinions = async () => {
+  const fetchOpinions = async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/opinion/libro/${libroId}`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/opinion/libro/${libroId}`, { signal });
       if (!res.ok) throw new Error('Error al cargar opiniones.');
       const data: OpinionAPI[] = await res.json();
 
@@ -29,6 +29,7 @@ export const useBookOpinion = (libroId: number | string | undefined) => {
 
       setOpinions(transformed);
     } catch (err) {
+      if ((err as { name?: string })?.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : String(err);
       console.error(err);
       setError(message);
@@ -38,7 +39,9 @@ export const useBookOpinion = (libroId: number | string | undefined) => {
   };
 
   useEffect(() => {
-    fetchOpinions();
+    const controller = new AbortController();
+    fetchOpinions(controller.signal);
+    return () => controller.abort();
   }, [libroId]);
 
   return { opinions, setOpinions, loading, error };

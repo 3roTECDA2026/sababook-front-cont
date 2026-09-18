@@ -29,5 +29,16 @@ dist-ssr
 *.sln
 *.sw?
 
+<<<<<<< HEAD
+# Agentes y herramientas locales
+.agents/
+.claude/
+
+# Locks de herramientas locales
+skills-lock.json
+
+# Dumps de base de datos
+dump.sql
+
 # Test and coverage output
 coverage/

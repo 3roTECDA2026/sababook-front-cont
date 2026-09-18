@@ -20,6 +20,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ForumIcon from '@mui/icons-material/Forum';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import LocalCafeIcon from '@mui/icons-material/LocalCafe';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Link, useNavigate } from 'react-router-dom';
@@ -48,6 +49,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     ];
   } else {
@@ -56,6 +58,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
       { text: 'Favoritos', icon: <FavoriteIcon />, path: '/favoritos' },
+      { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
     ];

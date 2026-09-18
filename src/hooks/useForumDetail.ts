@@ -13,11 +13,14 @@ const useForumDetail = (foroId: number | string | undefined) => {
 
   useEffect(() => {
     if (!foroId) return;
+    const controller = new AbortController();
     const fetchForo = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/foro/${foroId}/comentarios`);
+        const res = await fetch(`${API_BASE_URL}/api/v1/foro/${foroId}/comentarios`, {
+          signal: controller.signal,
+        });
         if (!res.ok) {
           throw new Error('Error al cargar el foro');
         }
@@ -25,6 +28,7 @@ const useForumDetail = (foroId: number | string | undefined) => {
         setForo(data);
         console.log('Datos del foro desde API:', data);
       } catch (err) {
+        if ((err as { name?: string })?.name === 'AbortError') return;
         const message = err instanceof Error ? err.message : String(err);
         setError(message);
         setForo(null);
@@ -33,6 +37,7 @@ const useForumDetail = (foroId: number | string | undefined) => {
       }
     };
     fetchForo();
+    return () => controller.abort();
   }, [foroId]);
 
   return { foro, loading, error };
