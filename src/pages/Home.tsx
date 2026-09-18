@@ -21,6 +21,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useBookData } from '../hooks/useBookData'; // NUEVO: Lógica de carga de libros
 import { useFavorites } from '../hooks/useFavorites'; // Lógica de manejo de favoritos
 import type { Book, BookFilters } from '../types';
+import { useReadingStatus } from '../hooks/useReadingStatus';
 
 export default function Home() {
   // --- Estados de UI ---
@@ -38,11 +39,12 @@ export default function Home() {
 
   // 2. Hook para manejar la interacción de favoritos
   const { toggleFavorite, isBookFavorite } = useFavorites();
+  const { getReadingStatus, setReadingStatus } = useReadingStatus();
 
   // Handler para toggle de favoritos
-  const handleFavoriteToggle = async (libro_id: number) => {
+  const handleFavoriteToggle = async (libro_id: number): Promise<boolean> => {
     const isFavorite = isBookFavorite(libro_id);
-    await toggleFavorite(libro_id, isFavorite);
+    return toggleFavorite(libro_id, isFavorite);
   };
   // -----------------------------------------------
 
@@ -133,6 +135,10 @@ export default function Home() {
           featuredBook={recomendado || {}}
           handleFavoriteToggle={handleFavoriteToggle}
           isFavorite={isBookFavorite(recomendado?.libro_id ?? -1)}
+          readingStatus={getReadingStatus(recomendado?.libro_id ?? -1)}
+          onReadingStatusChange={(status) => {
+            if (recomendado?.libro_id) setReadingStatus(recomendado.libro_id, status);
+          }}
           handleVerMas={() => {}}
         />
       )}
@@ -184,6 +190,8 @@ export default function Home() {
               isFavorite={isBookFavorite(book.libro_id)}
               libro_id={book.libro_id}
               onFavoriteToggle={() => handleFavoriteToggle(book.libro_id)}
+              readingStatus={getReadingStatus(book.libro_id)}
+              onReadingStatusChange={(status) => setReadingStatus(book.libro_id, status)}
             />
           ))
         )}

@@ -140,3 +140,10 @@ export async function votarCafeLiterario(
     body: JSON.stringify({ usuario_id: usuarioId, voto }),
   });
 }
+
+/**
+ * Obtener el catálogo completo de insignias de un usuario (obtenidas + no obtenidas)
+ */
+export async function getCatalogoMedals(userId: number | string, signal?: AbortSignal): Promise<Medal[]> {
+  return await apiRequest<Medal[]>(`/medal/catalog/${userId}`, { signal });
+}

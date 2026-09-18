@@ -14,6 +14,8 @@ dist-ssr
 
 # Environment variables
 .env
+.env.*
+!.env.example
 .env.*.local
 
 # Editor directories and files
@@ -27,6 +29,7 @@ dist-ssr
 *.sln
 *.sw?
 
+<<<<<<< HEAD
 # Agentes y herramientas locales
 .agents/
 .claude/
@@ -36,3 +39,6 @@ skills-lock.json
 
 # Dumps de base de datos
 dump.sql
+
+# Test and coverage output
+coverage/

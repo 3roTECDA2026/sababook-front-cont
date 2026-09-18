@@ -9,7 +9,7 @@ import InsigniaUnica from '../components/InsigniaUnica';
 
 // Importa el hook de autenticación
 import { useAuth } from '../hooks/useAuth';
-import { getUserMedals } from '../services/apiService';
+import { getCatalogoMedals } from '../services/apiService';
 import type { Medal } from '../types';
 
 const Insignias = () => {
@@ -25,20 +25,21 @@ const Insignias = () => {
 
   // Estado para las medallas del usuario
   const [insigniasUsuario, setInsigniasUsuario] = useState<Medal[]>([]);
+  const [cargando, setCargando] = useState<boolean>(true);
 
-  useEffect(() => {
+    useEffect(() => {
     if (user?.usuario_id) {
       const controller = new AbortController();
-      getUserMedals(user.usuario_id, controller.signal)
+      setCargando(true);
+      getCatalogoMedals(user.usuario_id, controller.signal)
         .then((medals) => {
-          // Si el endpoint devuelve un array de strings o de objetos, ajusta aquí
           setInsigniasUsuario(Array.isArray(medals) ? medals : []);
-          console.log(medals, user);
         })
         .catch((err) => {
           if (err.name === 'AbortError') return;
           setInsigniasUsuario([]);
-        });
+        })
+        .finally(() => setCargando(false));
 
       return () => controller.abort();
     }
@@ -97,21 +98,40 @@ const Insignias = () => {
           </Typography>
 
           {/* 2. COMPONENTES DE LAS INSIGNIAS */}
-          {(() => {
-            const rows: Medal[][] = [];
-            for (let i = 0; i < insigniasUsuario.length; i += 2) {
-              rows.push(insigniasUsuario.slice(i, i + 2));
-            }
-            return rows.map((row, rowIndex) => (
-              <Box key={rowIndex} sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                {row.map((insignia, index) => (
-                  <Box key={insignia.medalla_id ?? index} sx={{ mx: 1 }}>
-                    <InsigniaUnica insignia={insignia} />
-                  </Box>
-                ))}
-              </Box>
-            ));
-          })()}
+                              {cargando ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body2" color="text.secondary">
+                Cargando insignias...
+              </Typography>
+            </Box>
+          ) : insigniasUsuario.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4, px: 2 }}>
+              <Typography variant="body1" fontWeight="medium" gutterBottom>
+                Todavía no tenés insignias
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Participá en foros y comentá libros para empezar a ganarlas.
+              </Typography>
+            </Box>
+          ) : (
+            (() => {
+              const rows: Medal[][] = [];
+              for (let i = 0; i < insigniasUsuario.length; i += 2) {
+                rows.push(insigniasUsuario.slice(i, i + 2));
+              }
+              return rows.map((row, rowIndex) => (
+                <Box key={rowIndex} sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                  {row.map((insignia, index) => (
+                    <Box key={insignia.medalla_id ?? index} sx={{ mx: 1 }}>
+                      <InsigniaUnica insignia={insignia} />
+                    </Box>
+                  ))}
+                </Box>
+              ));
+            })()
+          )}
+          
+      
         </Paper>
       </Box>
     </Box>
