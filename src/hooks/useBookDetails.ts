@@ -1,7 +1,7 @@
 // src/hooks/useBookDetails.ts
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import type { Book } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { Book } from '@/types';
 
 export const useBookDetails = (id: number | string | undefined) => {
   const [book, setBook] = useState<Book | null>(null);

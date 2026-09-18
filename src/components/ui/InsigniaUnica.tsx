@@ -1,14 +1,14 @@
-// src/components/InsigniaUnica.tsx
+// src/components/ui/InsigniaUnica.tsx
 import React from 'react';
 import { Box, Typography, Avatar } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star'; // Ícono de ejemplo
-import type { Medal } from '../types';
+import type { Medal } from '@/types';
 
 // Importar los GIFs
-import lapizGif from '../assets/lapiz.gif';
-import chatGif from '../assets/chat.gif';
-import githubGif from '../assets/github.gif';
-import globosGif from '../assets/globos.gif';
+import lapizGif from '@/assets/lapiz.gif';
+import chatGif from '@/assets/chat.gif';
+import githubGif from '@/assets/github.gif';
+import globosGif from '@/assets/globos.gif';
 
 interface InsigniaUnicaProps {
   insignia: Medal;

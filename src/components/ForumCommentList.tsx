@@ -1,12 +1,12 @@
 // src/components/ForumCommentList.tsx
 import { Box, Typography, Paper, CircularProgress, Button, TextField, IconButton } from '@mui/material';
 import type { Theme } from '@mui/material';
-import { useForumComments } from '../hooks/useForumComments';
-import { useAuth } from '../hooks/useAuth';
+import { useForumComments } from '@/hooks/useForumComments';
+import { useAuth } from '@/hooks/useAuth';
 import { useState, FormEvent } from 'react';
-import { API_BASE_URL } from '../environments/api';
+import { API_BASE_URL } from '@/environments/api';
 import DeleteIcon from '@mui/icons-material/Delete';
-import type { ForumComment } from '../types';
+import type { ForumComment } from '@/types';
 
 type CommentDisplay = ForumComment & {
   nombre?: string;

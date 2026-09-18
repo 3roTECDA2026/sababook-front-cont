@@ -1,7 +1,7 @@
 // src/components/BookOpinionList.tsx
 import { Box, Typography, Rating } from '@mui/material';
 import type { Theme } from '@mui/material';
-import type { Opinion } from '../types';
+import type { Opinion } from '@/types';
 
 const ORANGE_COLOR = '#FF6633';
 

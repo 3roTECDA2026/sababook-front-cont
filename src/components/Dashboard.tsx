@@ -15,18 +15,18 @@ import {
 } from '@mui/material';
 import type { AlertColor } from '@mui/material';
 
-import HeaderDashboard from './HeaderDashboard';
-import type { DashboardView } from './HeaderDashboard';
-import UserTable from './UserTable';
-import BookTable from './BookTable';
-import ForumTable from './ForumTable';
-import ForumDetail from './ForumDetail';
-import UserForm from './UserForm';
-import type { UserFormData } from './UserForm';
-import ForumForm from './ForumForm';
-import BookForm from './BookForm';
-import { API_BASE_URL } from '../environments/api';
-import type { Book, Forum, User } from '../types';
+import HeaderDashboard from './layout/HeaderDashboard';
+import type { DashboardView } from './layout/HeaderDashboard';
+import ForumDetail from './ui/ForumDetail';
+import UserForm from './forms/UserForm';
+import type { UserFormData } from './forms/UserForm';
+import ForumForm from './forms/ForumForm';
+import BookForm from './forms/BookForm';
+import { API_BASE_URL } from '@/environments/api';
+import type { Book, Forum, User } from '@/types';
+import UserTable from './tables/UserTable';
+import BookTable from './tables/BookTable';
+import ForumTable from './tables/ForumTable';
 
 const DashboardContainer = Box;
 

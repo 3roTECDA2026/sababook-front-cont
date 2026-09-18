@@ -1,12 +1,12 @@
 // src/pages/Favs.tsx
 import { Box, Typography } from '@mui/material';
 import { useState } from 'react';
-import { useFavorites } from '../hooks/useFavorites';
+import { useFavorites } from '@/hooks/useFavorites';
 
-import LibroImage from '../assets/libro.jpg';
-import AppHeader from '../components/AppHeader';
-import BookCard from '../components/BookCard';
-import SideMenu from '../components/SideMenu';
+import LibroImage from '@/assets/libro.jpg';
+import AppHeader from '@/components/layout/AppHeader';
+import BookCard from '@/components/ui/BookCard';
+import SideMenu from '@/components/layout/SideMenu';
 
 export default function Favs() {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);

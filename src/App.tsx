@@ -14,8 +14,8 @@ import MyComments from './pages/MyComments';
 import Comments from './pages/Comments';
 import Insignias from './pages/Insignias';
 import ForumDetailsPage from './pages/ForumDetailsPage';
-import BookCommentsAdmin from './components/BookCommentsAdmin';
-import ForumCommentsAdmin from './components/ForumCommentsAdmin';
+import BookCommentsAdmin from './pages/BookCommentsAdmin';
+import ForumCommentsAdmin from './pages/ForumCommentsAdmin';
 
 // Importación de Ruta Protegida
 import { ProtectedRoute } from './components/ProtectedRoute';

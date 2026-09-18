@@ -16,12 +16,12 @@ import {
   Button,
 } from '@mui/material';
 import ForumIcon from '@mui/icons-material/Forum';
-import AppHeader from '../components/AppHeader';
-import SideMenu from '../components/SideMenu';
-import useForumDetail from '../hooks/useForumDetail';
-import { useAuth } from '../hooks/useAuth';
-import { API_BASE_URL } from '../environments/api';
-import type { ForumDetailComment } from '../types';
+import AppHeader from '@/components/layout/AppHeader';
+import SideMenu from '@/components/layout/SideMenu';
+import useForumDetail from '@/hooks/useForumDetail';
+import { useAuth } from '@/hooks/useAuth';
+import { API_BASE_URL } from '@/environments/api';
+import type { ForumDetailComment } from '@/types';
 
 const ForumDetailsPage = () => {
   const { id } = useParams<{ id: string }>(); // ID del foro desde la URL

@@ -1,6 +1,6 @@
 // src/services/apiService.ts
-import { API_BASE_URL } from '../environments/api';
-import type { Book, Medal, BookFilters } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { Book, Medal, BookFilters } from '@/types';
 
 /**
  * Función genérica para hacer peticiones HTTP

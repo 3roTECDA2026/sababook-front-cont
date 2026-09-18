@@ -1,8 +1,8 @@
 // src/contexts/AuthContext.tsx
 import { useState, useEffect, ReactNode } from 'react';
-import { API_BASE_URL } from '../environments/api';
+import { API_BASE_URL } from '@/environments/api';
 import { AuthContext, AuthContextType, AuthResult } from './AuthContextDefinition';
-import type { User } from '../types';
+import type { User } from '@/types';
 
 interface AuthProviderProps {
   children: ReactNode;

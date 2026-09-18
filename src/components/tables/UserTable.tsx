@@ -23,11 +23,11 @@ import {
 import type { AlertColor } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { API_BASE_URL } from '../environments/api';
-import UserForm from './UserForm';
-import type { UserFormData } from './UserForm';
-import ConfirmationModal from './ConfirmationModal';
-import type { User } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import UserForm from '@/components/forms/UserForm';
+import type { UserFormData } from '@/components/forms/UserForm';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import type { User } from '@/types';
 
 const ROWS_PER_PAGE = 5;
 
