@@ -1,6 +1,5 @@
 // src/pages/Home.tsx
-import { Box, Typography, Button, Stack } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import { Box, Typography, Button } from '@mui/material';
 import RecommendationIcon from '@mui/icons-material/AutoAwesome';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -30,7 +29,6 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isWelcomeModalOpen, setWelcomeModalOpen] = useState<boolean>(false);
   const [isCrearListaOpen, setCrearListaOpen] = useState<boolean>(false);
-  const [tipoInicialModal, setTipoInicialModal] = useState<'RECOMENDADA' | 'PUBLIC'>('PUBLIC');
   
   // Estado para almacenar dinámicamente el libro recomendado
   const [libroRecomendado, setLibroRecomendado] = useState<Book | undefined>(undefined);
@@ -64,7 +62,7 @@ export default function Home() {
       if (res.ok) {
         const listas = await res.json();
         
-        // Buscar la lista con tipo RECOMENDACION (la primera es la más nueva por orderBy: desc)
+        // Buscar la lista con tipo RECOMENDACION
         const recomendacion = listas.find(
           (l: any) => l.tipo === 'RECOMENDACION' || l.tipo === 'RECOMENDADA'
         );
@@ -93,7 +91,7 @@ export default function Home() {
     obtenerUltimaRecomendacion();
   }, [obtenerUltimaRecomendacion]);
 
-  // Si no hay recomendación en base de datos aún, toma el primer libro disponible de la lista como fallback
+  // Fallback si no hay recomendación en BD
   useEffect(() => {
     if (!libroRecomendado && books.length > 0) {
       setLibroRecomendado(books[0]);
@@ -135,11 +133,6 @@ export default function Home() {
     }
   };
 
-  const abrirModalConTipo = (tipo: 'RECOMENDADA' | 'PUBLIC') => {
-    setTipoInicialModal(tipo);
-    setCrearListaOpen(true);
-  };
-
   return (
     <Box
       py={2}
@@ -164,13 +157,12 @@ export default function Home() {
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} active="Inicio" />
       <WelcomeModal open={isWelcomeModalOpen} onClose={handleCloseWelcomeModal} user={user} />
 
-      {/* Modal dinámico para Crear Lista o Recomendar */}
+      {/* Modal para Recomendar */}
       <CrearListaModal
         open={isCrearListaOpen}
-        {...({ tipoInicial: tipoInicialModal } as any)}
         onClose={() => setCrearListaOpen(false)}
         onListaCreada={() => {
-          obtenerUltimaRecomendacion(); // 👈 RECARGA LA PORTADA DEL RECOMENDADO DINÁMICAMENTE
+          obtenerUltimaRecomendacion(); // Recarga la portada del recomendado dinámicamente
         }}
       />
 
@@ -198,7 +190,7 @@ export default function Home() {
         />
       )}
 
-      {/* TÍTULO LISTADO DE LIBROS CON BOTONES DE ACCIÓN */}
+      {/* TÍTULO LISTADO DE LIBROS SOLO CON BOTÓN RECOMENDAR */}
       {Object.keys(currentFilters).length === 0 && !currentQuery && (
         <Box
           mt={4}
@@ -221,36 +213,19 @@ export default function Home() {
             Listado de libros
           </Typography>
 
-          <Stack direction="row" spacing={1.5} flexWrap="wrap">
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<RecommendationIcon />}
-              onClick={() => abrirModalConTipo('RECOMENDADA')}
-              sx={{
-                borderRadius: 2,
-                fontWeight: 'bold',
-                textTransform: 'none',
-              }}
-            >
-              Recomendar
-            </Button>
-
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={() => abrirModalConTipo('PUBLIC')}
-              sx={{
-                borderRadius: 2,
-                fontWeight: 'bold',
-                textTransform: 'none',
-                boxShadow: 2,
-              }}
-            >
-              Crear Lista
-            </Button>
-          </Stack>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<RecommendationIcon />}
+            onClick={() => setCrearListaOpen(true)}
+            sx={{
+              borderRadius: 2,
+              fontWeight: 'bold',
+              textTransform: 'none',
+            }}
+          >
+            Recomendar
+          </Button>
         </Box>
       )}
 
