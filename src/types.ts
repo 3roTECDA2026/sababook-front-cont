@@ -9,6 +9,7 @@ export interface Book {
   descripcion: string;
   portada_url: string;
   calificacion_promedio: number;
+  estado_lectura?: 'general' | 'quiero-leer' | 'leyendo' | 'leido';
 }
 
 export interface Medal {
@@ -16,6 +17,8 @@ export interface Medal {
   nombre: string;
   descripcion: string;
   tipo_accion: string;
+  obtenida?: boolean;
+  fecha_obtenida?: string | null;
 }
 
 export interface BookFilters {

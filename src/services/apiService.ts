@@ -76,6 +76,13 @@ export async function getUserMedals(userId: number | string): Promise<Medal[]> {
 }
 
 /**
+ * Obtener el catálogo completo de insignias de un usuario (obtenidas + no obtenidas)
+ */
+export async function getCatalogoMedals(userId: number | string): Promise<Medal[]> {
+  return await apiRequest<Medal[]>(`/medal/catalog/${userId}`);
+}
+
+/**
  * Helper para obtener headers autenticados con JWT
  */
 function getAuthHeaders() {
