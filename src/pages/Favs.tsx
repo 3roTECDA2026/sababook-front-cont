@@ -1,5 +1,5 @@
 // src/pages/Favs.tsx
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Tabs, Tab } from '@mui/material';
 import { useState } from 'react';
 import { useFavorites } from '../hooks/useFavorites';
 
@@ -7,10 +7,13 @@ import LibroImage from '../assets/libro.jpg';
 import AppHeader from '../components/AppHeader';
 import BookCard from '../components/BookCard';
 import SideMenu from '../components/SideMenu';
+import { useReadingStatus, type ReadingStatus } from '../hooks/useReadingStatus';
 
 export default function Favs() {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [selectedStatus, setSelectedStatus] = useState<ReadingStatus>('general');
   const { favoriteBooks, loading, error, toggleFavorite } = useFavorites();
+  const { getReadingStatus, setReadingStatus } = useReadingStatus();
 
   // Para determinar si un libro es favorito (basado en la lista obtenida)
   const isBookFavorite = (libro_id: number) =>
@@ -21,6 +24,10 @@ export default function Favs() {
     const currentlyFavorite = isBookFavorite(libro_id);
     await toggleFavorite(libro_id, currentlyFavorite);
   };
+
+  const visibleBooks = favoriteBooks.filter(
+    (book) => selectedStatus === 'general' || getReadingStatus(book.libro_id) === selectedStatus
+  );
 
   if (loading) {
     return (
@@ -54,19 +61,27 @@ export default function Favs() {
     >
       <AppHeader
         onMenuClick={() => setMenuOpen(true)}
-        title="Mis Favoritos"
+        title="Mi Biblioteca"
         subtitle={`Tienes ${favoriteBooks.length} libros favoritos`}
       />
 
       {/* Drawer lateral */}
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} active="Favoritos" />
 
-      {/* SearchBar personalizada */}
-      <Box mb={2}>{/* <SearchBar onSearch={handleSearch} /> */}</Box>
+      <Tabs
+        value={selectedStatus}
+        onChange={(_, value: ReadingStatus) => setSelectedStatus(value)}
+        variant="fullWidth"
+        sx={{ mb: 3, border: '1px solid', borderColor: 'primary.main', borderRadius: 3 }}
+      >
+        <Tab value="general" label="Favoritos (General)" />
+        <Tab value="quiero-leer" label="Quiero leer" />
+        <Tab value="leyendo" label="Leyendo" />
+        <Tab value="leido" label="Leídos" />
+      </Tabs>
 
-      {/* Favs */}
       <Typography variant="h5" fontWeight="bold" color="secondary" mb={2}>
-        Tu Colección Favorita
+        {selectedStatus === 'general' ? 'Mis libros favoritos' : `Libros ${selectedStatus.replace('-', ' ')}`}
       </Typography>
 
       <Box
@@ -78,7 +93,7 @@ export default function Favs() {
         }}
       >
         {/* Mapear la lista de libros favoritos y pasar las nuevas props */}
-        {favoriteBooks.map((book) => (
+        {visibleBooks.map((book) => (
           <BookCard
             key={book.libro_id}
             image={book.portada_url || LibroImage}
@@ -89,11 +104,15 @@ export default function Favs() {
             isFavorite={isBookFavorite(book.libro_id)} // Determina si está en favoritos
             onFavoriteToggle={() => handleFavoriteToggle(book.libro_id)} // Maneja el toggle
             libro_id={book.libro_id}
+            readingStatus={getReadingStatus(book.libro_id)}
+            onReadingStatusChange={(status) => setReadingStatus(book.libro_id, status)}
+            showReadingStatusControl
+            includeGeneralStatus
           />
         ))}
 
         {/* Mensaje si no hay favoritos */}
-        {favoriteBooks.length === 0 && (
+        {visibleBooks.length === 0 && (
           <Typography variant="subtitle1" color="text.secondary" mt={3}>
             Aún no tienes libros marcados como favoritos.
           </Typography>
