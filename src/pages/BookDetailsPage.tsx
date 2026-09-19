@@ -13,6 +13,8 @@ import BookDetailsHeader from '../components/BookDetailsHeader';
 import BookCommentBox from '../components/BookCommentBox';
 import BookOpinionList from '../components/BookOpinionList';
 import BookDescription from '../components/BookDescription';
+import ReadingProgress from '../components/ReadingProgress';
+import { API_BASE_URL } from '../environments/api';
 
 const ORANGE_COLOR = '#FF6633';
 
@@ -26,6 +28,7 @@ const BookDetailsPage = () => {
   const [showCommentBox, setShowCommentBox] = useState<boolean>(false);
   const [newComment, setNewComment] = useState<string>('');
   const [newRating, setNewRating] = useState<number>(0);
+  const [currentProgress, setCurrentProgress] = useState<number | null>(null);
 
   const { book, loading: bookLoading, error: bookError } = useBookDetails(id);
   const { opinions, setOpinions, loading: opinionsLoading, error: opinionsError } = useBookOpinion(id);
@@ -48,8 +51,25 @@ const BookDetailsPage = () => {
   if (bookError) return <div>{bookError}</div>;
   if (!book) return <div>No se encontró el libro.</div>;
 
-  const bookWithAlias = book as typeof book & { coverImage?: string };
-  const coverImageSrc = bookWithAlias.coverImage?.trim() || book.portada_url?.trim() || undefined;
+  const coverImageSrc = book.portada_url?.trim() || undefined;
+
+   const handleUpdateProgress = async (newPage: number) => {
+    if (!id) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/libros/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pagina_actual: newPage }),
+      });
+
+      if (!res.ok) throw new Error('Error al actualizar');
+
+      setCurrentProgress(newPage);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <Box
@@ -73,6 +93,12 @@ const BookDetailsPage = () => {
       <Box sx={{ pt: 0 }}>
         <BookDetailsHeader book={book} coverImageSrc={coverImageSrc} authorStyle={authorStyle} />
 
+        {/* Componente de Progreso de Lectura con la prop correcta: onUpdateProgress */}
+        <ReadingProgress
+        currentPage={currentProgress !== null ? currentProgress : ((book as any).pagina_actual ?? 0)}
+        totalPages={(book as any).paginas_totales > 0 ? (book as any).paginas_totales : 100}        onUpdateProgress={handleUpdateProgress}
+        />
+
         {showCommentBox && user && (
           <BookCommentBox
             theme={theme}
@@ -83,7 +109,7 @@ const BookDetailsPage = () => {
             setNewRating={setNewRating}
             setNewComment={setNewComment}
             setShowCommentBox={setShowCommentBox}
-            setOpinions={setOpinions} // Actualiza la lista de opiniones en tiempo real
+            setOpinions={setOpinions}
           />
         )}
 
@@ -109,7 +135,6 @@ const BookDetailsPage = () => {
 
         <Divider sx={{ my: 3 }} />
 
-        {/* Lista de opiniones */}
         <BookOpinionList opinions={opinions} theme={theme} />
       </Box>
     </Box>
