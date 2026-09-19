@@ -6,7 +6,13 @@ import {
   Typography,
 } from "@mui/material";
 
-export default function GoalForm({ goalToEdit, onSave, onCancel }) {
+interface GoalFormProps {
+  goalToEdit?: any; // Podés reemplazar 'any' por tu interfaz de Meta si la tenés
+  onSave: (data: any) => void;
+  onCancel: () => void;
+}
+
+  export default function GoalForm({ goalToEdit, onSave, onCancel }: GoalFormProps) {
   const [formData, setFormData] = useState({
     meta_id: "",
     periodo_nombre: "",
@@ -31,7 +37,7 @@ export default function GoalForm({ goalToEdit, onSave, onCancel }) {
     }
   }, [goalToEdit]);
 
-  const handleChange = (event) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -39,7 +45,7 @@ export default function GoalForm({ goalToEdit, onSave, onCancel }) {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onSave({
       ...goalToEdit,

@@ -20,6 +20,7 @@ import type { DashboardView } from './HeaderDashboard';
 import UserTable from './UserTable';
 import BookTable from './BookTable';
 import ForumTable from './ForumTable';
+// @ts-ignore
 import GoalTable from './GoalTable'
 import ForumDetail from './ForumDetail';
 import UserForm from './UserForm';
@@ -55,6 +56,14 @@ const Dashboard = () => {
   const [openForumModal, setOpenForumModal] = useState<boolean>(false);
   const [openCreateModal, setOpenCreateModal] = useState<boolean>(false); // Modal para USUARIOS
   const [openCreateBookModal, setOpenCreateBookModal] = useState<boolean>(false); // Modal para LIBROS
+
+const [goals, setGoals] = useState<unknown[]>([]);
+const [goalsLoading, setGoalsLoading] = useState<boolean>(true);
+const [goalsError, setGoalsError] = useState<string | null>(null);
+const [openGoalModal, setOpenGoalModal] = useState<boolean>(false);
+const [goalToEdit, setGoalToEdit] = useState<unknown | null>(null);
+const [openDeleteGoalConfirm, setOpenDeleteGoalConfirm] = useState<boolean>(false);
+const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
   //  ESTADO CLAVE: Rastrear el libro que se está editando (null si es creación)
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -175,7 +184,8 @@ const Dashboard = () => {
       const data = await res.json();
       setGoals(data);
     } catch (err) {
-      setGoalsError(err.message);
+      const msg = err instanceof Error ? err.message : String(err);
+      setGoalsError(msg);
     } finally {
       setGoalsLoading(false);
     }
@@ -342,12 +352,11 @@ const Dashboard = () => {
   const handleEditForumClick = (forum: Forum) => {
     setForumToEdit(forum); // Guarda el objeto completo del foro
     setOpenForumModal(true); // Abre el modal de creación/edición
-      setBookToDeleteId(null);
-    }
+    setBookToDeleteId(null);
   };
 
   // --- HANDLERS (METAS DE LECTURA) ---
-  const handleOpenDeleteGoalConfirm = (goalId) => {
+  const handleOpenDeleteGoalConfirm = (goalId: number) => {
     setGoalToDeleteId(goalId);
     setOpenDeleteGoalConfirm(true);
   };
@@ -378,9 +387,9 @@ const Dashboard = () => {
 
       await fetchGoals();
       setSnackbar({ open: true, message: `✅ Meta de lectura eliminada correctamente.`, severity: "success" });
-    } catch (error) {
-      console.error("Error al eliminar meta:", error);
-      setSnackbar({ open: true, message: `❌ Error al eliminar meta: ${error.message}`, severity: "error" });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setGoalsError(msg);
     } finally {
       setIsApiLoading(false);
       setGoalToDeleteId(null);
@@ -388,10 +397,10 @@ const Dashboard = () => {
   };
 
   // --- HANDLERS (FOROS) ---
-  const handleEditForumClick = (forum) => {
+  /*/const handleEditForumClick = (forum) => {
     setForumToEdit(forum);
     setOpenForumModal(true);
-  };
+  };/*/
 
   const handleCloseForumModal = () => {
     setOpenForumModal(false);
@@ -512,7 +521,7 @@ const Dashboard = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handleSaveGoal = async (goalData) => {
+  const handleSaveGoal = async (goalData: { meta_id?: number; id?: number; [key: string]: unknown }) => {
   setIsApiLoading(true);
   const token = localStorage.getItem('token');
   const endpoint = `${API_BASE_URL}/api/v1/metas-lectura/${goalData.meta_id || goalData.id}`;
@@ -536,10 +545,10 @@ const Dashboard = () => {
     setOpenGoalModal(false);
     setGoalToEdit(null);
     setSnackbar({ open: true, message: "✅ Meta de lectura actualizada correctamente.", severity: "success" });
-  } catch (error) {
-    console.error("Error al editar meta:", error);
-    setSnackbar({ open: true, message: `❌ Error: ${error.message}`, severity: "error" });
-  } finally {
+  } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setGoalsError(msg);
+    } finally {
     setIsApiLoading(false);
   }
 };

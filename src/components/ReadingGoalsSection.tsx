@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Box, Card, CardContent, Typography, LinearProgress, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { getActiveReadingGoal, createReadingGoal } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
-
+import { ReadingGoal } from '../types';
+const [goal, setGoal] = useState<ReadingGoal | null>(null);
 const ReadingGoalsSection = () => {
   const { user } = useAuth();
   const [goal, setGoal] = useState(null);
@@ -21,7 +22,7 @@ const ReadingGoalsSection = () => {
   const fetchGoal = async () => {
     try {
       setLoading(true);
-      const userId = user?.usuario_id || user?.id;
+      const userId = user?.usuario_id;
       if (userId) {
         const res = await getActiveReadingGoal(userId);
         const data = res?.data || res;
@@ -43,7 +44,7 @@ const ReadingGoalsSection = () => {
 
   const handleCreateGoal = async () => {
     try {
-      const userId = user?.usuario_id || user?.id;
+      const userId = user?.usuario_id;
 
       // Calculamos el inicio para mañana a primera hora (00:00:00 hs)
       const manana = new Date();
