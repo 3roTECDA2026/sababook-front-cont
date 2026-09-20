@@ -1,9 +1,13 @@
-// src/contexts/AuthContext.tsx
-import { useState, useEffect, ReactNode } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import { AuthContext, AuthContextType, AuthResult } from './AuthContextDefinition';
-import { useNavigate } from 'react-router-dom';
-import type { User } from '../types';
+import { useState, useEffect, ReactNode, useCallback } from "react";
+import { API_BASE_URL } from "../environments/api";
+import {
+  AuthContext,
+  AuthContextType,
+  AuthResult,
+} from "./AuthContextDefinition";
+import { useNavigate } from "react-router-dom";
+import type { User } from "../types";
+import { parseJsonResponse } from "../utils/api"; // Importación desde el archivo utilitario
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -15,36 +19,49 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [token, setToken] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const logout = useCallback((): void => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("rol");
+    localStorage.removeItem("username");
+    setUser(null);
+    setToken(null);
+    navigate("/login");
+  }, [navigate]);
+
   // Cargar usuario desde localStorage al iniciar la aplicación
   useEffect(() => {
     const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('token');
-      const storedUserId = localStorage.getItem('userId');
+      const storedToken = localStorage.getItem("token");
+      const storedUserId = localStorage.getItem("userId");
 
       if (storedToken && storedUserId) {
         setToken(storedToken);
         try {
-          // Obtener los datos del usuario desde la API
-          const response = await fetch(`${API_BASE_URL}/api/v1/user/${storedUserId}`, {
-            headers: {
-              Authorization: `Bearer ${storedToken}`,
-              'Content-Type': 'application/json',
+          const response = await fetch(
+            `${API_BASE_URL}/api/v1/user/${storedUserId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${storedToken}`,
+                "Content-Type": "application/json",
+              },
             },
-          });
+          );
 
           if (response.ok) {
-            const userData = await response.json();
-            setUser({
-              ...userData,
-              userId: storedUserId,
-              rol: localStorage.getItem('rol'),
-            });
+            const userData = await parseJsonResponse(response);
+            if (userData) {
+              setUser({
+                ...userData,
+                userId: storedUserId,
+                rol: localStorage.getItem("rol"),
+              });
+            }
           } else {
-            // Si el token no es válido, limpiar el localStorage
             logout();
           }
         } catch (error) {
-          console.error('Error al cargar datos del usuario:', error);
+          console.error("Error al cargar datos del usuario:", error);
           logout();
         }
       }
@@ -52,47 +69,62 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [logout]);
 
-  const login = async (email: string, password: string): Promise<AuthResult> => {
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<AuthResult> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, contrasena: password }),
       });
 
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al iniciar sesión');
+        const errorMsg =
+          data?.error ||
+          data?.message ||
+          `Error en el servidor (${response.status})`;
+        throw new Error(errorMsg);
       }
 
-      // Guardar los datos básicos
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.userId);
-      localStorage.setItem('rol', data.rol);
+      if (!data?.token || !data?.userId) {
+        throw new Error("Respuesta de autenticación incompleta.");
+      }
 
+      // Guardar datos en localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.userId);
+      localStorage.setItem("rol", data.rol);
       setToken(data.token);
 
       // Obtener el perfil completo del usuario
-      const profileResponse = await fetch(`${API_BASE_URL}/api/v1/user/${data.userId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${data.token}`,
+      const profileResponse = await fetch(
+        `${API_BASE_URL}/api/v1/user/${data.userId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.token}`,
+          },
         },
-      });
+      );
 
-      const profileData = await profileResponse.json();
+      const profileData = await parseJsonResponse(profileResponse);
 
       if (!profileResponse.ok) {
-        throw new Error(profileData.error || 'No se pudo obtener el perfil del usuario');
+        const profileError =
+          profileData?.error || "No se pudo obtener el perfil del usuario";
+        throw new Error(profileError);
       }
 
-      // Guardar el nombre en localStorage
-      localStorage.setItem('username', profileData.nombre);
+      if (profileData?.nombre) {
+        localStorage.setItem("username", profileData.nombre);
+      }
 
-      // Actualizar el estado del usuario
       setUser({
         ...profileData,
         userId: data.userId,
@@ -102,53 +134,44 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const errorMessage = message.includes('Failed to fetch')
-        ? 'No se pudo conectar con el servidor. ¿Está en ejecución?'
+      const errorMessage = message.includes("Failed to fetch")
+        ? "No se pudo conectar con el servidor backend."
         : message;
       return { success: false, error: errorMessage };
     }
   };
 
-  const logout = (): void => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('rol');
-    localStorage.removeItem('username');
-    setUser(null);
-    setToken(null);
-    navigate('/login');
-  };
-
-  const updateUser = async (updatedData: Partial<User>): Promise<AuthResult> => {
+  const updateUser = async (
+    updatedData: Partial<User>,
+  ): Promise<AuthResult> => {
     try {
-      const userId = localStorage.getItem('userId');
+      const userId = localStorage.getItem("userId");
       const response = await fetch(`${API_BASE_URL}/api/v1/user/${userId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(updatedData),
       });
 
-      if (response.ok) {
-        const userData = await response.json();
-        setUser({
-          ...user,
-          ...userData,
-        });
-        // Actualizar localStorage si es necesario
+      const userData = await parseJsonResponse(response);
+
+      if (response.ok && userData) {
+        setUser((prevUser) =>
+          prevUser ? { ...prevUser, ...userData } : userData,
+        );
         if (userData.nombre) {
-          localStorage.setItem('username', userData.nombre);
+          localStorage.setItem("username", userData.nombre);
         }
         return { success: true };
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al actualizar el usuario');
+        const errorMsg = userData?.error || "Error al actualizar el usuario";
+        throw new Error(errorMsg);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error('Error al actualizar usuario:', error);
+      console.error("Error al actualizar usuario:", error);
       return { success: false, error: message };
     }
   };
