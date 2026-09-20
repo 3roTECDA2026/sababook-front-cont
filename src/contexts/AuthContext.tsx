@@ -7,19 +7,11 @@ import {
 } from "./AuthContextDefinition";
 import { useNavigate } from "react-router-dom";
 import type { User } from "../types";
+import { parseJsonResponse } from "../utils/api"; // Importación desde el archivo utilitario
 
 interface AuthProviderProps {
   children: ReactNode;
 }
-
-// Función auxiliar para parsear JSON de forma segura
-const parseJsonResponse = async (response: Response) => {
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return await response.json();
-  }
-  return null;
-};
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
