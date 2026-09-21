@@ -9,31 +9,33 @@ import lapizGif from '@/assets/lapiz.gif';
 import chatGif from '@/assets/chat.gif';
 import githubGif from '@/assets/github.gif';
 import globosGif from '@/assets/globos.gif';
+import libroPlumaGif from '@/assets/libro-pluma.gif';
+import chatEstrellaGif from '@/assets/chat-estrella.gif';
 
 interface InsigniaUnicaProps {
   insignia: Medal;
 }
 
 const InsigniaUnica = ({ insignia }: InsigniaUnicaProps) => {
-  // icono según tipo_accion
-  const getIcon = (tipo: string) => {
-    switch (tipo) {
-      // Comentador --> al menos  libro
+    // ícono según el nombre de la insignia
+  const getIcon = (nombre: string) => {
+    switch (nombre) {
       case 'Comentador':
-        return <img src={lapizGif} alt="Opinar" style={{ width: 40, height: 40 }} />; // GIF de lápiz para opiniones
-      // Opinador --> comento en un foro
-      case 'Opinador':
-        return <img src={chatGif} alt="Foro" style={{ width: 40, height: 40 }} />; // GIF de chat para foros
-      // mas de 10 foros
-      case 'Debatiente':
-        return <img src={githubGif} alt="Lectura" style={{ width: 40, height: 40 }} />; // GIF de github para lectura
+        return <img src={lapizGif} alt="Comentador" style={{ width: 40, height: 40 }} />;
       case 'Comentador Activo':
-        return <img src={globosGif} alt="Club" style={{ width: 40, height: 40 }} />; // GIF de globos para clubes
+        return <img src={globosGif} alt="Comentador Activo" style={{ width: 40, height: 40 }} />;
+      case 'Super Comentador':
+        return <img src={chatEstrellaGif} alt="Super Comentador" style={{ width: 40, height: 40 }} />;
+      case 'Opinador':
+        return <img src={chatGif} alt="Opinador" style={{ width: 40, height: 40 }} />;
+      case 'Debatiente':
+        return <img src={githubGif} alt="Debatiente" style={{ width: 40, height: 40 }} />;
+      case 'Master de la lectura':
+        return <img src={libroPlumaGif} alt="Master de la lectura" style={{ width: 40, height: 40 }} />;
       default:
         return <StarIcon />;
     }
   };
-
   return (
     <Box
       sx={{
@@ -47,6 +49,8 @@ const InsigniaUnica = ({ insignia }: InsigniaUnicaProps) => {
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 2,
+        opacity: insignia.obtenida ? 1 : 0.45,
+        filter: insignia.obtenida ? 'none' : 'grayscale(100%)',
       }}
     >
       {/* Ícono de la Insignia */}
@@ -60,6 +64,7 @@ const InsigniaUnica = ({ insignia }: InsigniaUnicaProps) => {
           mb: 1,
         }}
       >
+        
         {getIcon(insignia.nombre)}
       </Avatar>
       {/* Nombre de la Insignia */}

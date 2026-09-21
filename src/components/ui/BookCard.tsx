@@ -8,11 +8,22 @@ import {
   Button,
   Box,
   IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Chip,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import CheckIcon from '@mui/icons-material/Check';
+import StarIcon from '@mui/icons-material/Star';
+import type { ReadingStatus } from '@/hooks/useReadingStatus';
 
 const HORIZONTAL_PADDING = 2; // (Equivale a 16px en el tema de Material-UI)
 
@@ -25,7 +36,11 @@ interface BookCardProps {
   rating?: number;
   featured?: boolean;
   isFavorite?: boolean;
-  onFavoriteToggle?: () => void;
+  onFavoriteToggle?: () => boolean | Promise<boolean> | void;
+  readingStatus?: ReadingStatus;
+  onReadingStatusChange?: (status: ReadingStatus) => void;
+  showReadingStatusControl?: boolean;
+  includeGeneralStatus?: boolean;
   // bookId, // Esto esta de mas
   libro_id?: number | null;
   onVerMas?: () => void;
@@ -42,10 +57,15 @@ export default function BookCard({
   featured = false,
   isFavorite = false,
   onFavoriteToggle,
+  readingStatus = 'general',
+  onReadingStatusChange,
+  showReadingStatusControl = false,
+  includeGeneralStatus = false,
   // bookId, // Esto esta de mas
   libro_id,
 }: BookCardProps) {
   const navigate = useNavigate();
+  const [statusMenuAnchor, setStatusMenuAnchor] = useState<null | HTMLElement>(null);
 
   // Determinar ID del libro (usa cualquiera de los dos disponibles)
   const bookIdentifier = libro_id;
@@ -93,8 +113,12 @@ export default function BookCard({
 
         {/* Botón de favorito */}
         <IconButton
-          aria-label="Toggle favorite"
-          onClick={onFavoriteToggle}
+          aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+          onClick={async (event) => {
+            const favoriteButton = event.currentTarget;
+            const result = await onFavoriteToggle?.();
+            if (!isFavorite && result !== false) setStatusMenuAnchor(favoriteButton);
+          }}
           sx={{
             position: 'absolute',
             top: 4,
@@ -109,6 +133,46 @@ export default function BookCard({
             <FavoriteBorderIcon fontSize="small" sx={{ color: 'red' }} />
           )}
         </IconButton>
+
+        {isFavorite && onReadingStatusChange && showReadingStatusControl && (
+          <Chip
+            label={readingStatus === 'general' ? 'Favorito' : statusLabels[readingStatus]}
+            size="small"
+            onClick={(event) => setStatusMenuAnchor(event.currentTarget)}
+            sx={{
+              position: 'absolute',
+              top: 42,
+              right: 4,
+              bgcolor: '#fff3e8',
+              color: '#9b4d20',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          />
+        )}
+
+        <Menu
+          anchorEl={statusMenuAnchor}
+          open={Boolean(statusMenuAnchor)}
+          onClose={() => setStatusMenuAnchor(null)}
+          slotProps={{ paper: { sx: { borderRadius: 2, mt: 1, minWidth: 190 } } }}
+        >
+          {readingOptions
+            .filter(({ value }) => includeGeneralStatus || value !== 'general')
+            .map(({ value, label, icon: Icon }) => (
+            <MenuItem
+              key={value}
+              selected={readingStatus === value}
+              onClick={() => {
+                onReadingStatusChange?.(value);
+                setStatusMenuAnchor(null);
+              }}
+            >
+              <ListItemIcon><Icon fontSize="small" /></ListItemIcon>
+              <ListItemText>{label}</ListItemText>
+            </MenuItem>
+            ))}
+        </Menu>
       </Box>
 
       {/* Contenido de la tarjeta */}
@@ -201,3 +265,21 @@ export default function BookCard({
     </Card>
   );
 }
+
+const statusLabels: Record<ReadingStatus, string> = {
+  general: 'Favorito',
+  'quiero-leer': 'Quiero leer',
+  leyendo: 'Leyendo',
+  leido: 'Leído',
+};
+
+const readingOptions: Array<{
+  value: ReadingStatus;
+  label: string;
+  icon: typeof BookmarkBorderIcon;
+}> = [
+  { value: 'quiero-leer', label: 'Quiero leer', icon: BookmarkBorderIcon },
+  { value: 'leyendo', label: 'Leyendo', icon: MenuBookIcon },
+  { value: 'leido', label: 'Leído', icon: CheckIcon },
+  { value: 'general', label: 'Favorito (General)', icon: StarIcon },
+];

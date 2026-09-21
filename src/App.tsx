@@ -17,6 +17,10 @@ import ForumDetailsPage from './pages/ForumDetailsPage';
 import BookCommentsAdmin from './pages/BookCommentsAdmin';
 import ForumCommentsAdmin from './pages/ForumCommentsAdmin';
 
+// Importaciones de Nuevos Módulos (Radio Sábato y Feed Muro)
+import { RadioPlayer } from './components/RadioPlayer';
+import { FeedMuro } from './components/FeedMuro';
+
 // Importación de Ruta Protegida
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -100,6 +104,29 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      {/* Nuevas Rutas: Radio Sábato y Muro de Actividades */}
+      <Route
+        path="/radio"
+        element={
+          <ProtectedRoute>
+            <div className="container mx-auto px-4 py-6">
+              <RadioPlayer esDocenteOAdmin={true} />
+            </div>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/feed"
+        element={
+          <ProtectedRoute>
+            <div className="container mx-auto px-4 py-6">
+              <FeedMuro />
+            </div>
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="/dashboard/forum-comments/:foroId" element={<ForumCommentsAdmin />} />
 
       {/* Ruta principal de administración */}

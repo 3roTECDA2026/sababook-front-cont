@@ -22,6 +22,8 @@ import ForumIcon from '@mui/icons-material/Forum';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
+import RadioIcon from '@mui/icons-material/Radio';
+import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
 import { Link, useNavigate } from 'react-router-dom';
 
 interface MenuItem {
@@ -48,20 +50,22 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
+      { text: 'Radio', icon: <RadioIcon />, path: '/radio' },
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     ];
   } else {
-    // Menú para usuarios normales
+    // Menú para usuarios normales / estudiantes / docentes
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
+      { text: 'Radio Sábato', icon: <RadioIcon />, path: '/radio' },
       { text: 'Favoritos', icon: <FavoriteIcon />, path: '/favoritos' },
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
     ];
   }
-
-  // Nota: El item 'Salir' se maneja fuera del mapeo
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -79,7 +83,11 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
         open={open}
         onClose={onClose}
         transitionDuration={400}
-        slotProps={{
+       ModalProps={{
+          disableEnforceFocus: true,
+         
+        }}
+        slotProps= {{
           paper: {
             sx: {
               width: 240,
@@ -104,14 +112,13 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
               return (
                 <ListItem key={i} disablePadding sx={{ mb: 0.5 }}>
                   <ListItemButton
-                    //Propiedades para navegación con React Router
                     component={Link}
                     to={item.path}
                     onClick={onClose}
                     sx={{
                       borderRadius: 3,
                       bgcolor: isActive ? '#ff8a00' : 'transparent',
-                      color: isActive ? '#fff' : '#4b2c15',
+                      color: isActive ? '#837878' : '#4b2c15',
                       '&:hover': {
                         bgcolor: isActive ? '#ff9e2a' : 'rgba(0,0,0,0.04)',
                       },
@@ -134,7 +141,10 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
         </Box>
 
         <Box textAlign="center" pb={2}>
-          <ListItemButton onClick={() => setConfirmOpen(true)}>
+          <ListItemButton onClick={() => {
+             onClose();           // cierra el Drawer ya
+             setConfirmOpen(true)
+            }}>
             <ListItemIcon sx={{ color: '#4b2c15' }}>
               <LogoutIcon />
             </ListItemIcon>
@@ -147,6 +157,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       <Dialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
+        disableRestoreFocus
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
