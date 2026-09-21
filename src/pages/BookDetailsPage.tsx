@@ -31,7 +31,7 @@ const BookDetailsPage = () => {
   const [currentProgress, setCurrentProgress] = useState<number | null>(null);
 
   const { book, loading: bookLoading, error: bookError } = useBookDetails(id);
-  const { opinions, setOpinions, loading: opinionsLoading, error: opinionsError } = useBookOpinion(id);
+  const { opinions, setOpinions, loading: opinionsLoading } = useBookOpinion(id);
 
   const authorStyle: SxProps<Theme> = {
     fontWeight: 900,
@@ -43,15 +43,12 @@ const BookDetailsPage = () => {
   };
 
   const handleCommentClick = () => setShowCommentBox(!showCommentBox);
-  const handleViewCommentsClick = () => navigate(`/book/${id}/comments`);
   const handleMenuToggle = () => setMenuOpen(true);
   const handleMenuClose = () => setMenuOpen(false);
 
   if (bookLoading || opinionsLoading) return <div>Cargando...</div>;
   if (bookError) return <div>{bookError}</div>;
   if (!book) return <div>No se encontró el libro.</div>;
-
-  const coverImageSrc = book.portada_url?.trim() || undefined;
 
    const handleUpdateProgress = async (newPage: number) => {
     if (!id) return;
@@ -70,6 +67,13 @@ const BookDetailsPage = () => {
       console.error(err);
     }
   };
+  // Mapeo seguro para obtener la URL de portada independiente de la convención de nombres (camelCase / snake_case)
+  const bookWithAlias = book as typeof book & { coverImage?: string; portadaUrl?: string };
+  const coverImageSrc =
+    bookWithAlias.coverImage?.trim() ||
+    bookWithAlias.portadaUrl?.trim() ||
+    book.portada_url?.trim() ||
+    undefined;
 
   return (
     <Box

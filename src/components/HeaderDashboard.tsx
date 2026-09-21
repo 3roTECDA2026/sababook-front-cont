@@ -4,12 +4,13 @@ import { Box, Button, styled, Typography } from '@mui/material';
 
 import NavButton from './NavButton';
 
-export type DashboardView = 'users' | 'books' | 'forums' | 'forumCommentsAdmin';
+export type DashboardView = 'users' | 'books' | 'forums' | 'goals' | 'forumCommentsAdmin';
 
 const titleMap: Partial<Record<DashboardView, string>> = {
   users: 'Usuarios',
   books: 'Libros',
   forums: 'Foros',
+  goals: 'Metas de Lectura',
 };
 
 // 1. Estilo para el botón de "Agregar"

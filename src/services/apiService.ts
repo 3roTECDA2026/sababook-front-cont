@@ -81,3 +81,92 @@ export async function getUserMedals(userId: number | string): Promise<Medal[]> {
 export async function getCatalogoMedals(userId: number | string): Promise<Medal[]> {
   return await apiRequest<Medal[]>(`/medal/catalog/${userId}`);
 }
+
+/**
+ * Helper para obtener headers autenticados con JWT
+ */
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+}
+
+// ========== FUNCIONES PARA METAS DE LECTURA ==========
+
+/**
+ * Obtener las metas del usuario autenticado
+ * @param {number|string} userId
+ */
+export async function getActiveReadingGoal(userId) {
+  if (!userId) return null;
+  return await apiRequest(`/metas-lectura/usuario/${userId}`, {
+    headers: getAuthHeaders(),
+  });
+}
+
+/**
+ * Crear una nueva meta de lectura
+ * @param {object} goalData
+ */
+export async function createReadingGoal(goalData) {
+  const payload = {
+    usuario_id: Number(goalData.usuario_id),
+    periodo_nombre: goalData.periodo_nombre || 'Meta Personal',
+    cantidad_libros: Number(goalData.target_books),
+    fecha_inicio: goalData.start_date,
+    fecha_fin: goalData.end_date,
+  };
+
+  return await apiRequest('/metas-lectura', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Registrar un libro como leído en la meta activa
+ * @param {number|string} bookId 
+ */
+export async function logBookProgress(bookId) {
+  return await apiRequest('/metas-lectura/log-book', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ bookId }),
+  });
+}
+
+/**
+ * Obtener todas las metas del sistema (Panel Admin/Docente)
+ */
+export async function getAllReadingGoals() {
+  return await apiRequest('/metas-lectura', {
+    headers: getAuthHeaders(),
+  });
+}
+
+/**
+ * Actualizar una meta por su ID
+ * @param {number|string} metaId 
+ * @param {object} goalData 
+ */
+export async function updateReadingGoal(metaId, goalData) {
+  return await apiRequest(`/metas-lectura/${metaId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(goalData),
+  });
+}
+
+/**
+ * Eliminar una meta por su ID
+ * @param {number|string} metaId 
+ */
+export async function deleteReadingGoal(metaId) {
+  return await apiRequest(`/metas-lectura/${metaId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+}
