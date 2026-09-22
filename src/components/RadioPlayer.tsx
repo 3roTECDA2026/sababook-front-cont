@@ -1,8 +1,12 @@
 // src/components/RadioPlayer.tsx
 import React from 'react';
-import { useRadio } from '../hooks/useRadio';
+import { useRadio } from '@/hooks/useRadio';
 
-export const RadioPlayer = () => {
+interface RadioPlayerProps {
+  esDocenteOAdmin?: boolean;
+}
+
+export const RadioPlayer = ({ esDocenteOAdmin }: RadioPlayerProps) => {
   const { programa, loading, error } = useRadio();
 
   if (loading) return <div>Cargando transmisión...</div>;

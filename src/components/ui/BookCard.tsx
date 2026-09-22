@@ -23,7 +23,7 @@ import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import CheckIcon from '@mui/icons-material/Check';
 import StarIcon from '@mui/icons-material/Star';
-import type { ReadingStatus } from '../hooks/useReadingStatus';
+import type { ReadingStatus } from '@/hooks/useReadingStatus';
 
 const HORIZONTAL_PADDING = 2; // (Equivale a 16px en el tema de Material-UI)
 

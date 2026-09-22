@@ -15,21 +15,21 @@ import {
 } from '@mui/material';
 import type { AlertColor } from '@mui/material';
 
-import HeaderDashboard from './HeaderDashboard';
-import type { DashboardView } from './HeaderDashboard';
-import UserTable from './UserTable';
-import BookTable from './BookTable';
-import ForumTable from './ForumTable';
-// @ts-ignore
-import GoalTable from './GoalTable'
-import ForumDetail from './ForumDetail';
-import UserForm from './UserForm';
-import type { UserFormData } from './UserForm';
+import HeaderDashboard from './layout/HeaderDashboard';
+import type { DashboardView } from './layout/HeaderDashboard';
+import ForumDetail from './ui/ForumDetail';
+import UserForm from './forms/UserForm';
+import type { UserFormData } from './forms/UserForm';
+import ForumForm from './forms/ForumForm';
+import BookForm from './forms/BookForm';
 import GoalForm from './GoalForm';
-import ForumForm from './ForumForm';
-import BookForm from './BookForm';
-import { API_BASE_URL } from '../environments/api';
-import type { Book, Forum, User } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { Book, Forum, User, ReadingGoal } from '@/types';
+import UserTable from './tables/UserTable';
+import BookTable from './tables/BookTable';
+import ForumTable from './tables/ForumTable';
+// @ts-ignore
+import GoalTable from './GoalTable';
 
 const DashboardContainer = Box;
 
@@ -57,13 +57,13 @@ const Dashboard = () => {
   const [openCreateModal, setOpenCreateModal] = useState<boolean>(false); // Modal para USUARIOS
   const [openCreateBookModal, setOpenCreateBookModal] = useState<boolean>(false); // Modal para LIBROS
 
-const [goals, setGoals] = useState<unknown[]>([]);
-const [goalsLoading, setGoalsLoading] = useState<boolean>(true);
-const [goalsError, setGoalsError] = useState<string | null>(null);
-const [openGoalModal, setOpenGoalModal] = useState<boolean>(false);
-const [goalToEdit, setGoalToEdit] = useState<unknown | null>(null);
-const [openDeleteGoalConfirm, setOpenDeleteGoalConfirm] = useState<boolean>(false);
-const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
+  const [goals, setGoals] = useState<ReadingGoal[]>([]);
+  const [goalsLoading, setGoalsLoading] = useState<boolean>(true);
+  const [goalsError, setGoalsError] = useState<string | null>(null);
+  const [openGoalModal, setOpenGoalModal] = useState<boolean>(false);
+  const [goalToEdit, setGoalToEdit] = useState<ReadingGoal | null>(null);
+  const [openDeleteGoalConfirm, setOpenDeleteGoalConfirm] = useState<boolean>(false);
+  const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
   //  ESTADO CLAVE: Rastrear el libro que se está editando (null si es creación)
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -173,15 +173,15 @@ const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
       setGoalsError(null);
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE_URL}/api/v1/metas-lectura`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) {
-        if (res.status === 403) throw new Error("Acceso denegado.");
-        throw new Error("Error al cargar las metas de lectura");
+        if (res.status === 403) throw new Error('Acceso denegado.');
+        throw new Error('Error al cargar las metas de lectura');
       }
 
-      const data = await res.json();
+      const data: ReadingGoal[] = await res.json();
       setGoals(data);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -377,7 +377,7 @@ const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
     try {
       const response = await fetch(endpoint, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) {
@@ -386,7 +386,7 @@ const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
       }
 
       await fetchGoals();
-      setSnackbar({ open: true, message: `✅ Meta de lectura eliminada correctamente.`, severity: "success" });
+      setSnackbar({ open: true, message: `✅ Meta de lectura eliminada correctamente.`, severity: 'success' });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setGoalsError(msg);
@@ -522,36 +522,36 @@ const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
   };
 
   const handleSaveGoal = async (goalData: { meta_id?: number; id?: number; [key: string]: unknown }) => {
-  setIsApiLoading(true);
-  const token = localStorage.getItem('token');
-  const endpoint = `${API_BASE_URL}/api/v1/metas-lectura/${goalData.meta_id || goalData.id}`;
+    setIsApiLoading(true);
+    const token = localStorage.getItem('token');
+    const endpoint = `${API_BASE_URL}/api/v1/metas-lectura/${goalData.meta_id || goalData.id}`;
 
-  try {
-    const response = await fetch(endpoint, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(goalData),
-    });
+    try {
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(goalData),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Fallo al actualizar la meta (HTTP ${response.status})`);
-    }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Fallo al actualizar la meta (HTTP ${response.status})`);
+      }
 
-    await fetchGoals();
-    setOpenGoalModal(false);
-    setGoalToEdit(null);
-    setSnackbar({ open: true, message: "✅ Meta de lectura actualizada correctamente.", severity: "success" });
-  } catch (err) {
+      await fetchGoals();
+      setOpenGoalModal(false);
+      setGoalToEdit(null);
+      setSnackbar({ open: true, message: '✅ Meta de lectura actualizada correctamente.', severity: 'success' });
+    } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setGoalsError(msg);
     } finally {
-    setIsApiLoading(false);
-  }
-};
+      setIsApiLoading(false);
+    }
+  };
 
   const renderActiveView = () => {
     switch (activeView) {
@@ -586,18 +586,18 @@ const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
           />
         );
       case 'goals':
-  return (
-    <GoalTable
-      goals={goals}
-      loading={goalsLoading}
-      error={goalsError}
-      onDeleteGoal={handleOpenDeleteGoalConfirm}
-      onEditGoal={(goal) => {
-        setGoalToEdit(goal);
-        setOpenGoalModal(true);
-      }}
-    />
-  );
+        return (
+          <GoalTable
+            goals={goals}
+            loading={goalsLoading}
+            error={goalsError}
+            onDeleteGoal={handleOpenDeleteGoalConfirm}
+            onEditGoal={(goal: ReadingGoal) => {
+              setGoalToEdit(goal);
+              setOpenGoalModal(true);
+            }}
+          />
+        );
       default:
         return null;
     }
@@ -690,33 +690,33 @@ const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
       </Modal>
 
       {/* Modal Meta de Lectura */}
-<Modal open={openGoalModal} onClose={() => setOpenGoalModal(false)}>
-  <Box
-    sx={{
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      outline: "none",
-    }}
-  >
-    {goalToEdit && (
-      <GoalForm
-        goalToEdit={goalToEdit}
-        onSave={handleSaveGoal}
-        onCancel={() => setOpenGoalModal(false)}
-      />
-    )}
-  </Box>
-</Modal>
+      <Modal open={openGoalModal} onClose={() => setOpenGoalModal(false)}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            outline: 'none',
+          }}
+        >
+          {goalToEdit && (
+            <GoalForm
+              goalToEdit={goalToEdit}
+              onSave={handleSaveGoal}
+              onCancel={() => setOpenGoalModal(false)}
+            />
+          )}
+        </Box>
+      </Modal>
 
       <Modal
         open={openForumDetail}
         onClose={() => setOpenForumDetail(false)}
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <Box
@@ -783,7 +783,7 @@ const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Diálogo Eliminar Meta */}
       <Dialog open={openDeleteGoalConfirm} onClose={handleCloseDeleteGoalConfirm}>
         <DialogTitle>Confirmar Eliminación de la Meta</DialogTitle>
@@ -801,7 +801,7 @@ const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Snackbar para notificaciones */}
       <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleSnackbarClose}>
         <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>

@@ -1,13 +1,10 @@
-import { useState, useEffect, ReactNode, useCallback } from "react";
-import { API_BASE_URL } from "../environments/api";
-import {
-  AuthContext,
-  AuthContextType,
-  AuthResult,
-} from "./AuthContextDefinition";
-import { useNavigate } from "react-router-dom";
-import type { User } from "../types";
-import { parseJsonResponse } from "../utils/api"; // Importación desde el archivo utilitario
+// src/contexts/AuthContext.tsx
+import { useState, useEffect, ReactNode, useCallback } from 'react';
+import { API_BASE_URL } from '@/environments/api';
+import { AuthContext, AuthContextType, AuthResult } from './AuthContextDefinition';
+import { useNavigate } from 'react-router-dom';
+import type { User } from '@/types';
+import { parseJsonResponse } from '@/utils/api';
 
 interface AuthProviderProps {
   children: ReactNode;

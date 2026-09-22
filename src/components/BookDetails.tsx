@@ -2,8 +2,8 @@
 import React from 'react';
 import { Box, Typography, Rating, Divider, Chip, Paper, useTheme } from '@mui/material';
 
-import AppHeader from './AppHeader';
-import NavButton from './NavButton';
+import AppHeader from './layout/AppHeader';
+import NavButton from './ui/NavButton';
 
 interface MockBookData {
   title: string;

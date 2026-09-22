@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import BookRatingSection from './BookRatingSection';
-import type { Book } from '../types';
+import type { Book } from '@/types';
 
 type BookWithAliases = Book & {
   title?: string;

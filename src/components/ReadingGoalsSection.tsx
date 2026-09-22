@@ -1,14 +1,27 @@
+// src/components/ReadingGoalsSection.tsx
 import React, { useState, useEffect } from 'react';
-import { Box, Card, CardContent, Typography, LinearProgress, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { getActiveReadingGoal, createReadingGoal } from '../services/apiService';
-import { useAuth } from '../hooks/useAuth';
-import { ReadingGoal } from '../types';
-const [goal, setGoal] = useState<ReadingGoal | null>(null);
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  LinearProgress,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
+import { getActiveReadingGoal, createReadingGoal } from '@/services/apiService';
+import { useAuth } from '@/hooks/useAuth';
+import type { ReadingGoal } from '@/types';
+
 const ReadingGoalsSection = () => {
   const { user } = useAuth();
-  const [goal, setGoal] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [openModal, setOpenModal] = useState(false);
+  const [goal, setGoal] = useState<ReadingGoal | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [openModal, setOpenModal] = useState<boolean>(false);
 
   // Genera la fecha de mañana en formato YYYY-MM-DD
   const fechaMananaStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
@@ -24,10 +37,8 @@ const ReadingGoalsSection = () => {
       setLoading(true);
       const userId = user?.usuario_id;
       if (userId) {
-        const res = await getActiveReadingGoal(userId);
-        const data = res?.data || res;
-        const activeGoal = Array.isArray(data) ? data[0] : data;
-        setGoal(activeGoal || null);
+        const data = await getActiveReadingGoal(userId);
+        setGoal(data || null);
       }
     } catch (err) {
       console.error('Error al cargar la meta:', err);
@@ -45,6 +56,7 @@ const ReadingGoalsSection = () => {
   const handleCreateGoal = async () => {
     try {
       const userId = user?.usuario_id;
+      if (!userId) return;
 
       // Calculamos el inicio para mañana a primera hora (00:00:00 hs)
       const manana = new Date();
@@ -73,7 +85,7 @@ const ReadingGoalsSection = () => {
   const targetCount = Number(goal?.cantidad_libros || goal?.target_books || 0);
   const currentCount = Number(goal?.libros_leidos ?? goal?.progreso ?? goal?.current_books ?? 0);
   const progress = targetCount > 0 ? Math.min((currentCount / targetCount) * 100, 100) : 0;
-  
+
   // Condición para saber si la meta fue alcanzada
   const isCompleted = targetCount > 0 && currentCount >= targetCount;
 
@@ -95,48 +107,47 @@ const ReadingGoalsSection = () => {
               </Typography>
             </Box>
 
-            <LinearProgress 
-              variant="determinate" 
-              value={progress} 
-              sx={{ 
-                height: 10, 
-                borderRadius: 5, 
-                backgroundColor: '#f0f0f0', 
-                '& .MuiLinearProgress-bar': { backgroundColor: isCompleted ? '#2e7d32' : '#f25600' } 
-              }} 
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={{
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: '#f0f0f0',
+                '& .MuiLinearProgress-bar': { backgroundColor: isCompleted ? '#2e7d32' : '#f25600' },
+              }}
             />
 
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, textAlign: 'right' }}>
-              Período: {new Date(goal.fecha_inicio || goal.start_date).toLocaleDateString()} - {new Date(goal.fecha_fin || goal.end_date).toLocaleDateString()}
+              Período: {new Date(goal.fecha_inicio || goal.start_date || '').toLocaleDateString()} -{' '}
+              {new Date(goal.fecha_fin || goal.end_date || '').toLocaleDateString()}
             </Typography>
 
             {/* Cartel de éxito si la meta está completada */}
             {isCompleted && (
-              <Box 
-                sx={{ 
-                  backgroundColor: '#e8f5e9', 
-                  color: '#2e7d32', 
-                  p: 2, 
-                  borderRadius: 2, 
-                  mt: 2, 
+              <Box
+                sx={{
+                  backgroundColor: '#e8f5e9',
+                  color: '#2e7d32',
+                  p: 2,
+                  borderRadius: 2,
+                  mt: 2,
                   textAlign: 'center',
-                  border: '1px solid #a5d6a7'
+                  border: '1px solid #a5d6a7',
                 }}
               >
-                <Typography fontWeight="bold">
-                  ¡Meta alcanzada exitosamente! 🎉
-                </Typography>
-                <Button 
-                  variant="contained" 
+                <Typography fontWeight="bold">¡Meta alcanzada exitosamente! 🎉</Typography>
+                <Button
+                  variant="contained"
                   size="small"
                   onClick={() => setOpenModal(true)}
-                  sx={{ 
-                    mt: 1.5, 
-                    backgroundColor: '#2e7d32', 
-                    '&:hover': { backgroundColor: '#1b5e20' }, 
-                    borderRadius: '20px', 
+                  sx={{
+                    mt: 1.5,
+                    backgroundColor: '#2e7d32',
+                    '&:hover': { backgroundColor: '#1b5e20' },
+                    borderRadius: '20px',
                     fontWeight: 'bold',
-                    textTransform: 'none'
+                    textTransform: 'none',
                   }}
                 >
                   Crear nueva meta
@@ -149,8 +160,8 @@ const ReadingGoalsSection = () => {
             <Typography variant="body2" color="text.secondary" mb={2}>
               No tenés ninguna meta activa para este período.
             </Typography>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={() => setOpenModal(true)}
               sx={{ backgroundColor: '#f25600', '&:hover': { backgroundColor: '#cc4800' }, borderRadius: '20px', fontWeight: 'bold' }}
             >
@@ -171,7 +182,7 @@ const ReadingGoalsSection = () => {
               onChange={(e) => setFormData({ ...formData, target_books: parseInt(e.target.value) || 1 })}
               fullWidth
             />
-            
+
             {/* FECHA DE INICIO CON BLOQUEO A PARTIR DE MAÑANA */}
             <TextField
               label="Fecha de inicio"
@@ -196,7 +207,9 @@ const ReadingGoalsSection = () => {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenModal(false)} color="inherit">Cancelar</Button>
+          <Button onClick={() => setOpenModal(false)} color="inherit">
+            Cancelar
+          </Button>
           <Button onClick={handleCreateGoal} variant="contained" sx={{ backgroundColor: '#f25600', '&:hover': { backgroundColor: '#cc4800' } }}>
             Guardar
           </Button>
