@@ -3,16 +3,18 @@ import { useState } from 'react';
 import { Box, Divider, useTheme } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import SideMenu from '@/components/layout/SideMenu';
-import AppHeader from '@/components/layout/AppHeader';
-import NavButton from '@/components/ui/NavButton';
-import { useAuth } from '@/hooks/useAuth';
-import { useBookDetails } from '@/hooks/useBookDetails';
-import { useBookOpinion } from '@/hooks/useBookOpinion';
-import BookDetailsHeader from '@/components/ui/BookDetailsHeader';
-import BookCommentBox from '@/components/BookCommentBox';
-import BookOpinionList from '@/components/ui/BookOpinionList';
-import BookDescription from '@/components/ui/BookDescription';
+import SideMenu from '../components/SideMenu';
+import AppHeader from '../components/AppHeader';
+import NavButton from '../components/NavButton';
+import { useAuth } from '../hooks/useAuth';
+import { useBookDetails } from '../hooks/useBookDetails';
+import { useBookOpinion } from '../hooks/useBookOpinion';
+import BookDetailsHeader from '../components/BookDetailsHeader';
+import BookCommentBox from '../components/BookCommentBox';
+import BookOpinionList from '../components/BookOpinionList';
+import BookDescription from '../components/BookDescription';
+import ReadingProgress from '../components/ReadingProgress';
+import { API_BASE_URL } from '../environments/api';
 
 const ORANGE_COLOR = '#FF6633';
 
@@ -26,6 +28,7 @@ const BookDetailsPage = () => {
   const [showCommentBox, setShowCommentBox] = useState<boolean>(false);
   const [newComment, setNewComment] = useState<string>('');
   const [newRating, setNewRating] = useState<number>(0);
+  const [currentProgress, setCurrentProgress] = useState<number | null>(null);
 
   const { book, loading: bookLoading, error: bookError } = useBookDetails(id);
   const { opinions, setOpinions, loading: opinionsLoading } = useBookOpinion(id);
@@ -47,6 +50,23 @@ const BookDetailsPage = () => {
   if (bookError) return <div>{bookError}</div>;
   if (!book) return <div>No se encontró el libro.</div>;
 
+   const handleUpdateProgress = async (newPage: number) => {
+    if (!id) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/libros/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pagina_actual: newPage }),
+      });
+
+      if (!res.ok) throw new Error('Error al actualizar');
+
+      setCurrentProgress(newPage);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   // Mapeo seguro para obtener la URL de portada independiente de la convención de nombres (camelCase / snake_case)
   const bookWithAlias = book as typeof book & { coverImage?: string; portadaUrl?: string };
   const coverImageSrc =
@@ -76,6 +96,12 @@ const BookDetailsPage = () => {
 
       <Box sx={{ pt: 0 }}>
         <BookDetailsHeader book={book} coverImageSrc={coverImageSrc} authorStyle={authorStyle} />
+
+        {/* Componente de Progreso de Lectura con la prop correcta: onUpdateProgress */}
+        <ReadingProgress
+        currentPage={currentProgress !== null ? currentProgress : ((book as any).pagina_actual ?? 0)}
+        totalPages={(book as any).paginas_totales > 0 ? (book as any).paginas_totales : 100}        onUpdateProgress={handleUpdateProgress}
+        />
 
         {showCommentBox && user && (
           <BookCommentBox
@@ -113,7 +139,6 @@ const BookDetailsPage = () => {
 
         <Divider sx={{ my: 3 }} />
 
-        {/* Lista de opiniones */}
         <BookOpinionList opinions={opinions} theme={theme} />
       </Box>
     </Box>
