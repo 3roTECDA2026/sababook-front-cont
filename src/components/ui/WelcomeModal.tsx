@@ -1,7 +1,7 @@
 // src/components/WelcomeModal.tsx
 import { Modal, Box, Typography, Button, Avatar } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
-import type { User } from '../types';
+import type { User } from '@/types';
 
 const style: SxProps<Theme> = {
   position: 'absolute',

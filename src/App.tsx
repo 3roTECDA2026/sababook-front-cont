@@ -14,11 +14,11 @@ import MyComments from './pages/MyComments';
 import Comments from './pages/Comments';
 import Insignias from './pages/Insignias';
 import ForumDetailsPage from './pages/ForumDetailsPage';
-import BookCommentsAdmin from './components/BookCommentsAdmin';
-import ForumCommentsAdmin from './components/ForumCommentsAdmin';
+import BookCommentsAdmin from './pages/BookCommentsAdmin';
+import ForumCommentsAdmin from './pages/ForumCommentsAdmin';
 
 // Importaciones de Nuevos Módulos (Radio Sábato y Feed Muro)
-import RadioPlayer from './components/RadioPlayer';
+import { RadioPlayer } from './components/RadioPlayer';
 import { FeedMuro } from './components/FeedMuro';
 
 // Importación de Ruta Protegida

@@ -1,20 +1,30 @@
 // src/components/CrearListaModal.tsx
+// Este componente llegó incompleto desde la rama develop (solo tenía imports, sin cuerpo).
+// Se dejó este stub temporal para no bloquear el merge. Falta la implementación real.
+import { Modal, Box, Typography } from '@mui/material';
 
-import {
-  InputLabel,
-  Select,
-  MenuItem,
-  Tabs,
-  Tab,
-  Box,
-  CircularProgress,
-  Alert,
-  IconButton,
-  Typography,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import AutoStoriesIcon from '@mui/icons-material/AutoStories';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+interface CrearListaModalProps {
+  open: boolean;
+  onClose: () => void;
+  onListaCreada?: () => void;
+}
 
-// Importar Book desde la ubicación centralizada
-import { Book, ListaLectura, CreateListaLecturaInput } from '../types';
+export const CrearListaModal = ({ open, onClose }: CrearListaModalProps) => {
+  return (
+    <Modal open={open} onClose={onClose}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          bgcolor: 'background.paper',
+          p: 4,
+          borderRadius: 2,
+        }}
+      >
+        <Typography>Funcionalidad en construcción.</Typography>
+      </Box>
+    </Modal>
+  );
+};

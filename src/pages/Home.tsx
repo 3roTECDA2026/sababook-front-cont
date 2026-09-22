@@ -4,26 +4,24 @@ import RecommendationIcon from "@mui/icons-material/AutoAwesome";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 
-import AppHeader from "../components/AppHeader";
-import BookCard from "../components/BookCard";
-import FeaturedBookSection from "../components/FeaturedBookSection";
-import FilterChips from "../components/FilterChips";
-import SearchBar from "../components/SearchBar";
-import type { SearchBarHandle } from "../components/SearchBar";
-import SideMenu from "../components/SideMenu";
-import WelcomeModal from "../components/WelcomeModal";
-import { CrearListaModal } from "../components/CrearListaModal";
-
-// Importaciones de Servicios
-import { buscarLibros } from "../services/apiService";
-import { normalizarTexto } from "../utils/normalize";
+import AppHeader from '@/components/layout/AppHeader';
+import BookCard from '@/components/ui/BookCard';
+import FeaturedBookSection from '@/components/ui/FeaturedBookSection';
+import FilterChips from '@/components/ui/FilterChips';
+import SearchBar from '@/components/ui/SearchBar';
+import type { SearchBarHandle } from '@/components/ui/SearchBar';
+import SideMenu from '@/components/layout/SideMenu';
+import WelcomeModal from '@/components/ui/WelcomeModal';
+import { CrearListaModal } from '@/components/CrearListaModal';
+import { buscarLibros } from '@/services/apiService';
+import { normalizarTexto } from '@/utils/normalize';
 
 // Importaciones de Lógica (Custom Hooks)
-import { useAuth } from "../hooks/useAuth";
-import { useBookData } from "../hooks/useBookData";
-import { useFavorites } from "../hooks/useFavorites";
-import type { Book, BookFilters } from "../types";
-import { useReadingStatus } from "../hooks/useReadingStatus";
+import { useAuth } from '@/hooks/useAuth';
+import { useBookData } from '@/hooks/useBookData'; // NUEVO: Lógica de carga de libros
+import { useFavorites } from '@/hooks/useFavorites'; // Lógica de manejo de favoritos
+import type { Book, BookFilters } from '@/types';
+import { useReadingStatus } from '@/hooks/useReadingStatus';
 
 export default function Home() {
   // --- Estados de UI ---

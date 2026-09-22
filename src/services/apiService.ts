@@ -1,6 +1,6 @@
 // src/services/apiService.ts
-import { API_BASE_URL } from '../environments/api';
-import type { Book, Medal, BookFilters } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { Book, Medal, BookFilters, ReadingGoal } from '@/types';
 
 /**
  * Función genérica para hacer peticiones HTTP
@@ -95,22 +95,28 @@ function getAuthHeaders() {
 
 // ========== FUNCIONES PARA METAS DE LECTURA ==========
 
+interface CreateGoalData {
+  usuario_id: number | string;
+  periodo_nombre?: string;
+  target_books: number;
+  start_date: string;
+  end_date: string;
+}
+
 /**
  * Obtener las metas del usuario autenticado
- * @param {number|string} userId
  */
-export async function getActiveReadingGoal(userId) {
+export async function getActiveReadingGoal(userId: number | string): Promise<ReadingGoal | null> {
   if (!userId) return null;
-  return await apiRequest(`/metas-lectura/usuario/${userId}`, {
+  return await apiRequest<ReadingGoal>(`/metas-lectura/usuario/${userId}`, {
     headers: getAuthHeaders(),
   });
 }
 
 /**
  * Crear una nueva meta de lectura
- * @param {object} goalData
  */
-export async function createReadingGoal(goalData) {
+export async function createReadingGoal(goalData: CreateGoalData): Promise<ReadingGoal> {
   const payload = {
     usuario_id: Number(goalData.usuario_id),
     periodo_nombre: goalData.periodo_nombre || 'Meta Personal',
@@ -119,7 +125,7 @@ export async function createReadingGoal(goalData) {
     fecha_fin: goalData.end_date,
   };
 
-  return await apiRequest('/metas-lectura', {
+  return await apiRequest<ReadingGoal>('/metas-lectura', {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -128,10 +134,9 @@ export async function createReadingGoal(goalData) {
 
 /**
  * Registrar un libro como leído en la meta activa
- * @param {number|string} bookId 
  */
-export async function logBookProgress(bookId) {
-  return await apiRequest('/metas-lectura/log-book', {
+export async function logBookProgress(bookId: number | string): Promise<ReadingGoal> {
+  return await apiRequest<ReadingGoal>('/metas-lectura/log-book', {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ bookId }),
@@ -141,19 +146,20 @@ export async function logBookProgress(bookId) {
 /**
  * Obtener todas las metas del sistema (Panel Admin/Docente)
  */
-export async function getAllReadingGoals() {
-  return await apiRequest('/metas-lectura', {
+export async function getAllReadingGoals(): Promise<ReadingGoal[]> {
+  return await apiRequest<ReadingGoal[]>('/metas-lectura', {
     headers: getAuthHeaders(),
   });
 }
 
 /**
  * Actualizar una meta por su ID
- * @param {number|string} metaId 
- * @param {object} goalData 
  */
-export async function updateReadingGoal(metaId, goalData) {
-  return await apiRequest(`/metas-lectura/${metaId}`, {
+export async function updateReadingGoal(
+  metaId: number | string,
+  goalData: Partial<ReadingGoal>
+): Promise<ReadingGoal> {
+  return await apiRequest<ReadingGoal>(`/metas-lectura/${metaId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(goalData),
@@ -162,10 +168,9 @@ export async function updateReadingGoal(metaId, goalData) {
 
 /**
  * Eliminar una meta por su ID
- * @param {number|string} metaId 
  */
-export async function deleteReadingGoal(metaId) {
-  return await apiRequest(`/metas-lectura/${metaId}`, {
+export async function deleteReadingGoal(metaId: number | string): Promise<{ success: boolean }> {
+  return await apiRequest<{ success: boolean }>(`/metas-lectura/${metaId}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });

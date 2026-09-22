@@ -16,7 +16,7 @@ import {
   Grid,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import type { Book } from '../types';
+import type { Book } from '@/types';
 
 // NOTA: Se eliminan useParams y useNavigate ya que el formulario es llamado por un modal y no por una ruta.
 

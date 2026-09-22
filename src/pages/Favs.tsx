@@ -1,13 +1,13 @@
 // src/pages/Favs.tsx
 import { Box, Typography, Tabs, Tab } from '@mui/material';
 import { useState } from 'react';
-import { useFavorites } from '../hooks/useFavorites';
+import { useFavorites } from '@/hooks/useFavorites';
 
-import LibroImage from '../assets/libro.jpg';
-import AppHeader from '../components/AppHeader';
-import BookCard from '../components/BookCard';
-import SideMenu from '../components/SideMenu';
-import { useReadingStatus, type ReadingStatus } from '../hooks/useReadingStatus';
+import LibroImage from '@/assets/libro.jpg';
+import AppHeader from '@/components/layout/AppHeader';
+import BookCard from '@/components/ui/BookCard';
+import SideMenu from '@/components/layout/SideMenu';
+import { useReadingStatus, type ReadingStatus } from '@/hooks/useReadingStatus';
 
 export default function Favs() {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
@@ -22,7 +22,7 @@ export default function Favs() {
   // Handler para toggle
   const handleFavoriteToggle = async (libro_id: number) => {
     const currentlyFavorite = isBookFavorite(libro_id);
-    await toggleFavorite(libro_id, currentlyFavorite);
+    return await toggleFavorite(libro_id, currentlyFavorite);
   };
 
   const visibleBooks = favoriteBooks.filter(

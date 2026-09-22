@@ -1,7 +1,7 @@
 // src/hooks/useForumComments.ts
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import type { ForumComment } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { ForumComment } from '@/types';
 
 export const useForumComments = (foroId: number | string | undefined) => {
   const [comments, setComments] = useState<ForumComment[]>([]);

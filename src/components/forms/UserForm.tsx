@@ -11,7 +11,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import type { User } from '../types';
+import type { User } from '@/types';
 
 // Opciones para los campos de selección
 const roles = ['docente', 'alumno', 'administrador'];

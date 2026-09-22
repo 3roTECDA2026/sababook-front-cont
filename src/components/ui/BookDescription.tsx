@@ -1,7 +1,7 @@
 // src/components/BookDescription.tsx
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import type { Book } from '../types';
+import type { Book } from '@/types';
 
 interface BookDescriptionProps {
   book: Book & { description?: string };
