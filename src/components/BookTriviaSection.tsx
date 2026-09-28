@@ -1,12 +1,12 @@
 // src/components/BookTriviaSection.tsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Typography, Button } from '@mui/material';
 import QuizIcon from '@mui/icons-material/Quiz';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import moment from 'moment';
 import 'moment/locale/es';
-import { API_BASE_URL } from '../environments/api';
-import type { Book, TriviaQuestion, TriviaModo } from '../types';
+import { useBookTrivia } from '../hooks/useBookTrivia';
+import type { Book, TriviaModo } from '../types';
 import TriviaQuestionCard from './TriviaQuestionCard';
 import TriviaQuestionForm from './TriviaQuestionForm';
 import styles from '../styles/trivia.module.css';
@@ -26,81 +26,18 @@ const BookTriviaSection = ({
   deadline = null,
   evaluationId = null,
 }: BookTriviaSectionProps) => {
-  const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { questions, loading, error, addQuestion, deleteQuestion } = useBookTrivia(
+    book.libro_id,
+    mode,
+    evaluationId,
+  );
 
   const isEvaluation = mode === 'evaluacion';
   const evaluationEnded =
     isEvaluation && deadline
       ? moment(`${deadline}T23:59:59`).isBefore(moment())
       : false;
-
-  const loadQuestions = () => {
-    setLoading(true);
-    fetch(`${API_BASE_URL}/api/v1/trivia/libro/${book.libro_id}`)
-      .then((res) => res.json())
-      .then((data: TriviaQuestion[]) => {
-        setQuestions(
-          data.filter(
-            (question) =>
-              question.mode === mode &&
-              (mode !== 'evaluacion' || question.evaluationId === evaluationId),
-          ),
-        );
-      })
-      .catch((err) => {
-        console.error('Error cargando trivia:', err);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    loadQuestions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [book.libro_id, mode, evaluationId]);
-
-  const handleAdd = (input: Omit<TriviaQuestion, 'id'>) => {
-    const token = localStorage.getItem('token');
-    fetch(`${API_BASE_URL}/api/v1/trivia`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ bookId: book.libro_id, evaluationId, ...input }),
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const body = await res.json().catch(() => null);
-          throw new Error(body?.error || 'Error al guardar la pregunta.');
-        }
-        return res.json();
-      })
-      .then((created: TriviaQuestion) => {
-        setQuestions((prev) => [...prev, created]);
-      })
-      .catch((err) => {
-        alert(err.message);
-      });
-  };
-
-  const handleDelete = (id: number) => {
-    const token = localStorage.getItem('token');
-    fetch(`${API_BASE_URL}/api/v1/trivia/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Error al eliminar la pregunta.');
-        }
-        setQuestions((prev) => prev.filter((question) => question.id !== id));
-      })
-      .catch((err) => {
-        alert(err.message);
-      });
-  };
 
   return (
     <div>
@@ -135,6 +72,12 @@ const BookTriviaSection = ({
         </Typography>
       )}
 
+      {error && (
+        <Typography variant="body2" color="error" mb={2}>
+          {error}
+        </Typography>
+      )}
+
       {loading ? (
         <Typography variant="body2" className={styles.emptyText} mb={2}>
           Cargando preguntas...
@@ -150,7 +93,7 @@ const BookTriviaSection = ({
               key={question.id}
               question={question}
               index={index}
-              onDelete={evaluationEnded ? undefined : handleDelete}
+              onDelete={evaluationEnded ? undefined : deleteQuestion}
             />
           ))}
         </div>
@@ -159,7 +102,7 @@ const BookTriviaSection = ({
       <TriviaQuestionForm
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onAdd={handleAdd}
+        onAdd={addQuestion}
         mode={mode}
         deadline={deadline}
       />

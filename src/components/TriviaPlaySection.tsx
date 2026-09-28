@@ -1,5 +1,4 @@
 // src/components/TriviaPlaySection.tsx
-import { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -20,9 +19,8 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import moment from 'moment';
 import 'moment/locale/es';
-import { API_BASE_URL } from '../environments/api';
 import { useAuth } from '../hooks/useAuth';
-import type { Evaluacion, PlayAnswer, PlayCheckResponse, PlayQuestion, TriviaModo } from '../types';
+import { useTriviaPlay } from '../hooks/useTriviaPlay';
 import styles from '../styles/trivia.module.css';
 
 moment.locale('es');
@@ -179,136 +177,30 @@ const ClozeControl = ({ text, values, wordBank, onChange }: ClozeControlProps) =
 };
 
 const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
-  const { token, user, loading: authLoading } = useAuth();
-  const [triviaQuestions, setTriviaQuestions] = useState<PlayQuestion[]>([]);
-  const [activeEvaluation, setActiveEvaluation] = useState<Evaluacion | null>(null);
-  const [answered, setAnswered] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [phase, setPhase] = useState<'entry' | 'play' | 'result'>('entry');
-  const [playMode, setPlayMode] = useState<TriviaModo>('trivia');
-  const [playQuestions, setPlayQuestions] = useState<PlayQuestion[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, PlayAnswer>>({});
-  const [checking, setChecking] = useState(false);
-  const [result, setResult] = useState<PlayCheckResponse | null>(null);
+  const { token, loading: authLoading } = useAuth();
+  const {
+    triviaQuestions,
+    activeEvaluation,
+    answered,
+    loading,
+    hasContent,
+    isStudent,
+    phase,
+    playMode,
+    playQuestions,
+    currentIndex,
+    current,
+    answers,
+    checking,
+    result,
+    startPlay,
+    setAnswerFor,
+    goToNext,
+    goToPrev,
+    backToEntry,
+    submit,
+  } = useTriviaPlay(bookId);
 
-  useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    Promise.all([
-      fetch(`${API_BASE_URL}/api/v1/trivia/jugar/libro/${bookId}`).then((res) => res.json()),
-      fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/libro/${bookId}`).then((res) => res.json()),
-    ])
-      .then(([questions, evaluations]: [PlayQuestion[], Evaluacion[]]) => {
-        if (!mounted) return;
-        setTriviaQuestions(questions);
-        const active = evaluations.find((evaluation) => {
-          if (!evaluation.deadline) return true;
-          return moment(`${evaluation.deadline}T23:59:59`).isSameOrAfter(moment());
-        });
-        setActiveEvaluation(active ?? null);
-      })
-      .catch((err) => {
-        console.error('Error cargando trivia del libro:', err);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [bookId]);
-
-  useEffect(() => {
-    if (!activeEvaluation || !token) {
-      setAnswered(null);
-      return;
-    }
-    let mounted = true;
-    fetch(`${API_BASE_URL}/api/v1/trivia/jugar/evaluacion/${activeEvaluation.evaluationId}/status`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => (res.ok ? res.json() : { answered: false }))
-      .then((data: { answered: boolean }) => {
-        if (mounted) setAnswered(data.answered);
-      })
-      .catch(() => {
-        if (mounted) setAnswered(null);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [activeEvaluation, token]);
-
-  const hasContent = triviaQuestions.length > 0 || !!activeEvaluation;
-
-  const startPlay = async (mode: 'trivia' | 'evaluacion') => {
-    let questions: PlayQuestion[] = [];
-    if (mode === 'evaluacion' && activeEvaluation) {
-      const res = await fetch(
-        `${API_BASE_URL}/api/v1/trivia/jugar/evaluacion/${activeEvaluation.evaluationId}`,
-      );
-      questions = await res.json();
-    } else {
-      questions = triviaQuestions;
-    }
-
-    setPlayQuestions(questions);
-    setPlayMode(mode);
-    setAnswers({});
-    setCurrentIndex(0);
-    setResult(null);
-    setChecking(false);
-    setPhase('play');
-  };
-
-  const setAnswerFor = (questionId: number, answer: PlayAnswer) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: answer }));
-  };
-
-  const current: PlayQuestion | undefined = playQuestions[currentIndex];
-
-  const submit = async () => {
-    setChecking(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/jugar/check`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          answers: playQuestions.map((question) => ({
-            questionId: question.id,
-            answer: answers[question.id] ?? {},
-          })),
-          evaluationId: playMode === 'evaluacion' ? activeEvaluation?.evaluationId : undefined,
-        }),
-      });
-
-      if (res.status === 409) {
-        setPhase('entry');
-        setAnswered(true);
-        alert('Ya respondiste esta evaluación. No se pueden volver a enviar respuestas.');
-        return;
-      }
-      if (!res.ok) {
-        throw new Error('No se pudo corregir la trivia.');
-      }
-
-      const data: PlayCheckResponse = await res.json();
-      setResult(data);
-      setPhase('result');
-      if (playMode === 'evaluacion') setAnswered(true);
-    } catch (err) {
-      console.error('Error corrigiendo respuestas:', err);
-      alert('No se pudo corregir la trivia.');
-    } finally {
-      setChecking(false);
-    }
-  };
-
-  const isStudent = Number(user?.rol) === 1 || user?.rol_id === 1;
   if (authLoading || !isStudent || loading || !hasContent) return null;
 
   const formatLabels: Record<string, string> = {
@@ -373,7 +265,7 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
   }
 
   return (
-    <Modal open onClose={() => setPhase('entry')} aria-labelledby="trivia-play-modal">
+    <Modal open onClose={backToEntry} aria-labelledby="trivia-play-modal">
       <Box className={styles.formModal}>
         {phase === 'play' && current && (
           <>
@@ -434,7 +326,7 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
                 variant="text"
                 color="inherit"
                 disabled={currentIndex === 0}
-                onClick={() => setCurrentIndex((prev) => prev - 1)}
+                onClick={goToPrev}
               >
                 Anterior
               </Button>
@@ -442,7 +334,7 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
                 <Button
                   variant="contained"
                   className={styles.buttonOrange}
-                  onClick={() => setCurrentIndex((prev) => prev + 1)}
+                  onClick={goToNext}
                 >
                   Siguiente
                 </Button>
@@ -527,10 +419,10 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
           )}
 
           <Box display="flex" gap={2} mt={2}>
-              <Button variant="contained" className={styles.buttonOrange} onClick={() => setPhase('entry')}>
-                Volver
-              </Button>
-            </Box>
+            <Button variant="contained" className={styles.buttonOrange} onClick={backToEntry}>
+              Volver
+            </Button>
+          </Box>
           </>
         )}
       </Box>

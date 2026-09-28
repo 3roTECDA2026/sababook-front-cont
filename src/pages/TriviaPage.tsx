@@ -17,8 +17,8 @@ import SideMenu from '../components/SideMenu';
 import BookTriviaSection from '../components/BookTriviaSection';
 import EvaluationResponsesDialog from '../components/EvaluationResponsesDialog';
 import { useBookData } from '../hooks/useBookData';
-import { API_BASE_URL } from '../environments/api';
-import type { Book, Evaluacion, TriviaModo } from '../types';
+import { useEvaluations } from '../hooks/useEvaluations';
+import type { Book, TriviaModo } from '../types';
 import styles from '../styles/trivia.module.css';
 
 interface TriviaSelection {
@@ -32,9 +32,9 @@ const TriviaPage = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [selection, setSelection] = useState<TriviaSelection | null>(null);
   const { books, loading } = useBookData();
+  const { loading: evaluationsLoading, fetchEvaluations, createEvaluation } = useEvaluations();
 
   const [evaluationDialogOpen, setEvaluationDialogOpen] = useState(false);
-  const [evaluationBusy, setEvaluationBusy] = useState(false);
   const [evaluationBook, setEvaluationBook] = useState<Book | null>(null);
   const [deadline, setDeadline] = useState('');
 
@@ -44,43 +44,28 @@ const TriviaPage = () => {
   const handleMenuClose = () => setMenuOpen(false);
 
   const openResponses = async (book: Book) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/libro/${book.libro_id}`);
-      const evaluaciones: Evaluacion[] = await res.json();
-      setResponsesEvaluationId(evaluaciones.length > 0 ? evaluaciones[0].evaluationId : null);
-    } catch (err) {
-      console.error('Error cargando evaluaciones:', err);
-      setResponsesEvaluationId(null);
-    }
+    const evaluaciones = await fetchEvaluations(book.libro_id);
+    setResponsesEvaluationId(evaluaciones.length > 0 ? evaluaciones[0].evaluationId : null);
     setResponsesOpen(true);
   };
 
   const openOrResumeEvaluation = async (book: Book) => {
-    setEvaluationBusy(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/libro/${book.libro_id}`);
-      const evaluaciones: Evaluacion[] = await res.json();
+    const evaluaciones = await fetchEvaluations(book.libro_id);
 
-      if (evaluaciones.length > 0) {
-        const evaluacion = evaluaciones[0];
-        setSelection({
-          book,
-          mode: 'evaluacion',
-          deadline: evaluacion.deadline,
-          evaluationId: evaluacion.evaluationId,
-        });
-        return;
-      }
-
-      setEvaluationBook(book);
-      setDeadline('');
-      setEvaluationDialogOpen(true);
-    } catch (err) {
-      console.error('Error cargando evaluaciones:', err);
-      alert('No se pudieron cargar las evaluaciones del libro.');
-    } finally {
-      setEvaluationBusy(false);
+    if (evaluaciones.length > 0) {
+      const evaluacion = evaluaciones[0];
+      setSelection({
+        book,
+        mode: 'evaluacion',
+        deadline: evaluacion.deadline,
+        evaluationId: evaluacion.evaluationId,
+      });
+      return;
     }
+
+    setEvaluationBook(book);
+    setDeadline('');
+    setEvaluationDialogOpen(true);
   };
 
   const enterEvaluationMode = async () => {
@@ -90,34 +75,21 @@ const TriviaPage = () => {
       return;
     }
 
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ bookId: evaluationBook.libro_id, deadline }),
-      });
-      if (!res.ok) {
-        throw new Error('No se pudo crear la evaluación.');
-      }
-      const evaluacion: Evaluacion = await res.json();
-
-      setSelection({
-        book: evaluationBook,
-        mode: 'evaluacion',
-        deadline: evaluacion.deadline,
-        evaluationId: evaluacion.evaluationId,
-      });
-      setEvaluationDialogOpen(false);
-      setEvaluationBook(null);
-      setDeadline('');
-    } catch (err) {
-      console.error('Error creando evaluación:', err);
-      alert(err instanceof Error ? err.message : 'No se pudo crear la evaluación.');
+    const evaluacion = await createEvaluation(evaluationBook.libro_id, deadline);
+    if (!evaluacion) {
+      alert('No se pudo crear la evaluación.');
+      return;
     }
+
+    setSelection({
+      book: evaluationBook,
+      mode: 'evaluacion',
+      deadline: evaluacion.deadline,
+      evaluationId: evaluacion.evaluationId,
+    });
+    setEvaluationDialogOpen(false);
+    setEvaluationBook(null);
+    setDeadline('');
   };
 
   const selectBook = (book: Book) => {
@@ -162,7 +134,7 @@ const TriviaPage = () => {
                     size="small"
                     className={styles.evalButton}
                     startIcon={<EventNoteIcon />}
-                    disabled={evaluationBusy}
+                    disabled={evaluationsLoading}
                     onClick={() => openOrResumeEvaluation(book)}
                   >
                     Evaluación

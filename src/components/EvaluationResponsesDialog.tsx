@@ -20,7 +20,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import moment from 'moment';
 import 'moment/locale/es';
-import { API_BASE_URL } from '../environments/api';
+import { useEvaluationAttempts } from '../hooks/useEvaluationAttempts';
 import type { TriviaAttempt, PlayAnswer, PlayQuestion } from '../types';
 import styles from '../styles/trivia.module.css';
 
@@ -74,33 +74,11 @@ const renderCorrectAnswer = (question: PlayQuestion, solution: PlayAnswer | null
 };
 
 const EvaluationResponsesDialog = ({ open, onClose, evaluationId }: EvaluationResponsesDialogProps) => {
-  const [attempts, setAttempts] = useState<TriviaAttempt[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { attempts, loading } = useEvaluationAttempts(open, evaluationId);
   const [selected, setSelected] = useState<TriviaAttempt | null>(null);
 
   useEffect(() => {
-    if (!open || !evaluationId) return;
-    let mounted = true;
-    setLoading(true);
-    setSelected(null);
-    const token = localStorage.getItem('token');
-    fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/${evaluationId}/attempts`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: TriviaAttempt[]) => {
-        if (mounted) setAttempts(data);
-      })
-      .catch((err) => {
-        console.error('Error cargando respuestas:', err);
-        if (mounted) setAttempts([]);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
+    if (open) setSelected(null);
   }, [open, evaluationId]);
 
   const handleClose = () => {
