@@ -20,6 +20,8 @@ bun.lockb
 
 # Environment variables
 .env
+.env.*
+!.env.example
 .env.*.local
 
 # Editor directories and files
@@ -32,3 +34,6 @@ bun.lockb
 *.njsproj
 *.sln
 *.sw?
+
+# Test and coverage output
+coverage/

@@ -3,17 +3,17 @@ import { useState } from 'react';
 import { Box, Divider, useTheme } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import SideMenu from '../components/SideMenu';
-import AppHeader from '../components/AppHeader';
-import NavButton from '../components/NavButton';
-import { useAuth } from '../hooks/useAuth';
-import { useBookDetails } from '../hooks/useBookDetails';
-import { useBookOpinion } from '../hooks/useBookOpinion';
-import BookDetailsHeader from '../components/BookDetailsHeader';
-import BookCommentBox from '../components/BookCommentBox';
-import BookOpinionList from '../components/BookOpinionList';
-import BookDescription from '../components/BookDescription';
-import TriviaPlaySection from '../components/TriviaPlaySection';
+import SideMenu from '@/components/layout/SideMenu';
+import AppHeader from '@/components/layout/AppHeader';
+import NavButton from '@/components/ui/NavButton';
+import { useAuth } from '@/hooks/useAuth';
+import { useBookDetails } from '@/hooks/useBookDetails';
+import { useBookOpinion } from '@/hooks/useBookOpinion';
+import BookDetailsHeader from '@/components/ui/BookDetailsHeader';
+import BookCommentBox from '@/components/BookCommentBox';
+import BookOpinionList from '@/components/ui/BookOpinionList';
+import BookDescription from '@/components/ui/BookDescription';
+import TriviaPlaySection from '@/components/ui/TriviaPlaySection';
 
 const ORANGE_COLOR = '#FF6633';
 
@@ -29,7 +29,7 @@ const BookDetailsPage = () => {
   const [newRating, setNewRating] = useState<number>(0);
 
   const { book, loading: bookLoading, error: bookError } = useBookDetails(id);
-  const { opinions, setOpinions, loading: opinionsLoading, error: opinionsError } = useBookOpinion(id);
+  const { opinions, setOpinions, loading: opinionsLoading } = useBookOpinion(id);
 
   const authorStyle: SxProps<Theme> = {
     fontWeight: 900,
@@ -41,7 +41,6 @@ const BookDetailsPage = () => {
   };
 
   const handleCommentClick = () => setShowCommentBox(!showCommentBox);
-  const handleViewCommentsClick = () => navigate(`/book/${id}/comments`);
   const handleMenuToggle = () => setMenuOpen(true);
   const handleMenuClose = () => setMenuOpen(false);
 
@@ -49,8 +48,13 @@ const BookDetailsPage = () => {
   if (bookError) return <div>{bookError}</div>;
   if (!book) return <div>No se encontró el libro.</div>;
 
-  const bookWithAlias = book as typeof book & { coverImage?: string };
-  const coverImageSrc = bookWithAlias.coverImage?.trim() || book.portada_url?.trim() || undefined;
+  // Mapeo seguro para obtener la URL de portada independiente de la convención de nombres (camelCase / snake_case)
+  const bookWithAlias = book as typeof book & { coverImage?: string; portadaUrl?: string };
+  const coverImageSrc =
+    bookWithAlias.coverImage?.trim() ||
+    bookWithAlias.portadaUrl?.trim() ||
+    book.portada_url?.trim() ||
+    undefined;
 
   return (
     <Box
@@ -89,7 +93,7 @@ const BookDetailsPage = () => {
             setNewRating={setNewRating}
             setNewComment={setNewComment}
             setShowCommentBox={setShowCommentBox}
-            setOpinions={setOpinions} // Actualiza la lista de opiniones en tiempo real
+            setOpinions={setOpinions}
           />
         )}
 

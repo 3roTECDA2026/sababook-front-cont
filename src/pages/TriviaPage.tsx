@@ -12,10 +12,10 @@ import {
 import QuizIcon from '@mui/icons-material/Quiz';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 
-import AppHeader from '../components/AppHeader';
-import SideMenu from '../components/SideMenu';
-import BookTriviaSection from '../components/BookTriviaSection';
-import EvaluationResponsesDialog from '../components/EvaluationResponsesDialog';
+import AppHeader from '@/components/layout/AppHeader';
+import SideMenu from '@/components/layout/SideMenu';
+import BookTriviaSection from '@/components/ui/BookTriviaSection';
+import EvaluationResponsesDialog from '@/components/ui/EvaluationResponsesDialog';
 import { useBookData } from '../hooks/useBookData';
 import { useEvaluations } from '../hooks/useEvaluations';
 import type { Book, TriviaModo } from '../types';

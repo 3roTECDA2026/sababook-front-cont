@@ -1,7 +1,7 @@
 // src/hooks/useBookOpinion.ts
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import type { Opinion, OpinionAPI } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { Opinion, OpinionAPI } from '@/types';
 
 export const useBookOpinion = (libroId: number | string | undefined) => {
   const [opinions, setOpinions] = useState<Opinion[]>([]);

@@ -1,8 +1,8 @@
 // src/hooks/useFavorites.ts
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
-import { API_BASE_URL } from '../environments/api';
-import type { Book } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { Book } from '@/types';
 
 export function useFavorites() {
   const [favoriteBooks, setFavoriteBooks] = useState<Book[]>([]);
