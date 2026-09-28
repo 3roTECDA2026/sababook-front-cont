@@ -21,6 +21,7 @@ const DEFAULT_FEATURED_BOOK: FeaturedBook = {
 export function useBookData() {
   const [books, setBooks] = useState<Book[]>([]);
   const [featuredBook, setFeaturedBook] = useState<Partial<FeaturedBook>>({});
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/v1/libros`)
@@ -48,8 +49,11 @@ export function useBookData() {
       .catch((err) => {
         console.error('Error cargando libros:', err);
         // Opcional: manejar estado de error
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
-  return { books, setBooks, featuredBook, setFeaturedBook };
+  return { books, setBooks, featuredBook, setFeaturedBook, loading };
 }
