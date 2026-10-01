@@ -1,7 +1,7 @@
 // src/hooks/useForumDetail.ts
 import { useEffect, useState } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import type { ForumDetail } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { ForumDetail } from '@/types';
 
 /**
  * Hook para obtener los datos de un foro por ID
