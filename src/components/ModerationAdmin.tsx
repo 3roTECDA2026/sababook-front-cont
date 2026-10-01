@@ -1,5 +1,5 @@
 import { Box, Typography, TextField, Button, Alert, Card, CardContent, CircularProgress, Chip } from '@mui/material';
-import { useModeration } from '../hooks/useModeration';
+import { useModeration } from '@/hooks/useModeration';
 
 const ModerationAdmin = () => {
   const {

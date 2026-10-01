@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../environments/api';
+import { API_BASE_URL } from '@/environments/api';
 
 export interface Incidencia {
   incidencia_id: number;
