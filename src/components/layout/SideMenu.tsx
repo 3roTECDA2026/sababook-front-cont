@@ -45,7 +45,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
 
   let menuItems: MenuItem[];
 
-  if (userRolId == '3') {
+  if (userRolId === '1' || userRolId === '3') {
     // Menú para administradores
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
