@@ -1,21 +1,16 @@
 // src/components/ui/FeaturedBookSection.tsx
 import { Box, Typography } from '@mui/material';
 import BookCard from './BookCard';
-import type { FeaturedBook } from '@/types';
+import type { FeaturedBook, Book } from '@/types';
 import type { ReadingStatus } from '@/hooks/useReadingStatus';
-// import LibroImage from '../assets/libro.jpg'
 
-type FeaturedBookData = Partial<FeaturedBook> & {
-  autor?: string;
-  genero?: string;
-  rating?: number;
-};
+type FeaturedBookData = Partial<FeaturedBook & Book>;
 
 interface FeaturedBookSectionProps {
   featuredBook: FeaturedBookData;
-  handleFavoriteToggle: (libroId: number) => boolean | Promise<boolean>;
+  handleFavoriteToggle: (bookId: number) => boolean | Promise<boolean>;
   isFavorite: boolean;
-  handleVerMas: (libroId: number | null | undefined) => void;
+  handleViewMore: (bookId: number | null | undefined) => void;
   readingStatus: ReadingStatus;
   onReadingStatusChange: (status: ReadingStatus) => void;
 }
@@ -24,11 +19,11 @@ export default function FeaturedBookSection({
   featuredBook,
   handleFavoriteToggle,
   isFavorite,
-  handleVerMas,
+  handleViewMore,
   readingStatus,
   onReadingStatusChange,
 }: FeaturedBookSectionProps) {
-  //const bookId = featuredBook.id || featuredBook.libro_id;
+  const currentBookId = featuredBook.bookId || featuredBook.id;
 
   return (
     <>
@@ -39,21 +34,20 @@ export default function FeaturedBookSection({
       <Box display="flex" justifyContent="left" mt={2} mb={3}>
         <BookCard
           featured={true}
-          image={featuredBook.portada_url}
-          title={featuredBook.titulo}
-          autor={featuredBook.autor}
-          gender={featuredBook.genero}
-          rating={featuredBook.calificacion_promedio || featuredBook.rating}
+          image={featuredBook.coverUrl}
+          title={featuredBook.title}
+          author={featuredBook.author}
+          genre={featuredBook.genre}
+          rating={featuredBook.averageRating}
           isFavorite={isFavorite}
           onFavoriteToggle={() => {
-            if (!featuredBook.libro_id) return false;
-            return handleFavoriteToggle(featuredBook.libro_id);
+            if (!currentBookId) return false;
+            return handleFavoriteToggle(currentBookId);
           }}
-          // bookId={bookId}
-          libro_id={featuredBook.libro_id}
+          bookId={currentBookId}
           readingStatus={readingStatus}
           onReadingStatusChange={onReadingStatusChange}
-          onVerMas={() => handleVerMas(featuredBook.libro_id)}
+          onViewMore={() => handleViewMore(currentBookId)}
         />
       </Box>
     </>

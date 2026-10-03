@@ -30,8 +30,8 @@ const HORIZONTAL_PADDING = 2; // (Equivale a 16px en el tema de Material-UI)
 interface BookCardProps {
   image?: string;
   title?: string;
-  autor?: string;
-  gender?: string;
+  author?: string;
+  genre?: string;
   description?: string;
   rating?: number;
   featured?: boolean;
@@ -41,17 +41,16 @@ interface BookCardProps {
   onReadingStatusChange?: (status: ReadingStatus) => void;
   showReadingStatusControl?: boolean;
   includeGeneralStatus?: boolean;
-  // bookId, // Esto esta de mas
-  libro_id?: number | null;
-  onVerMas?: () => void;
+  bookId?: number | null;
+  onViewMore?: () => void;
   progress?: number;
 }
 
 export default function BookCard({
   image,
   title,
-  autor,
-  gender,
+  author,
+  genre,
   description,
   rating,
   featured = false,
@@ -61,14 +60,12 @@ export default function BookCard({
   onReadingStatusChange,
   showReadingStatusControl = false,
   includeGeneralStatus = false,
-  // bookId, // Esto esta de mas
-  libro_id,
+  bookId,
 }: BookCardProps) {
   const navigate = useNavigate();
   const [statusMenuAnchor, setStatusMenuAnchor] = useState<null | HTMLElement>(null);
 
-  // Determinar ID del libro (usa cualquiera de los dos disponibles)
-  const bookIdentifier = libro_id;
+  const bookIdentifier = bookId;
 
   return (
     <Card
@@ -196,22 +193,22 @@ export default function BookCard({
             {title}
           </Typography>
 
-          {autor && (
+          {author && (
             <Typography
               variant={featured ? 'body1' : 'body2'}
               color="text.secondary"
               sx={{ mb: 0.5 }}
             >
-              <b>Autor:</b> {autor}
+              <b>Autor:</b> {author}
             </Typography>
           )}
-          {gender && (
+          {genre && (
             <Typography
               variant={featured ? 'body1' : 'body2'}
               color="text.secondary"
               sx={{ mb: 0.5 }}
             >
-              <b>Género:</b> {gender}
+              <b>Género:</b> {genre}
             </Typography>
           )}
           {description && (
@@ -243,7 +240,6 @@ export default function BookCard({
           <Button
             variant="contained"
             onClick={() => {
-              console.log('Navigating to book details for ID:', bookIdentifier);
               if (bookIdentifier) {
                 navigate(`/bookdetails/${bookIdentifier}`);
               }
