@@ -39,9 +39,11 @@ const BookCommentBox = ({
       return;
     }
 
+    const resolvedUserId = Number(user.usuario_id || user.userId);
+
     const payload = {
       libro_id: Number(id),
-      usuario_id: user.usuario_id,
+      usuario_id: resolvedUserId,
       calificacion: newRating,
       comentario: newComment,
     };
