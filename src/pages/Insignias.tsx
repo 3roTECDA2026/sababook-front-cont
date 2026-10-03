@@ -3,13 +3,11 @@ import { useState, useEffect } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
-// Importa los componentes de la carpeta 'components'
 import AppHeader from '@/components/layout/AppHeader';
 import InsigniaUnica from '@/components/ui/InsigniaUnica';
 
-// Importa el hook de autenticación
 import { useAuth } from '@/hooks/useAuth';
-import { getCatalogoMedals } from '@/services/apiService';
+import { getCatalogMedals } from '@/services/apiService';
 import type { Medal } from '@/types';
 
 const Insignias = () => {
@@ -17,29 +15,24 @@ const Insignias = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const { user } = useAuth();
 
-  // ----------------------------------------------------
-  // DATOS DINÁMICOS (Se simula la obtención de datos del usuario)
-  // ----------------------------------------------------
+  const username = user ? (user.name || (user as any).nombre) : 'Usuario';
 
-  const username = user ? user.nombre : 'Usuario'; // Obtener nombre real del usuario logueado
+  const [userMedals, setUserMedals] = useState<Medal[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Estado para las medallas del usuario
-  const [insigniasUsuario, setInsigniasUsuario] = useState<Medal[]>([]);
-  const [cargando, setCargando] = useState<boolean>(true);
-
-    useEffect(() => {
-    if (user?.usuario_id) {
-      setCargando(true);
-      getCatalogoMedals(user.usuario_id)
+  useEffect(() => {
+    const currentUserId = user?.userId || (user as any)?.usuario_id;
+    if (currentUserId) {
+      setLoading(true);
+      getCatalogMedals(currentUserId)
         .then((medals) => {
-          setInsigniasUsuario(Array.isArray(medals) ? medals : []);
+          setUserMedals(Array.isArray(medals) ? medals : []);
         })
-        .catch(() => setInsigniasUsuario([]))
-        .finally(() => setCargando(false));
+        .catch(() => setUserMedals([]))
+        .finally(() => setLoading(false));
     }
-  }, [user?.usuario_id]);
+  }, [user]);
 
-  // Fecha dinámica (formato en español, con mayúscula inicial)
   const formattedDate = (() => {
     const d = new Date();
     const opts: Intl.DateTimeFormatOptions = {
@@ -48,31 +41,25 @@ const Insignias = () => {
       month: 'long',
       day: 'numeric',
     };
-    // Usamos locale 'es-ES' y capitalizamos la primera letra
     return d.toLocaleDateString('es-ES', opts).replace(/^./, (c) => c.toUpperCase());
   })();
 
-  // ----------------------------------------------------
-
   return (
-    // Box principal para simular el contenedor de la pantalla de la app
     <Box
       sx={{
         maxWidth: {
-          xs: 400, // Móvil
-          sm: 600, // Tablet pequeña
-          md: 800, // Tablet grande / Desktop pequeño
-          lg: 1000, // Desktop
+          xs: 400,
+          sm: 600,
+          md: 800,
+          lg: 1000,
         },
         margin: '0 auto',
         height: '100vh',
-        // Fondo general sutil
         display: 'flex',
         flexDirection: 'column',
         overflowY: 'auto',
       }}
     >
-      {/* 1. COMPONENTE DE ENCABEZADO */}
       <AppHeader
         onMenuClick={() => setMenuOpen(true)}
         title={`Hola, ${username || 'Usuario'}`}
@@ -80,7 +67,6 @@ const Insignias = () => {
       />
 
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
-        {/* Paper contenedor con estilo similar a CommentSection */}
         <Paper sx={{ mx: 0, px: 0, display: 'flex', flexDirection: 'column', borderRadius: 0, boxShadow: 'none' }}>
           <Typography
             variant="subtitle1"
@@ -91,14 +77,13 @@ const Insignias = () => {
             Insignias
           </Typography>
 
-          {/* 2. COMPONENTES DE LAS INSIGNIAS */}
-                              {cargando ? (
+          {loading ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="body2" color="text.secondary">
                 Cargando insignias...
               </Typography>
             </Box>
-          ) : insigniasUsuario.length === 0 ? (
+          ) : userMedals.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4, px: 2 }}>
               <Typography variant="body1" fontWeight="medium" gutterBottom>
                 Todavía no tenés insignias
@@ -110,13 +95,13 @@ const Insignias = () => {
           ) : (
             (() => {
               const rows: Medal[][] = [];
-              for (let i = 0; i < insigniasUsuario.length; i += 2) {
-                rows.push(insigniasUsuario.slice(i, i + 2));
+              for (let i = 0; i < userMedals.length; i += 2) {
+                rows.push(userMedals.slice(i, i + 2));
               }
               return rows.map((row, rowIndex) => (
                 <Box key={rowIndex} sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
                   {row.map((insignia, index) => (
-                    <Box key={insignia.medalla_id ?? index} sx={{ mx: 1 }}>
+                    <Box key={insignia.medalId ?? index} sx={{ mx: 1 }}>
                       <InsigniaUnica insignia={insignia} />
                     </Box>
                   ))}
@@ -124,8 +109,6 @@ const Insignias = () => {
               ));
             })()
           )}
-          
-      
         </Paper>
       </Box>
     </Box>

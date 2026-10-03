@@ -13,24 +13,21 @@ import type { SearchBarHandle } from '@/components/ui/SearchBar';
 import SideMenu from '@/components/layout/SideMenu';
 import WelcomeModal from '@/components/ui/WelcomeModal';
 import { CrearListaModal } from '@/components/CrearListaModal';
-import { buscarLibros } from '@/services/apiService';
+import { searchBooks } from '@/services/apiService';
 import { normalizeText } from '@/utils/normalize';
 
-// Importaciones de Lógica (Custom Hooks)
 import { useAuth } from '@/hooks/useAuth';
-import { useBookData } from '@/hooks/useBookData'; // NUEVO: Lógica de carga de libros
-import { useFavorites } from '@/hooks/useFavorites'; // Lógica de manejo de favoritos
+import { useBookData } from '@/hooks/useBookData';
+import { useFavorites } from '@/hooks/useFavorites';
 import type { Book, BookFilters } from '@/types';
 import { useReadingStatus } from '@/hooks/useReadingStatus';
 
 export default function Home() {
-  // --- Estados de UI ---
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isWelcomeModalOpen, setWelcomeModalOpen] = useState<boolean>(false);
   const [isCrearListaOpen, setCrearListaOpen] = useState<boolean>(false);
 
-  // Estado para almacenar dinámicamente el libro recomendado
-  const [libroRecomendado, setLibroRecomendado] = useState<Book | undefined>(
+  const [featuredBookData, setFeaturedBookData] = useState<Book | undefined>(
     undefined,
   );
 
@@ -40,19 +37,16 @@ export default function Home() {
   const location = useLocation();
   const { user } = useAuth();
 
-  // --- LÓGICA DE DATOS ---
   const { books, setBooks } = useBookData();
   const { toggleFavorite, isBookFavorite } = useFavorites();
   const { getReadingStatus, setReadingStatus } = useReadingStatus();
 
-  // Handler para toggle de favoritos
-  const handleFavoriteToggle = async (libro_id: number): Promise<boolean> => {
-    const isFavorite = isBookFavorite(libro_id);
-    return toggleFavorite(libro_id, isFavorite);
+  const handleFavoriteToggle = async (bookId: number): Promise<boolean> => {
+    const isFavorite = isBookFavorite(bookId);
+    return toggleFavorite(bookId, isFavorite);
   };
 
-  // Función para obtener la última recomendación guardada desde la API
-  const obtenerUltimaRecomendacion = useCallback(async () => {
+  const getLatestRecommendation = useCallback(async () => {
     try {
       const baseUrl =
         import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
@@ -64,52 +58,49 @@ export default function Home() {
 
       const res = await fetch(`${baseUrl}/api/v1/lists`, { headers });
       if (res.ok) {
-        const listas = await res.json();
+        const lists = await res.json();
 
-        // Buscar la lista con tipo RECOMENDACION
-        const recomendacion = listas.find(
+        const recommendation = lists.find(
           (l: any) => l.tipo === "RECOMENDACION" || l.tipo === "RECOMENDADA",
         );
 
         if (
-          recomendacion &&
-          recomendacion.libros &&
-          recomendacion.libros.length > 0
+          recommendation &&
+          recommendation.libros &&
+          recommendation.libros.length > 0
         ) {
-          const rawBook = recomendacion.libros[0];
+          const rawBook = recommendation.libros[0];
 
-          // Mapear el libro al formato que espera FeaturedBookSection
-          setLibroRecomendado({
-            libro_id: rawBook.libro_id ?? rawBook.id,
-            titulo: rawBook.titulo ?? rawBook.title ?? "Sin título",
-            autor: rawBook.autor ?? rawBook.author ?? "",
-            genero: rawBook.genero ?? rawBook.genre ?? "Recomendado",
-            portada_url:
+          setFeaturedBookData({
+            bookId: rawBook.bookId ?? rawBook.libro_id ?? rawBook.id,
+            title: rawBook.title ?? rawBook.titulo ?? "Sin título",
+            author: rawBook.author ?? rawBook.autor ?? "",
+            genre: rawBook.genre ?? rawBook.genero ?? "Recomendado",
+            coverUrl:
+              rawBook.coverUrl ??
               rawBook.portada_url ??
               rawBook.portadaUrl ??
-              rawBook.portada ??
               "",
-            calificacion_promedio:
-              rawBook.calificacion_promedio ?? rawBook.rating ?? 5.0,
-            descripcion: rawBook.descripcion ?? recomendacion.descripcion,
+            averageRating:
+              rawBook.averageRating ?? rawBook.calificacion_promedio ?? 5.0,
+            description: rawBook.description ?? rawBook.descripcion ?? recommendation.descripcion,
           } as Book);
         }
       }
     } catch (error) {
-      console.error("Error al cargar la recomendación principal:", error);
+      console.error("Error loading main recommendation:", error);
     }
   }, []);
 
   useEffect(() => {
-    obtenerUltimaRecomendacion();
-  }, [obtenerUltimaRecomendacion]);
+    getLatestRecommendation();
+  }, [getLatestRecommendation]);
 
-  // Fallback si no hay recomendación en BD
   useEffect(() => {
-    if (!libroRecomendado && books.length > 0) {
-      setLibroRecomendado(books[0]);
+    if (!featuredBookData && books.length > 0) {
+      setFeaturedBookData(books[0]);
     }
-  }, [books, libroRecomendado]);
+  }, [books, featuredBookData]);
 
   useEffect(() => {
     const state = location.state as { fromLogin?: boolean } | null;
@@ -124,26 +115,26 @@ export default function Home() {
   const handleSearch = async (query: string) => {
     setCurrentQuery(query);
     try {
-      const queryNormalizada = normalizeText(query);
-      const filtrosCombinados: BookFilters = { ...currentFilters };
-      if (queryNormalizada) filtrosCombinados.query = queryNormalizada;
-      const resultados = await buscarLibros(filtrosCombinados);
-      setBooks(resultados);
+      const normalizedQuery = normalizeText(query);
+      const combinedFilters: BookFilters = { ...currentFilters };
+      if (normalizedQuery) combinedFilters.query = normalizedQuery;
+      const results = await searchBooks(combinedFilters);
+      setBooks(results);
     } catch {
       setBooks([]);
     }
   };
 
   const handleFilterChange = async (
-    _resultados: Book[],
-    filtros: BookFilters,
+    _results: Book[],
+    filters: BookFilters,
   ) => {
-    setCurrentFilters(filtros);
+    setCurrentFilters(filters);
     try {
-      const filtrosCombinados: BookFilters = { ...filtros };
-      if (currentQuery) filtrosCombinados.query = normalizeText(currentQuery);
-      const resultadosActualizados = await buscarLibros(filtrosCombinados);
-      setBooks(resultadosActualizados);
+      const combinedFilters: BookFilters = { ...filters };
+      if (currentQuery) combinedFilters.query = normalizeText(currentQuery);
+      const updatedResults = await searchBooks(combinedFilters);
+      setBooks(updatedResults);
     } catch {
       setBooks([]);
     }
@@ -161,7 +152,7 @@ export default function Home() {
     >
       <AppHeader
         onMenuClick={() => setMenuOpen(true)}
-        title={`Hola, ${user?.nombre || "Usuario"}`}
+        title={`Hola, ${user?.name || (user as any)?.nombre || "Usuario"}`}
         subtitle={new Date().toLocaleDateString("es-ES", {
           weekday: "long",
           year: "numeric",
@@ -181,12 +172,11 @@ export default function Home() {
         user={user}
       />
 
-      {/* Modal para Recomendar */}
       <CrearListaModal
         open={isCrearListaOpen}
         onClose={() => setCrearListaOpen(false)}
         onListaCreada={() => {
-          obtenerUltimaRecomendacion(); // Recarga la portada del recomendado dinámicamente
+          getLatestRecommendation();
         }}
       />
 
@@ -207,24 +197,22 @@ export default function Home() {
         }}
       />
 
-      {/* Recomendado dinámico */}
       {Object.keys(currentFilters).length === 0 &&
         !currentQuery &&
-        libroRecomendado && (
+        featuredBookData && (
           <FeaturedBookSection
-            featuredBook={libroRecomendado}
+            featuredBook={featuredBookData}
             handleFavoriteToggle={handleFavoriteToggle}
-            isFavorite={isBookFavorite(libroRecomendado.libro_id ?? -1)}
-            readingStatus={getReadingStatus(libroRecomendado.libro_id ?? -1)}
+            isFavorite={isBookFavorite((featuredBookData.bookId || (featuredBookData as any).libro_id) ?? -1)}
+            readingStatus={getReadingStatus((featuredBookData.bookId || (featuredBookData as any).libro_id) ?? -1)}
             onReadingStatusChange={(status) => {
-              if (libroRecomendado.libro_id)
-                setReadingStatus(libroRecomendado.libro_id, status);
+              const bId = featuredBookData.bookId || (featuredBookData as any).libro_id;
+              if (bId) setReadingStatus(bId, status);
             }}
-            handleVerMas={() => {}}
+            handleViewMore={() => {}}
           />
         )}
 
-      {/* TÍTULO LISTADO DE LIBROS SOLO CON BOTÓN RECOMENDAR */}
       {Object.keys(currentFilters).length === 0 && !currentQuery && (
         <Box
           mt={4}
@@ -263,7 +251,6 @@ export default function Home() {
         </Box>
       )}
 
-      {/* Resultados de búsqueda/filtros */}
       {(currentQuery || Object.keys(currentFilters).length > 0) && (
         <Box
           display="flex"
@@ -295,23 +282,26 @@ export default function Home() {
             El libro que usted está buscando no se encuentra disponible
           </Typography>
         ) : (
-          books.map((book) => (
-            <BookCard
-              key={book.libro_id}
-              image={book.portada_url}
-              autor={book.autor}
-              gender={book.genero}
-              title={book.titulo}
-              rating={book.calificacion_promedio}
-              isFavorite={isBookFavorite(book.libro_id)}
-              libro_id={book.libro_id}
-              onFavoriteToggle={() => handleFavoriteToggle(book.libro_id)}
-              readingStatus={getReadingStatus(book.libro_id)}
-              onReadingStatusChange={(status) =>
-                setReadingStatus(book.libro_id, status)
-              }
-            />
-          ))
+          books.map((book) => {
+            const currentBookId = (book.bookId || (book as any).libro_id) ?? 0;
+            return (
+              <BookCard
+                key={currentBookId}
+                image={book.coverUrl || (book as any).portada_url}
+                author={book.author || (book as any).autor}
+                genre={book.genre || (book as any).genero}
+                title={book.title || (book as any).titulo}
+                rating={book.averageRating || (book as any).calificacion_promedio}
+                isFavorite={isBookFavorite(currentBookId)}
+                bookId={currentBookId}
+                onFavoriteToggle={() => handleFavoriteToggle(currentBookId)}
+                readingStatus={getReadingStatus(currentBookId)}
+                onReadingStatusChange={(status) =>
+                  setReadingStatus(currentBookId, status)
+                }
+              />
+            );
+          })
         )}
       </Box>
     </Box>

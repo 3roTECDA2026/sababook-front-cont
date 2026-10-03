@@ -1,10 +1,9 @@
 // src/components/ui/InsigniaUnica.tsx
 import React from 'react';
 import { Box, Typography, Avatar } from '@mui/material';
-import StarIcon from '@mui/icons-material/Star'; // Ícono de ejemplo
+import StarIcon from '@mui/icons-material/Star';
 import type { Medal } from '@/types';
 
-// Importar los GIFs
 import lapizGif from '@/assets/lapiz.gif';
 import chatGif from '@/assets/chat.gif';
 import githubGif from '@/assets/github.gif';
@@ -17,9 +16,8 @@ interface InsigniaUnicaProps {
 }
 
 const InsigniaUnica = ({ insignia }: InsigniaUnicaProps) => {
-    // ícono según el nombre de la insignia
-  const getIcon = (nombre: string) => {
-    switch (nombre) {
+  const getIcon = (name?: string) => {
+    switch (name) {
       case 'Comentador':
         return <img src={lapizGif} alt="Comentador" style={{ width: 40, height: 40 }} />;
       case 'Comentador Activo':
@@ -36,6 +34,9 @@ const InsigniaUnica = ({ insignia }: InsigniaUnicaProps) => {
         return <StarIcon />;
     }
   };
+
+  const isUnlocked = insignia.isUnlocked || (insignia as any).obtenida;
+
   return (
     <Box
       sx={{
@@ -49,11 +50,10 @@ const InsigniaUnica = ({ insignia }: InsigniaUnicaProps) => {
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 2,
-        opacity: insignia.obtenida ? 1 : 0.45,
-        filter: insignia.obtenida ? 'none' : 'grayscale(100%)',
+        opacity: isUnlocked ? 1 : 0.45,
+        filter: isUnlocked ? 'none' : 'grayscale(100%)',
       }}
     >
-      {/* Ícono de la Insignia */}
       <Avatar
         sx={{
           bgcolor: 'transparent',
@@ -64,16 +64,13 @@ const InsigniaUnica = ({ insignia }: InsigniaUnicaProps) => {
           mb: 1,
         }}
       >
-        
-        {getIcon(insignia.nombre)}
+        {getIcon(insignia.name || (insignia as any).nombre)}
       </Avatar>
-      {/* Nombre de la Insignia */}
       <Typography variant="body2" fontWeight="medium" textAlign="center" sx={{ mb: 0.5 }}>
-        {insignia.nombre}
+        {insignia.name || (insignia as any).nombre}
       </Typography>
-      {/* Descripción de la Insignia */}
       <Typography variant="caption" color="text.secondary" textAlign="center">
-        {insignia.descripcion}
+        {insignia.description || (insignia as any).descripcion}
       </Typography>
     </Box>
   );
