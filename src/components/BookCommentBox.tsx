@@ -4,7 +4,7 @@ import type { Theme } from '@mui/material';
 import NavButton from './ui/NavButton';
 import { API_BASE_URL } from '@/environments/api';
 import type { User, Opinion } from '@/types';
-import { useNotification } from '@/context/NotificationContext';
+import { useNotification } from '@/contexts/NotificationContext';
 
 const ORANGE_COLOR = '#FF6633';
 

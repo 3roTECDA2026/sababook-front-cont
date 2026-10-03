@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { Box, Button, TextField, Typography, styled } from '@mui/material';
-import { useNotification } from '@/context/NotificationContext';
+import { useNotification } from '@/contexts/NotificationContext';
 
 const StyledButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.button?.main || '#f25600',

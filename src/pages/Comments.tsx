@@ -1,7 +1,7 @@
 // src/pages/Comments.tsx
 import { Box, Button, createTheme, DialogActions, Rating, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
-import { useNotification } from '@/context/NotificationContext';
+import { useNotification } from '@/contexts/NotificationContext';
 
 // Iconos de MUI
 import StarIcon from '@mui/icons-material/Star';
