@@ -1,20 +1,20 @@
 // src/utils/date.ts
 
-export const formatearFecha = (
-  fechaStr?: string,
-  opciones?: Intl.DateTimeFormatOptions
+export const formatDate = (
+  dateStr?: string,
+  options?: Intl.DateTimeFormatOptions
 ): string => {
-  if (!fechaStr) return '';
+  if (!dateStr) return '';
   
-  const fecha = new Date(fechaStr);
-  if (isNaN(fecha.getTime())) return '';
+  const parsedDate = new Date(dateStr);
+  if (isNaN(parsedDate.getTime())) return '';
 
-  const opcionesPorDefecto: Intl.DateTimeFormatOptions = {
+  const defaultOptions: Intl.DateTimeFormatOptions = {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-    ...opciones,
+    ...options,
   };
 
-  return new Intl.DateTimeFormat('es-AR', opcionesPorDefecto).format(fecha);
+  return new Intl.DateTimeFormat('es-AR', defaultOptions).format(parsedDate);
 };

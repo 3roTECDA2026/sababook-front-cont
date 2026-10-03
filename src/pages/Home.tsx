@@ -14,7 +14,7 @@ import SideMenu from '@/components/layout/SideMenu';
 import WelcomeModal from '@/components/ui/WelcomeModal';
 import { CrearListaModal } from '@/components/CrearListaModal';
 import { buscarLibros } from '@/services/apiService';
-import { normalizarTexto } from '@/utils/normalize';
+import { normalizeText } from '@/utils/normalize';
 
 // Importaciones de Lógica (Custom Hooks)
 import { useAuth } from '@/hooks/useAuth';
@@ -124,7 +124,7 @@ export default function Home() {
   const handleSearch = async (query: string) => {
     setCurrentQuery(query);
     try {
-      const queryNormalizada = normalizarTexto(query);
+      const queryNormalizada = normalizeText(query);
       const filtrosCombinados: BookFilters = { ...currentFilters };
       if (queryNormalizada) filtrosCombinados.query = queryNormalizada;
       const resultados = await buscarLibros(filtrosCombinados);
@@ -141,7 +141,7 @@ export default function Home() {
     setCurrentFilters(filtros);
     try {
       const filtrosCombinados: BookFilters = { ...filtros };
-      if (currentQuery) filtrosCombinados.query = normalizarTexto(currentQuery);
+      if (currentQuery) filtrosCombinados.query = normalizeText(currentQuery);
       const resultadosActualizados = await buscarLibros(filtrosCombinados);
       setBooks(resultadosActualizados);
     } catch {
