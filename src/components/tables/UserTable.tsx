@@ -101,25 +101,22 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
 
   const handleSaveUser = async (formData: UserFormData) => {
     console.log('Guardando datos del usuario:', formData);
-    if (!userToEdit) return;
+    const userId = userToEdit?.userId || (userToEdit as any)?.usuario_id;
+    if (!userId) return;
 
-    // 1. Preparamos los datos para el backend.
-    const dataToSend: UserFormData = { ...formData };
-
-    // 2. Convertimos el rol a rol_id y renombramos la contraseña.
-    dataToSend.rol_id = dataToSend.rol ? rolMapping[dataToSend.rol as RolKey] : undefined;
-    dataToSend.contrasena = dataToSend.password;
-
-    // 3. Eliminamos los campos que el backend no espera.
-    delete dataToSend.rol;
-    delete dataToSend.password;
-    if (!dataToSend.contrasena) {
-      delete dataToSend.contrasena;
-    }
+    const roleKey = (formData.role || (formData as any).rol) as RolKey;
+    const dataToSend = {
+      name: formData.name || (formData as any).nombre,
+      email: formData.email,
+      avatarUrl: formData.avatarUrl || (formData as any).avatar_url,
+      roleId: roleKey ? rolMapping[roleKey] : undefined,
+      educationalLevel: formData.educationalLevel || (formData as any).nivel_educativo,
+      ...(formData.password && { password: formData.password }),
+    };
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/${userToEdit.usuario_id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

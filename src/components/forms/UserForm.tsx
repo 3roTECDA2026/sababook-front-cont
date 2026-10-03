@@ -18,41 +18,40 @@ const roles = ['docente', 'alumno', 'administrador'];
 const nivelesEducativos = ['Básico', 'Media', 'Superior'];
 
 export interface UserFormData {
-  nombre: string;
+  name: string;
   email: string;
   password?: string;
-  avatar_url: string;
-  rol?: string;
-  nivel_educativo: string;
+  avatarUrl: string;
+  role?: string;
+  educationalLevel: string;
   [key: string]: unknown;
 }
 
 interface UserFormProps {
-  userToEdit?: (Partial<User> & { rol?: string | null }) | null;
+  userToEdit?: (Partial<User> & { role?: string | null; rol?: string | null }) | null;
   onSave: (formData: UserFormData) => void | Promise<void>;
   onCancel: () => void;
 }
 
 export default function UserForm({ userToEdit, onSave, onCancel }: UserFormProps) {
   const [formData, setFormData] = useState<UserFormData>({
-    nombre: '',
+    name: '',
     email: '',
-    password: '', // La contraseña se deja vacía por seguridad. Solo se actualiza si se escribe algo.
-    avatar_url: '',
-    rol: '',
-    nivel_educativo: '',
+    password: '',
+    avatarUrl: '',
+    role: '',
+    educationalLevel: '',
   });
 
-  // Cuando el componente recibe un usuario para editar, llenamos el formulario.
   useEffect(() => {
     if (userToEdit) {
       setFormData({
-        nombre: userToEdit.nombre || '',
+        name: userToEdit.name || userToEdit.nombre || '',
         email: userToEdit.email || '',
-        password: '', // Importante: no precargar la contraseña
-        avatar_url: userToEdit.avatar_url || '',
-        rol: userToEdit.rol || '', // Asegura que no sea null
-        nivel_educativo: userToEdit.nivel_educativo || '', // Asegura que no sea null
+        password: '',
+        avatarUrl: userToEdit.avatarUrl || userToEdit.avatar_url || '',
+        role: userToEdit.role || userToEdit.rol || '',
+        educationalLevel: userToEdit.educationalLevel || userToEdit.nivel_educativo || '',
       });
     }
   }, [userToEdit]);
@@ -93,8 +92,8 @@ export default function UserForm({ userToEdit, onSave, onCancel }: UserFormProps
           <TextField
             fullWidth
             label="Nombre"
-            name="nombre"
-            value={formData.nombre}
+            name="name"
+            value={formData.name}
             onChange={handleChange}
             required
           />
@@ -106,7 +105,6 @@ export default function UserForm({ userToEdit, onSave, onCancel }: UserFormProps
             value={formData.email}
             onChange={handleChange}
             required
-            // El email no se puede editar una vez creado (práctica común)
             disabled={!!userToEdit}
           />
           <TextField
@@ -116,20 +114,19 @@ export default function UserForm({ userToEdit, onSave, onCancel }: UserFormProps
             name="password"
             value={formData.password}
             onChange={handleChange}
-            // La contraseña es obligatoria solo al crear
             required={!userToEdit}
             helperText={userToEdit ? 'Dejar en blanco para no cambiar la contraseña.' : ''}
           />
           <TextField
             fullWidth
             label="URL del Avatar"
-            name="avatar_url"
-            value={formData.avatar_url}
+            name="avatarUrl"
+            value={formData.avatarUrl}
             onChange={handleChange}
           />
           <FormControl fullWidth>
             <InputLabel>Rol</InputLabel>
-            <Select name="rol" value={formData.rol} label="Rol" onChange={handleChange}>
+            <Select name="role" value={formData.role} label="Rol" onChange={handleChange}>
               {roles.map((rol) => (
                 <MenuItem key={rol} value={rol}>
                   {rol.charAt(0).toUpperCase() + rol.slice(1)}
@@ -140,8 +137,8 @@ export default function UserForm({ userToEdit, onSave, onCancel }: UserFormProps
           <FormControl fullWidth>
             <InputLabel>Nivel Educativo</InputLabel>
             <Select
-              name="nivel_educativo"
-              value={formData.nivel_educativo}
+              name="educationalLevel"
+              value={formData.educationalLevel}
               label="Nivel Educativo"
               onChange={handleChange}
             >
