@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setToken(storedToken);
         try {
           const response = await fetch(
-            `${API_BASE_URL}/api/v1/user/${storedUserId}`,
+            `${API_BASE_URL}/api/v1/users/${storedUserId}`,
             {
               headers: {
                 Authorization: `Bearer ${storedToken}`,
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       // Obtener el perfil completo del usuario
       const profileResponse = await fetch(
-        `${API_BASE_URL}/api/v1/user/${data.userId}`,
+        `${API_BASE_URL}/api/v1/users/${data.userId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -143,7 +143,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   ): Promise<AuthResult> => {
     try {
       const userId = localStorage.getItem("userId");
-      const response = await fetch(`${API_BASE_URL}/api/v1/user/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/users/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

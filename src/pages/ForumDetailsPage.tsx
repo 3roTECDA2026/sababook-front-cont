@@ -14,6 +14,7 @@ import {
   ListItemText,
   TextField,
   Button,
+  Alert,
 } from '@mui/material';
 import ForumIcon from '@mui/icons-material/Forum';
 import AppHeader from '@/components/layout/AppHeader';
@@ -27,19 +28,20 @@ const ForumDetailsPage = () => {
   const { id } = useParams<{ id: string }>(); // ID del foro desde la URL
   const { foro, loading, error } = useForumDetail(id);
   const { user } = useAuth();
-  const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const [newComment, setNewComment] = useState<string>('');
-  const [sending, setSending] = useState<boolean>(false);
-  const [localComments, setLocalComments] = useState<ForumDetailComment[] | null>(null);
-
-  const comentarios = localComments ?? foro?.comentarios ?? null;
+  const [feedback, setFeedback] = useState<{ severity: 'error' | 'warning' | 'success'; message: string } | null>(null);
 
   const handleAddComment = async () => {
-    if (!newComment.trim() || !user) return;
+    if (!newComment.trim()) return;
+
+    if (!user) {
+      setFeedback({ severity: 'warning', message: 'Debés iniciar sesión para poder comentar.' });
+      return;
+    }
 
     setSending(true);
+    setFeedback(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/foro/${id}/comentarios`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/forums/${id}/comentarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -48,22 +50,27 @@ const ForumDetailsPage = () => {
         }),
       });
 
-      if (!res.ok) throw new Error('Error al agregar el comentario');
+      const data = await res.json();
 
-      const addedComment = await res.json();
+      if (!res.ok) {
+        const errorMsg = data.mensaje || data.error || 'Error al agregar el comentario';
+        setFeedback({ severity: 'error', message: errorMsg });
+        return;
+      }
+
       setNewComment('');
 
       const nuevoComentario: ForumDetailComment = {
-        ...addedComment,
+        ...data,
         usuario_nombre: user.nombre,
         usuario_avatar: user.avatar_url ?? null,
       };
 
-      // Actualizar comentarios localmente
       setLocalComments([...(comentarios ?? []), nuevoComentario]);
+      setFeedback({ severity: 'success', message: 'Comentario agregado con éxito.' });
     } catch (err) {
       console.error(err);
-      alert('No se pudo agregar el comentario');
+      setFeedback({ severity: 'error', message: 'No se pudo agregar el comentario. Verifica la conexión con el servidor.' });
     } finally {
       setSending(false);
     }
@@ -163,6 +170,11 @@ const ForumDetailsPage = () => {
 
           {/* Formulario para agregar comentario */}
           <Box mt={3} display="flex" flexDirection="column" gap={2}>
+            {feedback && (
+              <Alert severity={feedback.severity} onClose={() => setFeedback(null)} sx={{ mb: 2 }}>
+                {feedback.message}
+              </Alert>
+            )}
             <Typography variant="subtitle1" fontWeight="bold">
               Agregar un comentario
             </Typography>

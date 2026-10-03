@@ -17,7 +17,7 @@ const useForumDetail = (foroId: number | string | undefined) => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/foro/${foroId}/comentarios`);
+        const res = await fetch(`${API_BASE_URL}/api/v1/forums/${foroId}/comentarios`);
         if (!res.ok) {
           throw new Error('Error al cargar el foro');
         }

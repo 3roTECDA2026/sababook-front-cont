@@ -12,7 +12,7 @@ export const useBookDetails = (id: number | string | undefined) => {
     if (!id) return;
     setLoading(true);
 
-    fetch(`${API_BASE_URL}/api/v1/libros/${id}`)
+    fetch(`${API_BASE_URL}/api/v1/books/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error('No se encontró el libro.');
         return res.json();

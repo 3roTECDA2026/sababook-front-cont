@@ -23,7 +23,7 @@ export function useBookData() {
   const [featuredBook, setFeaturedBook] = useState<Partial<FeaturedBook>>({});
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/v1/libros`)
+    fetch(`${API_BASE_URL}/api/v1/books`)
       .then((res) => res.json())
       .then((data: Book[]) => {
         setBooks(data);

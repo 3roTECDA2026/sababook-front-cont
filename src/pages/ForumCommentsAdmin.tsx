@@ -145,7 +145,7 @@ const ForumCommentsAdmin = () => {
       const token = localStorage.getItem('token');
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/foro/${foroId}`, {
+        const res = await fetch(`${API_BASE_URL}/api/v1/forums/${foroId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -182,7 +182,7 @@ const ForumCommentsAdmin = () => {
     setIsUpdating(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/comentario/${comentarioId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/comments/${comentarioId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(editedComment),
@@ -217,7 +217,7 @@ const ForumCommentsAdmin = () => {
     setIsDeleting(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/comentario/${commentToDelete.comentario_id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/comments/${commentToDelete.comentario_id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -107,7 +107,7 @@ const BookCommentsAdmin = () => {
 
     try {
       // Fetch información del libro
-      const bookRes = await fetch(`${API_BASE_URL}/api/v1/libros/${bookId}`, {
+      const bookRes = await fetch(`${API_BASE_URL}/api/v1/books/${bookId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -116,7 +116,7 @@ const BookCommentsAdmin = () => {
       setBookInfo(bookData);
 
       // Fetch comentarios del libro
-      const commentsRes = await fetch(`${API_BASE_URL}/api/v1/opinion/libro/${bookId}`, {
+      const commentsRes = await fetch(`${API_BASE_URL}/api/v1/reviews/libro/${bookId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -153,7 +153,7 @@ const BookCommentsAdmin = () => {
     const token = localStorage.getItem('token');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/opinion/${opinionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/reviews/${opinionId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ const BookCommentsAdmin = () => {
     const token = localStorage.getItem('token');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/opinion/${commentToDelete.opinion_id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/reviews/${commentToDelete.opinion_id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
