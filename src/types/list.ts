@@ -1,17 +1,17 @@
 import { Book } from './book';
 
-export interface ListaLectura {
-  lista_id: number;
-  nombre: string;
-  descripcion?: string;
-  es_publica?: boolean;
-  usuario_id: number;
-  libros?: Book[];
+export interface ReadingList {
+  listId: number;
+  name: string;
+  description?: string;
+  isPublic?: boolean;
+  userId: number;
+  books?: Book[];
 }
 
-export interface CreateListaLecturaInput {
-  nombre: string;
-  descripcion?: string;
-  es_publica: boolean;
-  libros_ids?: number[];
+export interface CreateReadingListInput {
+  name: string;
+  description?: string;
+  isPublic: boolean;
+  bookIds?: number[];
 }
