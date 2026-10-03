@@ -71,7 +71,7 @@ const BookPreview = ({ book: propBook, onCommentClick }: BookPreviewProps) => {
 
   // Mapeo seguro para obtener la URL de portada
   const coverImageSrc =
-    book.portada_url ||
+    book.coverUrl ||
     book.portadaUrl ||
     book.image ||
     "https://via.placeholder.com/300x400";
@@ -140,7 +140,7 @@ const BookPreview = ({ book: propBook, onCommentClick }: BookPreviewProps) => {
         >
           <img
             src={coverImageSrc}
-            alt={`Portada de ${book?.titulo || book?.title || "Libro"}`}
+            alt={`Portada de ${book?.title || "Libro"}`}
             style={{
               width: "100%",
               height: 400,
@@ -160,7 +160,7 @@ const BookPreview = ({ book: propBook, onCommentClick }: BookPreviewProps) => {
               color: "secondary.main",
             }}
           >
-            {book?.titulo || book?.title || "Título del libro"}
+            {book?.title || "Título del libro"}
           </Typography>
         </Box>
       </Box>

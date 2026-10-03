@@ -25,10 +25,14 @@ import { API_BASE_URL } from '@/environments/api';
 import type { ForumDetailComment } from '@/types';
 
 const ForumDetailsPage = () => {
-  const { id } = useParams<{ id: string }>(); // ID del foro desde la URL
-  const { foro, loading, error } = useForumDetail(id);
+  const { id } = useParams<{ id: string }>();
+  const { forum, loading, error } = useForumDetail(id);
   const { user } = useAuth();
   const [feedback, setFeedback] = useState<{ severity: 'error' | 'warning' | 'success'; message: string } | null>(null);
+  const [newComment, setNewComment] = useState<string>('');
+  const [sending, setSending] = useState<boolean>(false);
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [localComments, setLocalComments] = useState<ForumDetailComment[]>([]);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -62,11 +66,11 @@ const ForumDetailsPage = () => {
 
       const nuevoComentario: ForumDetailComment = {
         ...data,
-        userName: user.name || user.nombre,
+        userName: user.name || (user as any).nombre,
         userAvatar: user.avatarUrl ?? (user as any).avatar_url ?? null,
       };
 
-      setLocalComments([...(comentarios ?? []), nuevoComentario]);
+      setLocalComments((prev) => [...prev, nuevoComentario]);
       setFeedback({ severity: 'success', message: 'Comentario agregado con éxito.' });
     } catch (err) {
       console.error(err);
@@ -105,7 +109,7 @@ const ForumDetailsPage = () => {
       )}
 
       {/* Foro encontrado */}
-      {!loading && !error && foro && (
+      {!loading && !error && forum && (
         <Paper elevation={3} sx={{ p: 3, borderRadius: 2, mb: 4 }}>
           {/* Datos del foro */}
           <Box display="flex" alignItems="flex-start" gap={2}>
@@ -114,16 +118,16 @@ const ForumDetailsPage = () => {
             </Avatar>
             <Box flexGrow={1}>
               <Typography variant="h6" fontWeight="bold">
-                {foro.titulo}
+                {forum.title || (forum as any).titulo}
               </Typography>
               <Typography variant="body2" color="text.secondary" mb={1}>
-                {foro.descripcion}
+                {forum.description || (forum as any).descripcion}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Creado por: {foro.creador_nombre || 'Usuario'}
+                Creado por: {forum.creatorName || (forum as any).creador_nombre || 'Usuario'}
               </Typography>
               <Typography variant="caption" color="text.secondary" display="block">
-                Fecha: {new Date(foro.fecha_creacion).toLocaleString()}
+                Fecha: {new Date(forum.createdAt || (forum as any).fecha_creacion || '').toLocaleString()}
               </Typography>
             </Box>
           </Box>
@@ -135,27 +139,27 @@ const ForumDetailsPage = () => {
             Comentarios
           </Typography>
 
-          {comentarios ? (
-            comentarios.length === 0 ? (
+          {forum.comments || localComments ? (
+            (forum.comments || localComments).length === 0 ? (
               <Typography variant="body2" color="text.secondary">
                 Aún no hay comentarios en este foro.
               </Typography>
             ) : (
               <List>
-                {comentarios.map((c) => (
-                  <ListItem key={c.comentario_id} alignItems="flex-start">
+                {(forum.comments || localComments).map((c: any) => (
+                  <ListItem key={c.commentId || c.id || c.comentario_id} alignItems="flex-start">
                     <ListItemAvatar>
-                      <Avatar src={c.usuario_avatar ?? undefined} alt={c.usuario_nombre}>
-                        {c.usuario_nombre?.[0]}
+                      <Avatar src={(c.userAvatar || c.avatar_url || c.usuario_avatar) ?? undefined} alt={c.userName || c.nombre || c.usuario_nombre}>
+                        {(c.userName || c.nombre || c.usuario_nombre)?.[0]}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={c.usuario_nombre}
+                      primary={c.userName || c.nombre || c.usuario_nombre}
                       secondary={
                         <>
-                          <Typography variant="body2">{c.contenido}</Typography>
+                          <Typography variant="body2">{c.content || c.contenido || c.comment}</Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {new Date(c.fecha).toLocaleString()}
+                            {new Date(c.createdAt || c.fecha || '').toLocaleString()}
                           </Typography>
                         </>
                       }
@@ -199,7 +203,7 @@ const ForumDetailsPage = () => {
       )}
 
       {/* Foro no encontrado */}
-      {!loading && !error && !foro && <Typography>No se encontró el foro.</Typography>}
+      {!loading && !error && !forum && <Typography>No se encontró el foro.</Typography>}
     </Box>
   );
 };

@@ -24,7 +24,7 @@ const BookDetailsHeader = ({ book, coverImageSrc, authorStyle }: BookDetailsHead
           <Box
             component="img"
             src={coverImageSrc}
-            alt={`Cubierta de ${book.title || book.titulo}`}
+            alt={`Cubierta de ${book.title || (book as any).titulo}`}
             sx={{
               width: '100px',
               height: '150px',
@@ -37,9 +37,9 @@ const BookDetailsHeader = ({ book, coverImageSrc, authorStyle }: BookDetailsHead
       </Box>
 
       <Box flexGrow={1} textAlign="left" pt={1}>
-        <Typography sx={authorStyle}>{book.title || book.titulo}</Typography>
+        <Typography sx={authorStyle}>{book.title || (book as any).titulo}</Typography>
         <Typography variant="h6" color="text.primary" sx={{ mb: 0.5 }}>
-          {book.author || book.autor}
+          {book.author || (book as any).autor}
         </Typography>
         <BookRatingSection book={book} />
       </Box>

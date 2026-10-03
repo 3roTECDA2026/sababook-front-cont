@@ -14,7 +14,7 @@ const BookDescription = ({ book }: BookDescriptionProps) => {
         Descripción
       </Typography>
       <Typography variant="body2" paragraph color="text.secondary" sx={{ mb: 3 }}>
-        {book.descripcion || book.description || 'Sin descripción disponible.'}
+        {book.description || (book as any).descripcion || 'Sin descripción disponible.'}
       </Typography>
     </Box>
   );

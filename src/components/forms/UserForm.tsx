@@ -46,12 +46,12 @@ export default function UserForm({ userToEdit, onSave, onCancel }: UserFormProps
   useEffect(() => {
     if (userToEdit) {
       setFormData({
-        name: userToEdit.name || userToEdit.nombre || '',
+        name: userToEdit.name || (userToEdit as any).nombre || '',
         email: userToEdit.email || '',
         password: '',
-        avatarUrl: userToEdit.avatarUrl || userToEdit.avatar_url || '',
+        avatarUrl: userToEdit.avatarUrl || (userToEdit as any).avatar_url || '',
         role: userToEdit.role || userToEdit.rol || '',
-        educationalLevel: userToEdit.educationalLevel || userToEdit.nivel_educativo || '',
+        educationalLevel: userToEdit.educationalLevel || (userToEdit as any).nivel_educativo || '',
       });
     }
   }, [userToEdit]);

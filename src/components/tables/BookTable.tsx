@@ -172,8 +172,8 @@ const BookTable = ({
                   hover
                   role="checkbox"
                   tabIndex={-1}
-                  key={row.libro_id || row.id}
-                  onClick={() => handleRowClick(row.libro_id || (row.id as number))}
+                  key={row.bookId || row.id || (row as any).libro_id}
+                  onClick={() => handleRowClick(row.bookId || row.id || ((row as any).libro_id as number))}
                   sx={{ cursor: 'pointer' }}
                 >
                   {columns.map((column) => {
@@ -196,7 +196,7 @@ const BookTable = ({
                             <ActionButton
                               onClick={(e: MouseEvent<HTMLButtonElement>) => {
                                 e.stopPropagation(); // Evita que se active el onClick de la fila
-                                handleDelete(row.libro_id || (row.id as number));
+                                handleDelete(row.bookId || row.id || ((row as any).libro_id as number));
                               }}
                               title="Eliminar"
                             >

@@ -70,7 +70,7 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
   });
 
   const handleEdit = (userId: number) => {
-    const user = users.find((u) => u.usuario_id === userId);
+    const user = users.find((u) => (u.userId || (u as any).usuario_id) === userId);
     setUserToEdit(user ?? null);
     setOpenModal(true);
   };
@@ -218,39 +218,43 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
             </TableRow>
           </TableHead>
           <TableBody>
-            {currentUsers.map((user) => (
-              <TableRow key={user.usuario_id}>
-                <TableCell>
-                  <Avatar alt={user.nombre} src={user.avatar_url ?? undefined}>
-                    {user.nombre ? user.nombre[0].toUpperCase() : '?'}
-                  </Avatar>
-                </TableCell>
-                <TableCell>{user.nombre}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.rol}</TableCell>
-                <TableCell>
-                  {user.fecha_registro
-                    ? new Date(user.fecha_registro).toLocaleDateString('es-ES')
-                    : '-'}
-                </TableCell>
-                <TableCell>{user.nivel_educativo || '-'}</TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                    <ActionButton onClick={() => handleEdit(user.usuario_id)} title="Editar" size="small">
-                      <EditIcon sx={{ fontSize: '1.1rem' }} />
-                    </ActionButton>
-                    <ActionButton
-                      onClick={() => handleDelete(user.usuario_id)}
-                      title="Eliminar"
-                      size="small"
-                      color="error"
-                    >
-                      <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                    </ActionButton>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
+            {currentUsers.map((user) => {
+              const uId = user.userId || (user as any).usuario_id || 0;
+              const userName = user.name || (user as any).nombre || '';
+              return (
+                <TableRow key={uId}>
+                  <TableCell>
+                    <Avatar alt={userName} src={(user.avatarUrl || (user as any).avatar_url) ?? undefined}>
+                      {userName ? userName[0].toUpperCase() : '?'}
+                    </Avatar>
+                  </TableCell>
+                  <TableCell>{userName}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.role || (user as any).rol}</TableCell>
+                  <TableCell>
+                    {(user as any).createdAt || (user as any).fecha_registro
+                      ? new Date((user as any).createdAt || (user as any).fecha_registro).toLocaleDateString('es-ES')
+                      : '-'}
+                  </TableCell>
+                  <TableCell>{user.educationalLevel || (user as any).nivel_educativo || '-'}</TableCell>
+                  <TableCell align="center">
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                      <ActionButton onClick={() => handleEdit(uId)} title="Editar" size="small">
+                        <EditIcon sx={{ fontSize: '1.1rem' }} />
+                      </ActionButton>
+                      <ActionButton
+                        onClick={() => handleDelete(uId)}
+                        title="Eliminar"
+                        size="small"
+                        color="error"
+                      >
+                        <DeleteIcon sx={{ fontSize: '1.1rem' }} />
+                      </ActionButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>

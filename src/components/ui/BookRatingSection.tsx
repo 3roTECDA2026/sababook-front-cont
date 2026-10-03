@@ -8,11 +8,12 @@ import type { Book } from '@/types';
 const ORANGE_COLOR = '#FF6633';
 
 interface BookRatingSectionProps {
-  book: Pick<Book, 'calificacion_promedio'>;
+  book: Partial<Book> & { averageRating?: number; calificacion_promedio?: number };
 }
 
 const BookRatingSection = ({ book }: BookRatingSectionProps) => {
   const theme = useTheme(); // 👈 obtenemos theme internamente
+  const ratingValue = book.averageRating ?? book.calificacion_promedio ?? 0;
 
   const ratingTextStyle: SxProps<Theme> = {
     fontSize: '1.8rem',
@@ -24,9 +25,9 @@ const BookRatingSection = ({ book }: BookRatingSectionProps) => {
   return (
     <Box textAlign="left" mb={2}>
       <Box display="flex" alignItems="flex-end" gap={1}>
-        <Typography sx={ratingTextStyle}>{(book.calificacion_promedio || 0).toFixed(1)}</Typography>
+        <Typography sx={ratingTextStyle}>{ratingValue.toFixed(1)}</Typography>
         <Rating
-          value={book.calificacion_promedio || 0}
+          value={ratingValue}
           precision={0.1}
           readOnly
           icon={<StarIcon sx={{ color: ORANGE_COLOR }} />}

@@ -8,7 +8,7 @@ const STORAGE_PREFIX = 'sababook-reading-statuses';
 
 export function useReadingStatus() {
   const { user, token } = useAuth() || {};
-  const userKey = user?.usuario_id ?? user?.userId ?? 'guest';
+  const userKey = user?.userId ?? (user as any)?.usuario_id ?? 'guest';
   const storageKey = `${STORAGE_PREFIX}-${userKey}`;
   const [statuses, setStatuses] = useState<Record<number, ReadingStatus>>({});
 

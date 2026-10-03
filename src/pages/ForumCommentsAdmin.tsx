@@ -62,10 +62,16 @@ const ActionButton = styled(IconButton)(({ theme }) => ({
 // Forma cruda que puede llegar del hook, con nombres alternativos
 type RawComment = ForumComment & {
   id?: number;
+  comment?: string;
+  contenido?: string;
   comentario?: string;
+  userName?: string;
+  nombre?: string;
   usuario_nombre?: string;
-  createdAt?: string;
+  fecha?: string;
+  isFeatured?: boolean;
   destacado?: boolean;
+  usuario_id?: number;
   usuario?: { id?: number };
 };
 
@@ -295,7 +301,7 @@ const ForumCommentsAdmin = () => {
           </Typography>
           {forumInfo && (
             <Typography variant="subtitle1" color="text.secondary">
-              {forumInfo.titulo}
+              {forumInfo.title || (forumInfo as any).titulo}
             </Typography>
           )}
         </Box>

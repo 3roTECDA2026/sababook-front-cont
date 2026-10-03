@@ -134,11 +134,11 @@ const BookCommentsAdmin = () => {
 
   // Iniciar edición de comentario
   const handleEditClick = (comment: OpinionAPI) => {
-    const opinionId = comment.opinionId || comment.opinion_id || 0;
+    const opinionId = comment.opinionId || 0;
     setEditingCommentId(opinionId);
     setEditedComment({
-      comment: comment.comment || comment.comentario || '',
-      rating: comment.rating ?? comment.calificacion ?? 0,
+      comment: comment.comment || '',
+      rating: comment.rating ?? 0,
     });
   };
 
@@ -197,7 +197,7 @@ const BookCommentsAdmin = () => {
     const token = localStorage.getItem('token');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/reviews/${commentToDelete.opinion_id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/reviews/${commentToDelete.opinionId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -273,7 +273,7 @@ const BookCommentsAdmin = () => {
           </Typography>
           {bookInfo && (
             <Typography variant="subtitle1" color="text.secondary">
-              {bookInfo.titulo} - {bookInfo.autor}
+              {bookInfo.title || (bookInfo as any).titulo} - {bookInfo.author || (bookInfo as any).autor}
             </Typography>
           )}
         </Box>
@@ -312,75 +312,78 @@ const BookCommentsAdmin = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                comments.map((comment) => (
-                  <TableRow key={comment.opinion_id} hover>
-                    <TableCell>{comment.usuario_nombre || 'Usuario'}</TableCell>
-                    <TableCell>{comment.usuario_rol || 'Lector'}</TableCell>
-                    <TableCell>
-                      {editingCommentId === (comment.opinionId || comment.opinion_id) ? (
-                        <Rating
-                          value={editedComment.rating}
-                          onChange={(e, newValue) =>
-                            setEditedComment({ ...editedComment, rating: newValue ?? 0 })
-                          }
-                          size="small"
-                        />
-                      ) : (
-                        <Rating value={comment.rating ?? comment.calificacion ?? 0} readOnly size="small" />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingCommentId === (comment.opinionId || comment.opinion_id) ? (
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={2}
-                          value={editedComment.comment}
-                          onChange={(e) =>
-                            setEditedComment({ ...editedComment, comment: e.target.value })
-                          }
-                          size="small"
-                        />
-                      ) : (
-                        <Typography variant="body2">{comment.comment || comment.comentario}</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {comment.fecha ? new Date(comment.fecha).toLocaleDateString('es-ES') : 'N/A'}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                        {editingCommentId === (comment.opinionId || comment.opinion_id) ? (
-                          <>
-                            <ActionButton
-                              onClick={() => handleSaveEdit(comment.opinionId || comment.opinion_id || 0)}
-                              title="Guardar"
-                              disabled={isUpdating}
-                            >
-                              {isUpdating ? (
-                                <CircularProgress size={18} color="inherit" />
-                              ) : (
-                                <SaveIcon sx={{ fontSize: '1.1rem' }} />
-                              )}
-                            </ActionButton>
-                            <ActionButton onClick={handleCancelEdit} title="Cancelar" disabled={isUpdating}>
-                              <CancelIcon sx={{ fontSize: '1.1rem' }} />
-                            </ActionButton>
-                          </>
+                comments.map((comment) => {
+                  const opId = comment.opinionId || (comment as any).opinion_id || 0;
+                  return (
+                    <TableRow key={opId} hover>
+                      <TableCell>{comment.userName || (comment as any).usuario_nombre || 'Usuario'}</TableCell>
+                      <TableCell>{comment.userRole || (comment as any).usuario_rol || 'Lector'}</TableCell>
+                      <TableCell>
+                        {editingCommentId === opId ? (
+                          <Rating
+                            value={editedComment.rating}
+                            onChange={(e, newValue) =>
+                              setEditedComment({ ...editedComment, rating: newValue ?? 0 })
+                            }
+                            size="small"
+                          />
                         ) : (
-                          <>
-                            <ActionButton onClick={() => handleEditClick(comment)} title="Editar">
-                              <EditIcon sx={{ fontSize: '1.1rem' }} />
-                            </ActionButton>
-                            <ActionButton onClick={() => handleDeleteClick(comment)} title="Eliminar">
-                              <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                            </ActionButton>
-                          </>
+                          <Rating value={comment.rating ?? (comment as any).calificacion ?? 0} readOnly size="small" />
                         )}
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell>
+                        {editingCommentId === opId ? (
+                          <TextField
+                            fullWidth
+                            multiline
+                            rows={2}
+                            value={editedComment.comment}
+                            onChange={(e) =>
+                              setEditedComment({ ...editedComment, comment: e.target.value })
+                            }
+                            size="small"
+                          />
+                        ) : (
+                          <Typography variant="body2">{comment.comment || (comment as any).comentario}</Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {comment.createdAt || (comment as any).fecha ? new Date(comment.createdAt || (comment as any).fecha).toLocaleDateString('es-ES') : 'N/A'}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                          {editingCommentId === opId ? (
+                            <>
+                              <ActionButton
+                                onClick={() => handleSaveEdit(opId)}
+                                title="Guardar"
+                                disabled={isUpdating}
+                              >
+                                {isUpdating ? (
+                                  <CircularProgress size={18} color="inherit" />
+                                ) : (
+                                  <SaveIcon sx={{ fontSize: '1.1rem' }} />
+                                )}
+                              </ActionButton>
+                              <ActionButton onClick={handleCancelEdit} title="Cancelar" disabled={isUpdating}>
+                                <CancelIcon sx={{ fontSize: '1.1rem' }} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                            <>
+                              <ActionButton onClick={() => handleEditClick(comment)} title="Editar">
+                                <EditIcon sx={{ fontSize: '1.1rem' }} />
+                              </ActionButton>
+                              <ActionButton onClick={() => handleDeleteClick(comment)} title="Eliminar">
+                                <DeleteIcon sx={{ fontSize: '1.1rem' }} />
+                              </ActionButton>
+                            </>
+                          )}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -397,9 +400,9 @@ const BookCommentsAdmin = () => {
           {commentToDelete && (
             <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
               <Typography variant="body2" fontWeight="bold">
-                Usuario: {commentToDelete.userName || commentToDelete.usuario_nombre || 'Usuario'}
+                Usuario: {commentToDelete.userName || (commentToDelete as any).usuario_nombre || 'Usuario'}
               </Typography>
-              <Typography variant="body2">Comentario: {commentToDelete.comment || commentToDelete.comentario}</Typography>
+              <Typography variant="body2">Comentario: {commentToDelete.comment || (commentToDelete as any).comentario}</Typography>
             </Box>
           )}
         </DialogContent>

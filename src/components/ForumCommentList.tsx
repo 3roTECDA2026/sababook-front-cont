@@ -9,9 +9,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import type { ForumComment } from '@/types';
 
 type CommentDisplay = ForumComment & {
-  nombre?: string;
-  contenido?: string;
-  comentario?: string;
   destacado?: boolean;
 };
 
@@ -28,7 +25,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
   const [sendError, setSendError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string>('');
   const { user } = useAuth() || {};
-  const usuarioId = usuarioIdProp || user?.usuario_id;
+  const usuarioId = usuarioIdProp || user?.userId;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,7 +76,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
       )}
       {(comments as CommentDisplay[])?.map((comment) => (
         <Paper
-          key={comment.comentario_id}
+          key={comment.commentId}
           variant="outlined"
           sx={{
             p: 1.5,
@@ -92,7 +89,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box>
               <Typography variant="body2" fontWeight="bold">
-                {comment.nombre || 'Usuario'}
+                {comment.name || 'Usuario'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {comment.email || ''}
@@ -100,15 +97,15 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
             </Box>
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="caption" color="text.secondary">
-                {comment.fecha ? new Date(comment.fecha).toLocaleString() : ''}
+                {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ''}
               </Typography>
-              {usuarioId && Number(comment.usuario_id) === Number(usuarioId) && (
+              {usuarioId && Number(comment.userId) === Number(usuarioId) && (
                 <IconButton
                   onClick={async () => {
                     if (window.confirm('¿Seguro que quieres eliminar este comentario?')) {
                       try {
                         const res = await fetch(
-                          `${API_BASE_URL}/api/v1/comments/${comment.comentario_id}`,
+                          `${API_BASE_URL}/api/v1/comments/${comment.commentId}`,
                           {
                             method: 'DELETE',
                           }
@@ -142,7 +139,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
             mt={1}
             sx={{ fontStyle: 'italic', color: theme?.palette?.text?.primary }}
           >
-            {comment.contenido || comment.comentario || ''}
+            {comment.content || ''}
           </Typography>
           {comment.destacado && (
             <Box display="flex" justifyContent="flex-end" mt={1}>

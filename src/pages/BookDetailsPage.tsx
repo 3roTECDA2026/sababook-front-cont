@@ -52,7 +52,7 @@ const BookDetailsPage = () => {
   const coverImageSrc =
     bookWithAlias.coverImage?.trim() ||
     bookWithAlias.portadaUrl?.trim() ||
-    book.portada_url?.trim() ||
+    (book as any).portada_url?.trim() ||
     undefined;
 
   return (

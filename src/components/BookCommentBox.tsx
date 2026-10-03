@@ -38,7 +38,7 @@ const BookCommentBox = ({
     }
 
     const storedUserId = localStorage.getItem('userId');
-    const resolvedUserId = Number(user?.usuario_id || user?.userId || storedUserId || 0);
+    const resolvedUserId = Number(user?.userId || (user as any)?.usuario_id || storedUserId || 0);
 
     if (!resolvedUserId || isNaN(resolvedUserId)) {
       alert('Error de autenticación. Por favor, reinicia sesión.');
@@ -46,10 +46,10 @@ const BookCommentBox = ({
     }
 
     const payload = {
-      libro_id: Number(id),
-      usuario_id: resolvedUserId,
-      calificacion: Number(newRating),
-      comentario: newComment,
+      bookId: Number(id),
+      userId: resolvedUserId,
+      rating: Number(newRating),
+      comment: newComment,
     };
 
     try {
@@ -71,15 +71,15 @@ const BookCommentBox = ({
 
       // Aquí usamos el nombre real que devuelve la API
       const newOpinion: Opinion = {
-        id: savedOpinion.opinion_id || Date.now(),
-        comentario: savedOpinion.comentario || newComment,
-        calificacion: savedOpinion.calificacion || newRating,
-        usuario: {
-          nombre: savedOpinion.usuario_nombre || 'Usuario',
-          rol: 'Lector',
+        id: savedOpinion.opinion_id || savedOpinion.opinionId || Date.now(),
+        comment: savedOpinion.comment || savedOpinion.comentario || newComment,
+        rating: savedOpinion.rating || savedOpinion.calificacion || newRating,
+        user: {
+          name: savedOpinion.usuario_nombre || savedOpinion.userName || 'Usuario',
+          role: 'Lector',
         },
-        destacado: savedOpinion.destacado || false,
-        fecha: savedOpinion.fecha || new Date().toISOString(),
+        isFeatured: savedOpinion.isFeatured || savedOpinion.destacado || false,
+        createdAt: savedOpinion.createdAt || savedOpinion.fecha || new Date().toISOString(),
       };
 
       setOpinions((prev) => [newOpinion, ...prev]);

@@ -54,17 +54,17 @@ export default function MyForum() {
         </Avatar>
         <Box>
           <Typography variant="subtitle1" fontWeight="bold">
-            {foro.titulo}
+            {foro.title || (foro as any).titulo}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {foro.descripcion}
+            {foro.description || (foro as any).descripcion}
           </Typography>
         </Box>
       </Box>
 
       <Box display="flex" gap={1}>
         <IconButton
-          onClick={() => handleViewForo(foro.foro_id)}
+          onClick={() => handleViewForo(foro.forumId || (foro as any).foro_id)}
           sx={{ bgcolor: theme.palette.button?.main, color: '#fff', '&:hover': { bgcolor: '#cc4800' } }}
         >
           <ChatBubbleOutlineIcon fontSize="small" />
@@ -103,7 +103,7 @@ export default function MyForum() {
 
       <Box sx={{ bgcolor: '#ffffff', borderRadius: 2, boxShadow: '0 3px 10px rgba(0,0,0,0.08)' }}>
         {foros.map((foro) => (
-          <ForoItem key={foro.foro_id} foro={foro} />
+          <ForoItem key={foro.forumId || (foro as any).foro_id} foro={foro} />
         ))}
       </Box>
     </Box>

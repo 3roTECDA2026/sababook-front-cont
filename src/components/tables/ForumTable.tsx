@@ -127,8 +127,8 @@ const ForumTable = ({
             {currentForums.map((row) => (
               <TableRow
                 hover
-                key={row.foro_id}
-                onClick={() => handleRowClick(row.foro_id)}
+                key={row.forumId || (row as any).foro_id}
+                onClick={() => handleRowClick(row.forumId || (row as any).foro_id)}
                 sx={{ cursor: 'pointer' }}
               >
                 {columns.map((column) => {
@@ -148,7 +148,7 @@ const ForumTable = ({
                           <ActionButton
                             onClick={(e: MouseEvent<HTMLButtonElement>) => {
                               e.stopPropagation();
-                              onDeleteForum(row.foro_id);
+                              onDeleteForum(row.forumId || (row as any).foro_id);
                             }}
                             title="Eliminar"
                           >

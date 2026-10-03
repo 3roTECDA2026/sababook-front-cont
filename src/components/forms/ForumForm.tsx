@@ -18,13 +18,13 @@ interface ForumFormProps {
 }
 
 const ForumForm = ({ forumToEdit, title: formTitle, onSave, onCancel }: ForumFormProps) => {
-  const [title, setTitle] = useState<string>(forumToEdit?.title || forumToEdit?.titulo || '');
-  const [description, setDescription] = useState<string>(forumToEdit?.description || forumToEdit?.descripcion || '');
+  const [title, setTitle] = useState<string>(forumToEdit?.title || (forumToEdit as any)?.titulo || '');
+  const [description, setDescription] = useState<string>(forumToEdit?.description || (forumToEdit as any)?.descripcion || '');
 
   useEffect(() => {
     if (forumToEdit) {
-      setTitle(forumToEdit.title || forumToEdit.titulo || '');
-      setDescription(forumToEdit.description || forumToEdit.descripcion || '');
+      setTitle(forumToEdit.title || (forumToEdit as any).titulo || '');
+      setDescription(forumToEdit.description || (forumToEdit as any).descripcion || '');
     } else {
       setTitle('');
       setDescription('');
@@ -39,7 +39,7 @@ const ForumForm = ({ forumToEdit, title: formTitle, onSave, onCancel }: ForumFor
     const dataToSend: ForumFormData = {
       title,
       description,
-      ...(isEditing && forumToEdit && { forumId: forumToEdit.forumId || forumToEdit.foro_id }),
+      ...(isEditing && forumToEdit && { forumId: forumToEdit.forumId || (forumToEdit as any).foro_id }),
     };
 
     onSave(dataToSend);

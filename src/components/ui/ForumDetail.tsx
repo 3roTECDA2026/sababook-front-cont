@@ -13,8 +13,8 @@ type ForumDetailData = ForumDetailType & {
 };
 
 const ForumDetail = ({ foroId, onClose }: ForumDetailProps) => {
-  const { foro, loading, error } = useForumDetail(foroId);
-  const foroData = foro as ForumDetailData | null;
+  const { forum, loading, error } = useForumDetail(foroId);
+  const foroData = forum as ForumDetailData | null;
 
   if (!foroId) return null;
   if (loading) return <p>Cargando foro...</p>;
@@ -23,11 +23,11 @@ const ForumDetail = ({ foroId, onClose }: ForumDetailProps) => {
 
   return (
     <div>
-      <h2>{foroData?.titulo || 'Foro sin título'}</h2>
-      <p>{foroData?.descripcion || 'Sin descripción'}</p>
+      <h2>{foroData?.title || (foroData as any)?.titulo || 'Foro sin título'}</h2>
+      <p>{foroData?.description || (foroData as any)?.descripcion || 'Sin descripción'}</p>
       <p>
         <strong>Creador:</strong>{' '}
-        {foroData?.creador?.nombre || foroData?.usuario_nombre || 'Desconocido'}
+        {foroData?.creatorName || (foroData as any)?.creador?.nombre || (foroData as any)?.usuario_nombre || 'Desconocido'}
       </p>
       {/* Aquí puedes agregar la lógica para mostrar comentarios si lo deseas */}
       <button onClick={onClose}>Cerrar</button>

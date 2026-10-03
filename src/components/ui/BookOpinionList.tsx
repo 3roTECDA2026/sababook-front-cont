@@ -38,13 +38,13 @@ const BookOpinionList = ({ opinions, theme }: BookOpinionListProps) => {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box>
               <Typography variant="body2" fontWeight="bold">
-                {opinion?.usuario?.nombre || 'Usuario'} {/* Aquí se muestra el autor */}
+                {opinion?.user?.name || (opinion?.user as any)?.nombre || (opinion as any)?.usuario?.nombre || 'Usuario'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {opinion?.usuario?.rol || ''}
+                {(opinion as any)?.usuario?.rol || ''}
               </Typography>
             </Box>
-            <Rating value={opinion?.calificacion || 0} readOnly size="small" />
+            <Rating value={opinion?.rating ?? (opinion as any)?.calificacion ?? 0} readOnly size="small" />
           </Box>
 
           {/* Comentario */}
@@ -53,11 +53,11 @@ const BookOpinionList = ({ opinions, theme }: BookOpinionListProps) => {
             mt={1}
             sx={{ fontStyle: 'italic', color: theme?.palette?.text?.primary }}
           >
-            {opinion?.comentario || ''}
+            {opinion?.comment || (opinion as any)?.comentario || ''}
           </Typography>
 
           {/* Comentario destacado */}
-          {opinion?.destacado && (
+          {(opinion?.isFeatured || (opinion as any)?.destacado) && (
             <Box display="flex" justifyContent="flex-end" mt={1}>
               <Typography
                 variant="caption"

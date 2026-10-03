@@ -16,17 +16,17 @@ export default function Favs() {
   const { getReadingStatus, setReadingStatus } = useReadingStatus();
 
   // Para determinar si un libro es favorito (basado en la lista obtenida)
-  const isBookFavorite = (libro_id: number) =>
-    favoriteBooks.some((book) => book.libro_id === libro_id);
+  const isBookFavorite = (bookId: number) =>
+    favoriteBooks.some((book) => book.bookId === bookId);
 
   // Handler para toggle
-  const handleFavoriteToggle = async (libro_id: number) => {
-    const currentlyFavorite = isBookFavorite(libro_id);
-    return await toggleFavorite(libro_id, currentlyFavorite);
+  const handleFavoriteToggle = async (bookId: number) => {
+    const currentlyFavorite = isBookFavorite(bookId);
+    return await toggleFavorite(bookId, currentlyFavorite);
   };
 
   const visibleBooks = favoriteBooks.filter(
-    (book) => selectedStatus === 'general' || getReadingStatus(book.libro_id) === selectedStatus
+    (book) => selectedStatus === 'general' || getReadingStatus(book.bookId) === selectedStatus
   );
 
   if (loading) {
@@ -93,23 +93,26 @@ export default function Favs() {
         }}
       >
         {/* Mapear la lista de libros favoritos y pasar las nuevas props */}
-        {visibleBooks.map((book) => (
-          <BookCard
-            key={book.libro_id}
-            image={book.portada_url || LibroImage}
-            title={book.titulo}
-            autor={book.autor}
-            gender={book.genero}
-            rating={book.calificacion_promedio}
-            isFavorite={isBookFavorite(book.libro_id)} // Determina si está en favoritos
-            onFavoriteToggle={() => handleFavoriteToggle(book.libro_id)} // Maneja el toggle
-            libro_id={book.libro_id}
-            readingStatus={getReadingStatus(book.libro_id)}
-            onReadingStatusChange={(status) => setReadingStatus(book.libro_id, status)}
-            showReadingStatusControl
-            includeGeneralStatus
-          />
-        ))}
+        {visibleBooks.map((book) => {
+          const bId = book.bookId || 0;
+          return (
+            <BookCard
+              key={bId}
+              image={book.coverUrl || LibroImage}
+              title={book.title}
+              author={book.author}
+              genre={book.genre}
+              rating={book.averageRating}
+              isFavorite={isBookFavorite(bId)}
+              onFavoriteToggle={() => handleFavoriteToggle(bId)}
+              bookId={bId}
+              readingStatus={getReadingStatus(bId)}
+              onReadingStatusChange={(status) => setReadingStatus(bId, status)}
+              showReadingStatusControl
+              includeGeneralStatus
+            />
+          );
+        })}
 
         {/* Mensaje si no hay favoritos */}
         {visibleBooks.length === 0 && (

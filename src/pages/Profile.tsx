@@ -51,9 +51,9 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       setUserData({
-        userName: user.nombre || '',
+        userName: user.name || (user as any).nombre || '',
         userEmail: user.email || '',
-        avatarUrl: user.avatar_url || 'https://i.pravatar.cc/150?img=1',
+        avatarUrl: user.avatarUrl || (user as any).avatar_url || 'https://i.pravatar.cc/150?img=1',
       });
     }
   }, [user]);
