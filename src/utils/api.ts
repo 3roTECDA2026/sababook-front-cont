@@ -1,29 +1,29 @@
 // src/utils/api.ts
 
-/**
- * Parsea la respuesta de un fetch a JSON de forma segura.
- * Si la respuesta no es un JSON válido o viene vacía, evita que la app rompa.
- */
-export const parseJsonResponse = async <T = any>(response: Response): Promise<T | null> => {
+export const parseJsonResponse = async <T = unknown>(response: Response): Promise<T | null> => {
   try {
     const text = await response.text();
     return text ? (JSON.parse(text) as T) : null;
   } catch (error) {
-    console.error('Error parseando respuesta JSON:', error);
+    console.error('Error parsing JSON response:', error);
     return null;
   }
 };
 
-/**
- * Helper opcional para realizar peticiones HTTP centralizadas con parseo seguro y token de autenticación opcional.
- */
-export const fetchData = async <T = any>(
+type UnauthorizedHandler = () => void;
+let onUnauthorizedCallback: UnauthorizedHandler | null = null;
+
+export const registerUnauthorizedHandler = (handler: UnauthorizedHandler) => {
+  onUnauthorizedCallback = handler;
+};
+
+export const fetchData = async <T = unknown>(
   url: string,
   options: RequestInit = {}
 ): Promise<T | null> => {
   try {
     const token = localStorage.getItem('token');
-    
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -35,13 +35,21 @@ export const fetchData = async <T = any>(
       headers,
     });
 
+    if (response.status === 401) {
+      console.warn('HTTP 401 Unauthorized: Session expired or invalid token.');
+      if (onUnauthorizedCallback) {
+        onUnauthorizedCallback();
+      }
+      return null;
+    }
+
     if (!response.ok) {
-      console.warn(`Petición HTTP fallida [${response.status}]: ${response.statusText}`);
+      console.warn(`HTTP request failed [${response.status}]: ${response.statusText}`);
     }
 
     return await parseJsonResponse<T>(response);
   } catch (error) {
-    console.error('Error en la red o en la llamada API:', error);
+    console.error('Network or API call error:', error);
     return null;
   }
 };

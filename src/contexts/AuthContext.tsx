@@ -4,7 +4,7 @@ import { API_BASE_URL } from '@/environments/api';
 import { AuthContext, AuthContextType, AuthResult } from './AuthContextDefinition';
 import { useNavigate } from 'react-router-dom';
 import type { User } from '@/types';
-import { parseJsonResponse } from '@/utils/api';
+import { parseJsonResponse, registerUnauthorizedHandler } from '@/utils/api';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -25,6 +25,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setToken(null);
     navigate("/login");
   }, [navigate]);
+
+  useEffect(() => {
+    registerUnauthorizedHandler(() => {
+      logout();
+    });
+  }, [logout]);
 
   // Cargar usuario desde localStorage al iniciar la aplicación
   useEffect(() => {
