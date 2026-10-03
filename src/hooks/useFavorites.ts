@@ -10,7 +10,6 @@ export function useFavorites() {
   const [error, setError] = useState<string | null>(null);
   const { token } = useAuth() || {};
 
-  // Fetch favoritos del usuario
   const fetchFavorites = useCallback(async () => {
     if (!token) {
       setLoading(false);
@@ -21,14 +20,13 @@ export function useFavorites() {
       const res = await fetch(`${API_BASE_URL}/api/v1/favorites`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Error al obtener favoritos');
+      if (!res.ok) throw new Error('Error fetching favorites');
       const data: Book[] = await res.json();
       setFavoriteBooks(data);
-      console.log('FAVORITOS', data);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
-      console.error('Error al cargar favoritos:', err);
+      console.error('Error loading favorites:', err);
     } finally {
       setLoading(false);
     }
@@ -38,8 +36,7 @@ export function useFavorites() {
     fetchFavorites();
   }, [fetchFavorites]);
 
-  // Agregar favorito
-  const addFavorite = async (libro_id: number): Promise<boolean> => {
+  const addFavorite = async (bookId: number): Promise<boolean> => {
     if (!token) return false;
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/favorites`, {
@@ -48,21 +45,19 @@ export function useFavorites() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ libro_id }),
+        body: JSON.stringify({ bookId }),
       });
-      if (!res.ok) throw new Error('Error al agregar favorito');
+      if (!res.ok) throw new Error('Error adding favorite');
 
-      // Refrescar la lista completa de favoritos
       await fetchFavorites();
       return true;
     } catch (err) {
-      console.error('Error al agregar favorito:', err);
+      console.error('Error adding favorite:', err);
       return false;
     }
   };
 
-  // Quitar favorito
-  const removeFavorite = async (libro_id: number): Promise<boolean> => {
+  const removeFavorite = async (bookId: number): Promise<boolean> => {
     if (!token) return false;
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/favorites`, {
@@ -71,27 +66,24 @@ export function useFavorites() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ libro_id }),
+        body: JSON.stringify({ bookId }),
       });
-      if (!res.ok) throw new Error('Error al quitar favorito');
+      if (!res.ok) throw new Error('Error removing favorite');
 
-      // Refrescar la lista completa de favoritos
       await fetchFavorites();
       return true;
     } catch (err) {
-      console.error('Error al quitar favorito:', err);
+      console.error('Error removing favorite:', err);
       return false;
     }
   };
 
-  // Toggle favorito (combina add/remove)
-  const toggleFavorite = async (libro_id: number, isFavorite: boolean): Promise<boolean> => {
-    return isFavorite ? await removeFavorite(libro_id) : await addFavorite(libro_id);
+  const toggleFavorite = async (bookId: number, isFavorite: boolean): Promise<boolean> => {
+    return isFavorite ? await removeFavorite(bookId) : await addFavorite(bookId);
   };
 
-  // Función para verificar si un libro es favorito
-  const isBookFavorite = (libro_id: number): boolean => {
-    return favoriteBooks.some((book) => book.libro_id === libro_id);
+  const isBookFavorite = (bookId: number): boolean => {
+    return favoriteBooks.some((book) => (book.bookId || (book as any).libro_id) === bookId);
   };
 
   return {

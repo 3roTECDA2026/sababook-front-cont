@@ -3,28 +3,29 @@ import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/environments/api';
 import type { Opinion, OpinionAPI } from '@/types';
 
-export const useBookOpinion = (libroId: number | string | undefined) => {
+export const useBookOpinion = (bookId: number | string | undefined) => {
   const [opinions, setOpinions] = useState<Opinion[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchOpinions = async () => {
+    if (!bookId) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/reviews/libro/${libroId}`);
-      if (!res.ok) throw new Error('Error al cargar opiniones.');
+      const res = await fetch(`${API_BASE_URL}/api/v1/reviews/book/${bookId}`);
+      if (!res.ok) throw new Error('Error loading reviews.');
       const data: OpinionAPI[] = await res.json();
 
       const transformed: Opinion[] = data.map((op) => ({
-        id: op.opinion_id,
-        comentario: op.comentario,
-        calificacion: op.calificacion,
-        usuario: {
-          nombre: op.usuario_nombre || 'Usuario',
-          rol: op.usuario_rol || 'Lector',
+        id: op.opinionId,
+        comment: op.comment,
+        rating: op.rating,
+        user: {
+          name: op.userName || 'User',
+          role: op.userRole || 'Reader',
         },
-        destacado: op.destacado || false,
-        fecha: op.fecha,
+        isFeatured: op.isFeatured || false,
+        createdAt: op.createdAt,
       }));
 
       setOpinions(transformed);
@@ -39,7 +40,7 @@ export const useBookOpinion = (libroId: number | string | undefined) => {
 
   useEffect(() => {
     fetchOpinions();
-  }, [libroId]);
+  }, [bookId]);
 
   return { opinions, setOpinions, loading, error };
 };

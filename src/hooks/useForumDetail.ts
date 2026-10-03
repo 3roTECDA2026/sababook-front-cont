@@ -3,39 +3,35 @@ import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/environments/api';
 import type { ForumDetail } from '@/types';
 
-/**
- * Hook para obtener los datos de un foro por ID
- */
-const useForumDetail = (foroId: number | string | undefined) => {
-  const [foro, setForo] = useState<ForumDetail | null>(null);
+const useForumDetail = (forumId: number | string | undefined) => {
+  const [forum, setForum] = useState<ForumDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!foroId) return;
-    const fetchForo = async () => {
+    if (!forumId) return;
+    const fetchForum = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/forums/${foroId}/comentarios`);
+        const res = await fetch(`${API_BASE_URL}/api/v1/forums/${forumId}/comments`);
         if (!res.ok) {
-          throw new Error('Error al cargar el foro');
+          throw new Error('Error loading forum details');
         }
         const data: ForumDetail = await res.json();
-        setForo(data);
-        console.log('Datos del foro desde API:', data);
+        setForum(data);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         setError(message);
-        setForo(null);
+        setForum(null);
       } finally {
         setLoading(false);
       }
     };
-    fetchForo();
-  }, [foroId]);
+    fetchForum();
+  }, [forumId]);
 
-  return { foro, loading, error };
+  return { forum, loading, error };
 };
 
 export default useForumDetail;
