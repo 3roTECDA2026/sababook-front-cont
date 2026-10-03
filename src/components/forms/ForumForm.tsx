@@ -4,9 +4,9 @@ import { Box, TextField, Button, Paper, Typography } from '@mui/material';
 import type { Forum } from '@/types';
 
 interface ForumFormData {
-  titulo: string;
-  descripcion: string;
-  foro_id?: number;
+  title: string;
+  description: string;
+  forumId?: number;
   [key: string]: unknown;
 }
 
@@ -17,36 +17,31 @@ interface ForumFormProps {
   onCancel: () => void;
 }
 
-const ForumForm = ({ forumToEdit, title, onSave, onCancel }: ForumFormProps) => {
-  const [titulo, setTitulo] = useState<string>(forumToEdit?.titulo || '');
-  const [descripcion, setDescripcion] = useState<string>(forumToEdit?.descripcion || '');
+const ForumForm = ({ forumToEdit, title: formTitle, onSave, onCancel }: ForumFormProps) => {
+  const [title, setTitle] = useState<string>(forumToEdit?.title || forumToEdit?.titulo || '');
+  const [description, setDescription] = useState<string>(forumToEdit?.description || forumToEdit?.descripcion || '');
 
   useEffect(() => {
     if (forumToEdit) {
-      setTitulo(forumToEdit.titulo || '');
-      setDescripcion(forumToEdit.descripcion || '');
+      setTitle(forumToEdit.title || forumToEdit.titulo || '');
+      setDescription(forumToEdit.description || forumToEdit.descripcion || '');
     } else {
-      // Limpiar estados si estamos en modo creación
-      setTitulo('');
-      setDescripcion('');
+      setTitle('');
+      setDescription('');
     }
   }, [forumToEdit]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!titulo || !descripcion) return;
+    if (!title || !description) return;
     const isEditing = !!forumToEdit;
 
     const dataToSend: ForumFormData = {
-      titulo,
-      descripcion,
-      // 3. Incluir el ID si estamos editando (necesario para la API PUT)
-      ...(isEditing && forumToEdit && { foro_id: forumToEdit.foro_id }),
-
-      // Nota: El creador_id es manejado por el Dashboard solo en el POST de creación.
+      title,
+      description,
+      ...(isEditing && forumToEdit && { forumId: forumToEdit.forumId || forumToEdit.foro_id }),
     };
 
-    // Llama al handler unificado (handleSaveForum) en Dashboard
     onSave(dataToSend);
   };
 
@@ -54,21 +49,21 @@ const ForumForm = ({ forumToEdit, title, onSave, onCancel }: ForumFormProps) => 
     <Paper sx={{ p: 4, width: '90%', maxWidth: 500 }}>
       <Typography variant="h6" component="h2" gutterBottom>
         {/* Mostrar el título recibido, que es dinámico */}
-        {title}
+        {formTitle}
       </Typography>
       <form onSubmit={handleSubmit}>
         <TextField
           label="Título"
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           fullWidth
           required
           sx={{ mb: 2 }}
         />
         <TextField
           label="Descripción"
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           fullWidth
           multiline
           rows={3}

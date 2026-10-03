@@ -41,12 +41,12 @@ const ForumDetailsPage = () => {
     setSending(true);
     setFeedback(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/forums/${id}/comentarios`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/forums/${id}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          usuario_id: user.usuario_id,
-          contenido: newComment,
+          userId: user.userId || (user as any).usuario_id,
+          content: newComment,
         }),
       });
 
@@ -62,8 +62,8 @@ const ForumDetailsPage = () => {
 
       const nuevoComentario: ForumDetailComment = {
         ...data,
-        usuario_nombre: user.nombre,
-        usuario_avatar: user.avatar_url ?? null,
+        userName: user.name || user.nombre,
+        userAvatar: user.avatarUrl ?? (user as any).avatar_url ?? null,
       };
 
       setLocalComments([...(comentarios ?? []), nuevoComentario]);

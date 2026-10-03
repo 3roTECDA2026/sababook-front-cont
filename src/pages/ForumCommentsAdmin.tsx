@@ -71,17 +71,17 @@ type RawComment = ForumComment & {
 
 // Forma ya transformada que usa este componente
 interface DisplayComment {
-  comentario_id: number;
-  comentario: string;
-  usuario_nombre: string;
+  commentId: number;
+  comment: string;
+  userName: string;
   email: string;
-  fecha: string;
-  destacado: boolean;
-  usuario_id: number | null;
+  createdAt: string;
+  isFeatured: boolean;
+  userId: number | null;
 }
 
 interface EditedComment {
-  comentario: string;
+  comment: string;
 }
 
 interface SnackbarState {
@@ -101,7 +101,7 @@ const ForumCommentsAdmin = () => {
 
   // Estados de edición
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
-  const [editedComment, setEditedComment] = useState<EditedComment>({ comentario: '' });
+  const [editedComment, setEditedComment] = useState<EditedComment>({ comment: '' });
 
   // Estados de eliminación
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
@@ -127,13 +127,13 @@ const ForumCommentsAdmin = () => {
   } = useForumComments(foroId);
 
   const comments: DisplayComment[] = (rawComments as RawComment[]).map((c) => ({
-    comentario_id: c.id ?? c.comentario_id,
-    comentario: c.contenido || c.comentario || '',
-    usuario_nombre: c.nombre || c.usuario_nombre || 'Usuario',
+    commentId: c.commentId ?? c.id ?? (c as any).comentario_id ?? 0,
+    comment: c.comment ?? c.contenido ?? (c as any).comentario ?? '',
+    userName: c.userName ?? c.nombre ?? (c as any).usuario_nombre ?? 'Usuario',
     email: c.email || '',
-    fecha: c.fecha || c.createdAt || new Date().toISOString(),
-    destacado: c.destacado || false,
-    usuario_id: c.usuario_id ?? c.usuario?.id ?? null,
+    createdAt: c.createdAt || c.fecha || new Date().toISOString(),
+    isFeatured: c.isFeatured ?? (c as any).destacado ?? false,
+    userId: c.userId ?? c.usuario_id ?? c.usuario?.id ?? null,
   }));
 
   // Fetch info del foro
@@ -171,21 +171,21 @@ const ForumCommentsAdmin = () => {
 
   // Editar comentario
   const handleEditClick = (comment: DisplayComment) => {
-    setEditingCommentId(comment.comentario_id);
-    setEditedComment({ comentario: comment.comentario });
+    setEditingCommentId(comment.commentId);
+    setEditedComment({ comment: comment.comment });
   };
   const handleCancelEdit = () => {
     setEditingCommentId(null);
-    setEditedComment({ comentario: '' });
+    setEditedComment({ comment: '' });
   };
-  const handleSaveEdit = async (comentarioId: number) => {
+  const handleSaveEdit = async (commentId: number) => {
     setIsUpdating(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/comments/${comentarioId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/comments/${commentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(editedComment),
+        body: JSON.stringify({ comment: editedComment.comment }),
       });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -217,7 +217,7 @@ const ForumCommentsAdmin = () => {
     setIsDeleting(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/comments/${commentToDelete.comentario_id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/comments/${commentToDelete.commentId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -333,33 +333,33 @@ const ForumCommentsAdmin = () => {
                 </TableRow>
               ) : (
                 comments.map((comment) => (
-                  <TableRow key={comment.comentario_id} hover>
-                    <TableCell>{comment.usuario_nombre || 'Usuario'}</TableCell>
+                  <TableRow key={comment.commentId} hover>
+                    <TableCell>{comment.userName || 'Usuario'}</TableCell>
                     <TableCell>
-                      {editingCommentId === comment.comentario_id ? (
+                      {editingCommentId === comment.commentId ? (
                         <TextField
                           fullWidth
                           multiline
                           rows={2}
-                          value={editedComment.comentario}
+                          value={editedComment.comment}
                           onChange={(e) =>
-                            setEditedComment({ ...editedComment, comentario: e.target.value })
+                            setEditedComment({ ...editedComment, comment: e.target.value })
                           }
                           size="small"
                         />
                       ) : (
-                        <Typography variant="body2">{comment.comentario}</Typography>
+                        <Typography variant="body2">{comment.comment}</Typography>
                       )}
                     </TableCell>
                     <TableCell>
-                      {comment.fecha ? new Date(comment.fecha).toLocaleDateString('es-ES') : 'N/A'}
+                      {comment.createdAt ? new Date(comment.createdAt).toLocaleDateString('es-ES') : 'N/A'}
                     </TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                        {editingCommentId === comment.comentario_id ? (
+                        {editingCommentId === comment.commentId ? (
                           <>
                             <ActionButton
-                              onClick={() => handleSaveEdit(comment.comentario_id)}
+                              onClick={() => handleSaveEdit(comment.commentId)}
                               title="Guardar"
                               disabled={isUpdating}
                             >
@@ -400,9 +400,9 @@ const ForumCommentsAdmin = () => {
           {commentToDelete && (
             <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
               <Typography variant="body2" fontWeight="bold">
-                Usuario: {commentToDelete.usuario_nombre || 'Usuario'}
+                Usuario: {commentToDelete.userName || 'Usuario'}
               </Typography>
-              <Typography variant="body2">Comentario: {commentToDelete.comentario}</Typography>
+              <Typography variant="body2">Comentario: {commentToDelete.comment}</Typography>
             </Box>
           )}
         </DialogContent>
