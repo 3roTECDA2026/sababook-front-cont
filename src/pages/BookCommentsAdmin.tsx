@@ -60,8 +60,8 @@ const ActionButton = styled(IconButton)(({ theme }) => ({
 }));
 
 interface EditedComment {
-  comentario: string;
-  calificacion: number;
+  comment: string;
+  rating: number;
 }
 
 interface SnackbarState {
@@ -82,7 +82,7 @@ const BookCommentsAdmin = () => {
 
   // Estados para edición
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
-  const [editedComment, setEditedComment] = useState<EditedComment>({ comentario: '', calificacion: 0 });
+  const [editedComment, setEditedComment] = useState<EditedComment>({ comment: '', rating: 0 });
 
   // Estados para eliminación
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
@@ -134,17 +134,18 @@ const BookCommentsAdmin = () => {
 
   // Iniciar edición de comentario
   const handleEditClick = (comment: OpinionAPI) => {
-    setEditingCommentId(comment.opinion_id);
+    const opinionId = comment.opinionId || comment.opinion_id || 0;
+    setEditingCommentId(opinionId);
     setEditedComment({
-      comentario: comment.comentario,
-      calificacion: comment.calificacion,
+      comment: comment.comment || comment.comentario || '',
+      rating: comment.rating ?? comment.calificacion ?? 0,
     });
   };
 
   // Cancelar edición
   const handleCancelEdit = () => {
     setEditingCommentId(null);
-    setEditedComment({ comentario: '', calificacion: 0 });
+    setEditedComment({ comment: '', rating: 0 });
   };
 
   // Guardar cambios de edición
@@ -159,7 +160,10 @@ const BookCommentsAdmin = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(editedComment),
+        body: JSON.stringify({
+          comment: editedComment.comment,
+          rating: editedComment.rating,
+        }),
       });
 
       if (!response.ok) {
@@ -313,32 +317,32 @@ const BookCommentsAdmin = () => {
                     <TableCell>{comment.usuario_nombre || 'Usuario'}</TableCell>
                     <TableCell>{comment.usuario_rol || 'Lector'}</TableCell>
                     <TableCell>
-                      {editingCommentId === comment.opinion_id ? (
+                      {editingCommentId === (comment.opinionId || comment.opinion_id) ? (
                         <Rating
-                          value={editedComment.calificacion}
+                          value={editedComment.rating}
                           onChange={(e, newValue) =>
-                            setEditedComment({ ...editedComment, calificacion: newValue ?? 0 })
+                            setEditedComment({ ...editedComment, rating: newValue ?? 0 })
                           }
                           size="small"
                         />
                       ) : (
-                        <Rating value={comment.calificacion} readOnly size="small" />
+                        <Rating value={comment.rating ?? comment.calificacion ?? 0} readOnly size="small" />
                       )}
                     </TableCell>
                     <TableCell>
-                      {editingCommentId === comment.opinion_id ? (
+                      {editingCommentId === (comment.opinionId || comment.opinion_id) ? (
                         <TextField
                           fullWidth
                           multiline
                           rows={2}
-                          value={editedComment.comentario}
+                          value={editedComment.comment}
                           onChange={(e) =>
-                            setEditedComment({ ...editedComment, comentario: e.target.value })
+                            setEditedComment({ ...editedComment, comment: e.target.value })
                           }
                           size="small"
                         />
                       ) : (
-                        <Typography variant="body2">{comment.comentario}</Typography>
+                        <Typography variant="body2">{comment.comment || comment.comentario}</Typography>
                       )}
                     </TableCell>
                     <TableCell>
@@ -346,10 +350,10 @@ const BookCommentsAdmin = () => {
                     </TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                        {editingCommentId === comment.opinion_id ? (
+                        {editingCommentId === (comment.opinionId || comment.opinion_id) ? (
                           <>
                             <ActionButton
-                              onClick={() => handleSaveEdit(comment.opinion_id)}
+                              onClick={() => handleSaveEdit(comment.opinionId || comment.opinion_id || 0)}
                               title="Guardar"
                               disabled={isUpdating}
                             >
@@ -393,9 +397,9 @@ const BookCommentsAdmin = () => {
           {commentToDelete && (
             <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
               <Typography variant="body2" fontWeight="bold">
-                Usuario: {commentToDelete.usuario_nombre || 'Usuario'}
+                Usuario: {commentToDelete.userName || commentToDelete.usuario_nombre || 'Usuario'}
               </Typography>
-              <Typography variant="body2">Comentario: {commentToDelete.comentario}</Typography>
+              <Typography variant="body2">Comentario: {commentToDelete.comment || commentToDelete.comentario}</Typography>
             </Box>
           )}
         </DialogContent>

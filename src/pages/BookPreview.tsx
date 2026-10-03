@@ -49,7 +49,7 @@ const BookPreview = ({ book: propBook, onCommentClick }: BookPreviewProps) => {
     if (onCommentClick) {
       onCommentClick(book);
     } else {
-      navigate(`/book/${book?.id || book?.libro_id || id}`);
+      navigate(`/book/${book?.bookId || book?.id || (book as any)?.libro_id || id}`);
     }
   };
 
@@ -215,8 +215,8 @@ const BookPreview = ({ book: propBook, onCommentClick }: BookPreviewProps) => {
           textAlign: "center",
         }}
       >
-        {book?.descripcion ||
-          book?.description ||
+        {book?.description ||
+          (book as any)?.descripcion ||
           "Esta es la descripción completa del libro. Aquí se puede incluir sinopsis, detalles del contenido, o cualquier información que ayude a que quien lo vea decida si quiere leerlo."}
       </Typography>
     </Box>
