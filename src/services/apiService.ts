@@ -2,12 +2,6 @@
 import { API_BASE_URL } from '@/environments/api';
 import type { Book, Medal, BookFilters, ReadingGoal } from '@/types';
 
-/**
- * Función genérica para hacer peticiones HTTP
- * @param endpoint - Endpoint relativo a la API
- * @param options - Opciones de fetch (method, headers, body, etc.)
- * @returns Respuesta JSON o error
- */
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}/api/v1${endpoint}`;
 
@@ -28,63 +22,44 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
     return await response.json();
   } catch (error) {
-    console.error(`Error en la petición a ${endpoint}:`, error);
+    console.error(`Error in request to ${endpoint}:`, error);
     throw error;
   }
 }
 
-// ========== FUNCIONES PARA LIBROS Y FILTROS ==========
+// ========== BOOKS AND FILTERS ==========
 
-/**
- * Obtener catálogo completo de libros
- */
-export async function getCatalogoLibros(): Promise<Book[]> {
-  return await apiRequest<Book[]>('/libros');
+export async function getBookCatalog(): Promise<Book[]> {
+  return await apiRequest<Book[]>('/books');
 }
 
-/**
- * Buscar libros con filtros
- */
-export async function buscarLibros(filtros: BookFilters = {}): Promise<Book[]> {
-  // Construir query string con los filtros
+export async function searchBooks(filters: BookFilters = {}): Promise<Book[]> {
   const params = new URLSearchParams();
 
-  Object.entries(filtros).forEach(([key, value]) => {
+  Object.entries(filters).forEach(([key, value]) => {
     if (value && value.trim()) {
       params.append(key, value.trim());
     }
   });
 
   const queryString = params.toString();
-  const endpoint = queryString ? `/libros/buscar?${queryString}` : '/libros/buscar';
+  const endpoint = queryString ? `/books/search?${queryString}` : '/books/search';
 
   return await apiRequest<Book[]>(endpoint);
 }
 
-/**
- * Obtener detalle de un libro específico
- */
-export async function getLibroById(libroId: number): Promise<Book> {
-  return await apiRequest<Book>(`/libros/${libroId}`);
+export async function getBookById(bookId: number | string): Promise<Book> {
+  return await apiRequest<Book>(`/books/${bookId}`);
 }
 
-/**
- * Obtener medallas de un usuario
- */
 export async function getUserMedals(userId: number | string): Promise<Medal[]> {
   return await apiRequest<Medal[]>(`/medal/${userId}`);
 }
 
-/**
- * Obtener el catálogo completo de insignias de un usuario (obtenidas + no obtenidas)
- */
-export async function getCatalogoMedals(userId: number | string): Promise<Medal[]> {
+export async function getCatalogMedals(userId: number | string): Promise<Medal[]> {
   return await apiRequest<Medal[]>(`/medal/catalog/${userId}`);
 }
 
-/**
- * Helper para obtener headers autenticados con JWT
- */
 function getAuthHeaders() {
   const token = localStorage.getItem('token');
   return {
@@ -93,84 +68,66 @@ function getAuthHeaders() {
   };
 }
 
-// ========== FUNCIONES PARA METAS DE LECTURA ==========
+// ========== READING GOALS ==========
 
 interface CreateGoalData {
-  usuario_id: number | string;
-  periodo_nombre?: string;
-  target_books: number;
-  start_date: string;
-  end_date: string;
+  userId: number | string;
+  periodName?: string;
+  targetBooks: number;
+  startDate: string;
+  endDate: string;
 }
 
-/**
- * Obtener las metas del usuario autenticado
- */
 export async function getActiveReadingGoal(userId: number | string): Promise<ReadingGoal | null> {
   if (!userId) return null;
-  return await apiRequest<ReadingGoal>(`/metas-lectura/usuario/${userId}`, {
+  return await apiRequest<ReadingGoal>(`/reading-goals/user/${userId}`, {
     headers: getAuthHeaders(),
   });
 }
 
-/**
- * Crear una nueva meta de lectura
- */
 export async function createReadingGoal(goalData: CreateGoalData): Promise<ReadingGoal> {
   const payload = {
-    usuario_id: Number(goalData.usuario_id),
-    periodo_nombre: goalData.periodo_nombre || 'Meta Personal',
-    cantidad_libros: Number(goalData.target_books),
-    fecha_inicio: goalData.start_date,
-    fecha_fin: goalData.end_date,
+    userId: Number(goalData.userId),
+    periodName: goalData.periodName || 'Personal Goal',
+    targetBooks: Number(goalData.targetBooks),
+    startDate: goalData.startDate,
+    endDate: goalData.endDate,
   };
 
-  return await apiRequest<ReadingGoal>('/metas-lectura', {
+  return await apiRequest<ReadingGoal>('/reading-goals', {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 }
 
-/**
- * Registrar un libro como leído en la meta activa
- */
 export async function logBookProgress(bookId: number | string): Promise<ReadingGoal> {
-  return await apiRequest<ReadingGoal>('/metas-lectura/log-book', {
+  return await apiRequest<ReadingGoal>('/reading-goals/log-book', {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ bookId }),
   });
 }
 
-/**
- * Obtener todas las metas del sistema (Panel Admin/Docente)
- */
 export async function getAllReadingGoals(): Promise<ReadingGoal[]> {
-  return await apiRequest<ReadingGoal[]>('/metas-lectura', {
+  return await apiRequest<ReadingGoal[]>('/reading-goals', {
     headers: getAuthHeaders(),
   });
 }
 
-/**
- * Actualizar una meta por su ID
- */
 export async function updateReadingGoal(
-  metaId: number | string,
+  goalId: number | string,
   goalData: Partial<ReadingGoal>
 ): Promise<ReadingGoal> {
-  return await apiRequest<ReadingGoal>(`/metas-lectura/${metaId}`, {
+  return await apiRequest<ReadingGoal>(`/reading-goals/${goalId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(goalData),
   });
 }
 
-/**
- * Eliminar una meta por su ID
- */
-export async function deleteReadingGoal(metaId: number | string): Promise<{ success: boolean }> {
-  return await apiRequest<{ success: boolean }>(`/metas-lectura/${metaId}`, {
+export async function deleteReadingGoal(goalId: number | string): Promise<{ success: boolean }> {
+  return await apiRequest<{ success: boolean }>(`/reading-goals/${goalId}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
