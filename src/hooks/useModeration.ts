@@ -27,7 +27,7 @@ export const useModeration = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE_URL}/api/v1/moderacion/config`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/moderation/config`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -46,7 +46,7 @@ export const useModeration = () => {
     try {
       setLoadingIncidencias(true);
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE_URL}/api/v1/moderacion/incidencias`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/moderation/incidencias`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -68,7 +68,7 @@ export const useModeration = () => {
     try {
       setResolvingId(id);
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE_URL}/api/v1/moderacion/incidencias/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/moderation/incidencias/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export const useModeration = () => {
       setSaving(true);
       setFeedback(null);
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE_URL}/api/v1/moderacion/config`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/moderation/config`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

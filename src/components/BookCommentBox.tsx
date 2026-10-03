@@ -48,7 +48,7 @@ const BookCommentBox = ({
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No autenticado.');
 
-      const res = await fetch(`${API_BASE_URL}/api/v1/opinion`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/reviews`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

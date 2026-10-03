@@ -95,6 +95,14 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/foro/:id"
+        element={
+          <ProtectedRoute>
+            <ForumDetailsPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/foros"
