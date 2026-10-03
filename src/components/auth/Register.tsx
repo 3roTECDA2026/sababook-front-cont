@@ -1,6 +1,6 @@
-// src/components/auth/Register.tsx
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { Box, Button, TextField, Typography, styled } from '@mui/material';
+import { useNotification } from '@/context/NotificationContext';
 
 const StyledButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.button?.main || '#f25600',
@@ -27,6 +27,7 @@ interface RegisterProps {
 }
 
 const Register = ({ onRegisterSubmit, onBackToLogin }: RegisterProps) => {
+  const { showNotification } = useNotification();
   const [formData, setFormData] = useState<RegisterFormData>({
     name: '',
     email: '',
@@ -41,7 +42,7 @@ const Register = ({ onRegisterSubmit, onBackToLogin }: RegisterProps) => {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert('Las contraseñas no coinciden');
+      showNotification('Las contraseñas no coinciden', 'error');
       return;
     }
     onRegisterSubmit(formData);
