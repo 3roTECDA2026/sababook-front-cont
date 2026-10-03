@@ -23,25 +23,24 @@ const ReadingGoalsSection = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [openModal, setOpenModal] = useState<boolean>(false);
 
-  // Genera la fecha de mañana en formato YYYY-MM-DD
-  const fechaMananaStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
   const [formData, setFormData] = useState({
-    target_books: 5,
-    start_date: fechaMananaStr, // Por defecto inicia mañana
-    end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
+    targetBooks: 5,
+    startDate: tomorrowStr,
+    endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
   });
 
   const fetchGoal = async () => {
     try {
       setLoading(true);
-      const userId = user?.usuario_id;
+      const userId = user?.userId || (user as any)?.usuario_id;
       if (userId) {
         const data = await getActiveReadingGoal(userId);
         setGoal(data || null);
       }
     } catch (err) {
-      console.error('Error al cargar la meta:', err);
+      console.error('Error loading goal:', err);
     } finally {
       setLoading(false);
     }
@@ -55,38 +54,34 @@ const ReadingGoalsSection = () => {
 
   const handleCreateGoal = async () => {
     try {
-      const userId = user?.usuario_id;
+      const userId = user?.userId || (user as any)?.usuario_id;
       if (!userId) return;
 
-      // Calculamos el inicio para mañana a primera hora (00:00:00 hs)
-      const manana = new Date();
-      manana.setDate(manana.getDate() + 1);
-      manana.setHours(0, 0, 0, 0);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
 
       const payload = {
-        ...formData,
-        usuario_id: userId,
-        periodo_nombre: 'Meta Personal',
-        fecha_inicio: manana.toISOString(), // Forzamos inicio a mañana
-        fecha_fin: new Date(`${formData.end_date}T23:59:59.999Z`).toISOString(),
+        userId,
+        periodName: 'Personal Goal',
+        targetBooks: formData.targetBooks,
+        startDate: tomorrow.toISOString(),
+        endDate: new Date(`${formData.endDate}T23:59:59.999Z`).toISOString(),
       };
 
       await createReadingGoal(payload);
       setOpenModal(false);
       await fetchGoal();
     } catch (err) {
-      console.error('Error al crear la meta:', err);
+      console.error('Error creating goal:', err);
     }
   };
 
   if (loading) return null;
 
-  // Mapeo exacto con los campos de Prisma
-  const targetCount = Number(goal?.cantidad_libros || goal?.target_books || 0);
-  const currentCount = Number(goal?.libros_leidos ?? goal?.progreso ?? goal?.current_books ?? 0);
+  const targetCount = Number(goal?.targetBooks || (goal as any)?.cantidad_libros || 0);
+  const currentCount = Number(goal?.readBooks ?? (goal as any)?.libros_leidos ?? goal?.progress ?? 0);
   const progress = targetCount > 0 ? Math.min((currentCount / targetCount) * 100, 100) : 0;
-
-  // Condición para saber si la meta fue alcanzada
   const isCompleted = targetCount > 0 && currentCount >= targetCount;
 
   return (
@@ -119,11 +114,10 @@ const ReadingGoalsSection = () => {
             />
 
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, textAlign: 'right' }}>
-              Período: {new Date(goal.fecha_inicio || goal.start_date || '').toLocaleDateString()} -{' '}
-              {new Date(goal.fecha_fin || goal.end_date || '').toLocaleDateString()}
+              Período: {new Date(goal.startDate || (goal as any).fecha_inicio || '').toLocaleDateString()} -{' '}
+              {new Date(goal.endDate || (goal as any).fecha_fin || '').toLocaleDateString()}
             </Typography>
 
-            {/* Cartel de éxito si la meta está completada */}
             {isCompleted && (
               <Box
                 sx={{
@@ -178,30 +172,28 @@ const ReadingGoalsSection = () => {
             <TextField
               label="Cantidad de libros"
               type="number"
-              value={formData.target_books}
-              onChange={(e) => setFormData({ ...formData, target_books: parseInt(e.target.value) || 1 })}
+              value={formData.targetBooks}
+              onChange={(e) => setFormData({ ...formData, targetBooks: parseInt(e.target.value) || 1 })}
               fullWidth
             />
 
-            {/* FECHA DE INICIO CON BLOQUEO A PARTIR DE MAÑANA */}
             <TextField
               label="Fecha de inicio"
               type="date"
               InputLabelProps={{ shrink: true }}
-              inputProps={{ min: fechaMananaStr }} // <-- Deshabilita hoy y días pasados
-              value={formData.start_date}
-              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              inputProps={{ min: tomorrowStr }}
+              value={formData.startDate}
+              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
               fullWidth
             />
 
-            {/* FECHA DE FIN CON BLOQUEO A PARTIR DE LA FECHA DE INICIO ELEGIDA */}
             <TextField
               label="Fecha de fin"
               type="date"
               InputLabelProps={{ shrink: true }}
-              inputProps={{ min: formData.start_date || fechaMananaStr }} // <-- Garantiza que sea posterior al inicio
-              value={formData.end_date}
-              onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              inputProps={{ min: formData.startDate || tomorrowStr }}
+              value={formData.endDate}
+              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
               fullWidth
             />
           </Box>

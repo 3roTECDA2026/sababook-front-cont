@@ -7,32 +7,31 @@ import {
 } from "@mui/material";
 
 interface GoalFormProps {
-  goalToEdit?: any; // Podés reemplazar 'any' por tu interfaz de Meta si la tenés
+  goalToEdit?: any;
   onSave: (data: any) => void;
   onCancel: () => void;
 }
 
-  export default function GoalForm({ goalToEdit, onSave, onCancel }: GoalFormProps) {
+export default function GoalForm({ goalToEdit, onSave, onCancel }: GoalFormProps) {
   const [formData, setFormData] = useState({
-    meta_id: "",
-    periodo_nombre: "",
-    cantidad_libros: "",
-    fecha_fin: "",
+    goalId: "",
+    periodName: "",
+    targetBooks: "",
+    endDate: "",
   });
 
-  // Precargar los datos cuando llega una meta para editar
   useEffect(() => {
     if (goalToEdit) {
-      // Formatear la fecha a YYYY-MM-DD para que el input type="date" la reconozca
-      const formattedDate = goalToEdit.fecha_fin
-        ? new Date(goalToEdit.fecha_fin).toISOString().split("T")[0]
+      const rawEndDate = goalToEdit.endDate || goalToEdit.fecha_fin;
+      const formattedDate = rawEndDate
+        ? new Date(rawEndDate).toISOString().split("T")[0]
         : "";
 
       setFormData({
-        meta_id: goalToEdit.meta_id || goalToEdit.id || "",
-        periodo_nombre: goalToEdit.periodo_nombre || "",
-        cantidad_libros: goalToEdit.cantidad_libros || "",
-        fecha_fin: formattedDate,
+        goalId: goalToEdit.goalId || goalToEdit.meta_id || goalToEdit.id || "",
+        periodName: goalToEdit.periodName || goalToEdit.periodo_nombre || "",
+        targetBooks: String(goalToEdit.targetBooks || goalToEdit.cantidad_libros || ""),
+        endDate: formattedDate,
       });
     }
   }, [goalToEdit]);
@@ -49,8 +48,10 @@ interface GoalFormProps {
     event.preventDefault();
     onSave({
       ...goalToEdit,
-      ...formData,
-      cantidad_libros: parseInt(formData.cantidad_libros, 10) || 0,
+      goalId: formData.goalId ? Number(formData.goalId) : undefined,
+      periodName: formData.periodName,
+      targetBooks: parseInt(formData.targetBooks, 10) || 0,
+      endDate: formData.endDate,
     });
   };
 
@@ -75,8 +76,8 @@ interface GoalFormProps {
         <TextField
           fullWidth
           label="Período / Nombre de la Meta"
-          name="periodo_nombre"
-          value={formData.periodo_nombre}
+          name="periodName"
+          value={formData.periodName}
           onChange={handleChange}
           required
         />
@@ -85,8 +86,8 @@ interface GoalFormProps {
           fullWidth
           type="number"
           label="Objetivo (Cantidad de Libros)"
-          name="cantidad_libros"
-          value={formData.cantidad_libros}
+          name="targetBooks"
+          value={formData.targetBooks}
           onChange={handleChange}
           inputProps={{ min: 1 }}
           required
@@ -96,8 +97,8 @@ interface GoalFormProps {
           fullWidth
           type="date"
           label="Fecha de Finalización"
-          name="fecha_fin"
-          value={formData.fecha_fin}
+          name="endDate"
+          value={formData.endDate}
           onChange={handleChange}
           InputLabelProps={{ shrink: true }}
           required
