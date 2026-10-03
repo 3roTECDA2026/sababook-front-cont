@@ -37,10 +37,18 @@ const BookCommentBox = ({
       return;
     }
 
+    const storedUserId = localStorage.getItem('userId');
+    const resolvedUserId = Number(user?.usuario_id || user?.userId || storedUserId || 0);
+
+    if (!resolvedUserId || isNaN(resolvedUserId)) {
+      alert('Error de autenticación. Por favor, reinicia sesión.');
+      return;
+    }
+
     const payload = {
       libro_id: Number(id),
-      usuario_id: user.usuario_id,
-      calificacion: newRating,
+      usuario_id: resolvedUserId,
+      calificacion: Number(newRating),
       comentario: newComment,
     };
 
