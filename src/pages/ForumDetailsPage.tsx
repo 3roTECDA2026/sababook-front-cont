@@ -56,9 +56,11 @@ const ForumDetailsPage = () => {
 
       const data = await res.json();
 
-      if (!res.ok) {
+      if (!res.ok || res.status === 202 || data.ok === false) {
         const errorMsg = data.mensaje || data.error || 'Error al agregar el comentario';
-        setFeedback({ severity: 'error', message: errorMsg });
+        const severityType = res.status === 202 || data.error === 'EN_REVISION' ? 'info' : 'error';
+        setFeedback({ severity: severityType, message: errorMsg });
+        setNewComment('');
         return;
       }
 

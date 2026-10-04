@@ -41,8 +41,12 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
         },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
-        throw new Error('Error al enviar el comentario');
+      const data = await res.json();
+      if (!res.ok || res.status === 202 || data.ok === false) {
+        const errorMsg = data.mensaje || data.error || 'Error al enviar el comentario';
+        setSendError(errorMsg);
+        setContenido('');
+        return;
       }
       setContenido('');
       setSuccessMsg('Comentario enviado correctamente');
