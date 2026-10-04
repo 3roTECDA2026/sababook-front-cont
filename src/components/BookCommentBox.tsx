@@ -1,6 +1,6 @@
 // src/components/BookCommentBox.tsx
-import React, { Dispatch, SetStateAction } from 'react';
-import { Box, Typography, Rating } from '@mui/material';
+import React, { Dispatch, SetStateAction, useState } from 'react';
+import { Box, Typography, Rating, Alert } from '@mui/material';
 import type { Theme } from '@mui/material';
 import NavButton from './ui/NavButton';
 import { API_BASE_URL } from '@/environments/api';
@@ -31,7 +31,10 @@ const BookCommentBox = ({
   setShowCommentBox,
   setOpinions,
 }: BookCommentBoxProps) => {
+  const [feedback, setFeedback] = useState<{ msg: string; severity: 'info' | 'error' | 'success' } | null>(null);
+
   const handleSubmit = async () => {
+    setFeedback(null);
     if (!newComment.trim() || newRating === 0) {
       alert('Por favor, escribe un comentario y selecciona una calificación.');
       return;
@@ -69,7 +72,10 @@ const BookCommentBox = ({
 
       if (!res.ok || res.status === 202 || data?.ok === false) {
         const errorMsg = data?.mensaje || data?.error || 'No se pudo guardar el comentario.';
-        showNotification(errorMsg, res.status === 202 || data?.error === 'EN_REVISION' ? 'info' : 'error');
+        setFeedback({
+          msg: errorMsg,
+          severity: res.status === 202 || data?.error === 'EN_REVISION' ? 'info' : 'error',
+        });
         return;
       }
 
@@ -92,11 +98,10 @@ const BookCommentBox = ({
       setNewComment('');
       setNewRating(0);
       setShowCommentBox(false);
-      showNotification('Comentario guardado correctamente.', 'success');
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
-      showNotification(message || 'No se pudo guardar el comentario.', 'error');
+      setFeedback({ msg: message || 'No se pudo guardar el comentario.', severity: 'error' });
     }
   };
 
@@ -113,6 +118,11 @@ const BookCommentBox = ({
       <Typography variant="subtitle2" fontWeight="bold" mb={1}>
         Escribe tu opinión
       </Typography>
+      {feedback && (
+        <Alert severity={feedback.severity} sx={{ mb: 2 }}>
+          {feedback.msg}
+        </Alert>
+      )}
       <Rating value={newRating} onChange={(e, newValue) => setNewRating(newValue ?? 0)} sx={{ mb: 1 }} />
       <textarea
         value={newComment}
