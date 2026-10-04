@@ -38,7 +38,7 @@ const BookOpinionList = ({ opinions, theme }: BookOpinionListProps) => {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box>
               <Typography variant="body2" fontWeight="bold">
-                {opinion?.user?.name || (opinion?.user as any)?.nombre || (opinion as any)?.usuario?.nombre || 'Usuario'}
+                {opinion?.user?.name || (opinion as any)?.usuario_nombre || (opinion?.user as any)?.nombre || (opinion as any)?.usuario?.nombre || 'Usuario'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {(opinion as any)?.usuario?.rol || ''}
