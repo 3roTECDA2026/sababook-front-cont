@@ -1,36 +1,59 @@
 export interface Forum {
-  forumId: number;
-  title: string;
-  description: string;
-  creatorId: number;
-  creatorName: string | null;
-  createdAt: string;
+  foro_id?: number;
+  forumId?: number;
+  titulo?: string;
+  title?: string;
+  descripcion?: string;
+  description?: string;
+  creador_id?: number | null;
+  creatorId?: number;
+  creador_nombre?: string | null;
+  creatorName?: string | null;
+  fecha_creacion?: string;
+  createdAt?: string;
 }
 
 export interface ForumComment {
-  commentId: number;
-  forumId: number;
-  userId: number;
-  content: string;
-  createdAt: string;
+  comentario_id?: number;
+  commentId?: number;
+  foro_id?: number;
+  forumId?: number;
+  usuario_id?: number;
+  userId?: number;
+  contenido?: string;
+  content?: string;
+  fecha?: string;
+  createdAt?: string;
   name?: string;
   email?: string;
 }
 
 export interface ForumDetailComment {
-  commentId: number;
-  content: string;
-  createdAt: string;
-  userName: string;
-  userAvatar: string | null;
+  comentario_id?: number;
+  commentId?: number;
+  contenido?: string;
+  content?: string;
+  fecha?: string;
+  createdAt?: string;
+  usuario_nombre?: string;
+  userName?: string;
+  usuario_avatar?: string | null;
+  userAvatar?: string | null;
 }
 
 export interface ForumDetail {
-  forumId: number;
-  title: string;
-  description: string;
-  createdAt: string;
-  creatorName: string | null;
-  creatorAvatar: string | null;
-  comments: ForumDetailComment[];
+  foro_id?: number;
+  forumId?: number;
+  titulo?: string;
+  title?: string;
+  descripcion?: string;
+  description?: string;
+  fecha_creacion?: string;
+  createdAt?: string;
+  creador_nombre?: string | null;
+  creatorName?: string | null;
+  creador_avatar?: string | null;
+  creatorAvatar?: string | null;
+  comentarios?: ForumDetailComment[];
+  comments?: ForumDetailComment[];
 }

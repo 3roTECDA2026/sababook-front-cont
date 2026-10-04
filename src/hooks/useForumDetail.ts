@@ -9,7 +9,7 @@ const useForumDetail = (forumId: number | string | undefined) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!forumId) return;
+    if (!forumId || forumId === 'undefined' || forumId === 'null') return;
     const fetchForum = async () => {
       setLoading(true);
       setError(null);

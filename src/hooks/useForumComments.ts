@@ -9,7 +9,7 @@ export const useForumComments = (forumId: number | string | undefined) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchComments = async () => {
-    if (!forumId) return;
+    if (!forumId || forumId === 'undefined' || forumId === 'null') return;
     setLoading(true);
     setError(null);
 
