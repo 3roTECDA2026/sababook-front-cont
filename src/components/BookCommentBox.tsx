@@ -65,9 +65,15 @@ const BookCommentBox = ({
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Error al guardar el comentario.');
+      const data = await res.json().catch(() => null);
 
-      const savedOpinion = await res.json();
+      if (!res.ok || res.status === 202 || data?.ok === false) {
+        const errorMsg = data?.mensaje || data?.error || 'No se pudo guardar el comentario.';
+        showNotification(errorMsg, res.status === 202 || data?.error === 'EN_REVISION' ? 'info' : 'error');
+        return;
+      }
+
+      const savedOpinion = data;
 
       // Aquí usamos el nombre real que devuelve la API
       const newOpinion: Opinion = {
@@ -86,9 +92,11 @@ const BookCommentBox = ({
       setNewComment('');
       setNewRating(0);
       setShowCommentBox(false);
+      showNotification('Comentario guardado correctamente.', 'success');
     } catch (err) {
       console.error(err);
-      alert('No se pudo guardar el comentario.');
+      const message = err instanceof Error ? err.message : String(err);
+      showNotification(message || 'No se pudo guardar el comentario.', 'error');
     }
   };
 
