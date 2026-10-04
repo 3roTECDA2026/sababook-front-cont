@@ -1,5 +1,5 @@
 // src/components/ForumCommentList.tsx
-import { Box, Typography, Paper, CircularProgress, Button, TextField, IconButton } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Button, TextField, IconButton, Alert, Snackbar } from '@mui/material';
 import type { Theme } from '@mui/material';
 import { useForumComments } from '@/hooks/useForumComments';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,16 +22,14 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
   const { comments, loading, error, refetch } = useForumComments(foroId);
   const [contenido, setContenido] = useState<string>('');
   const [sending, setSending] = useState<boolean>(false);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string>('');
+  const [notification, setNotification] = useState<{ msg: string; severity: 'info' | 'error' | 'success' } | null>(null);
   const { user } = useAuth() || {};
   const usuarioId = usuarioIdProp || user?.userId;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSending(true);
-    setSendError(null);
-    setSuccessMsg('');
+    setNotification(null);
     try {
       const payload = { foro_id: foroId, contenido, usuario_id: usuarioId };
       const res = await fetch(`${API_BASE_URL}/api/v1/comments`, {
@@ -44,19 +42,21 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
       const data = await res.json();
       if (!res.ok || res.status === 202 || data.ok === false) {
         const errorMsg = data.mensaje || data.error || 'Error al enviar el comentario';
-        setSendError(errorMsg);
+        setNotification({
+          msg: errorMsg,
+          severity: res.status === 202 || data.error === 'EN_REVISION' ? 'info' : 'error',
+        });
         setContenido('');
         return;
       }
       setContenido('');
-      setSuccessMsg('Comentario enviado correctamente');
-      // Opcional: recargar comentarios aquí si lo deseas
+      setNotification({ msg: 'Comentario enviado correctamente', severity: 'success' });
       if (typeof refetch === 'function') {
         await refetch();
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setSendError(message);
+      setNotification({ msg: message, severity: 'error' });
     } finally {
       setSending(false);
     }
@@ -69,9 +69,9 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
       </Typography>
       {loading && <CircularProgress size={20} sx={{ ml: 1 }} />}
       {error && (
-        <Typography variant="body2" color="error">
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
-        </Typography>
+        </Alert>
       )}
       {!loading && Array.isArray(comments) && comments.length === 0 && (
         <Typography variant="body2" color="text.secondary">
@@ -118,7 +118,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
                         if (typeof refetch === 'function') await refetch();
                       } catch (err) {
                         const message = err instanceof Error ? err.message : String(err);
-                        alert(message);
+                        setNotification({ msg: message, severity: 'error' });
                       }
                     }
                   }}
@@ -165,6 +165,11 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
 
       <form onSubmit={handleSubmit}>
         <Box mt={2}>
+          {notification && (
+            <Alert severity={notification.severity} sx={{ mb: 2 }}>
+              {notification.msg}
+            </Alert>
+          )}
           <TextField
             label="Agregar comentario"
             multiline
@@ -178,18 +183,18 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
               mb: 1,
               '& .MuiOutlinedInput-root': {
                 '& fieldset': {
-                  borderColor: '#ccc', // color normal
+                  borderColor: '#ccc',
                 },
                 '&:hover fieldset': {
-                  borderColor: theme.palette.button?.main, // color al pasar el mouse
+                  borderColor: theme.palette.button?.main,
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: theme.palette.button?.main, // borde naranja al escribir
+                  borderColor: theme.palette.button?.main,
                   borderWidth: '2px',
                 },
               },
               '& .MuiInputLabel-root.Mui-focused': {
-                color: theme.palette.button?.main, // label naranja al enfocarse
+                color: theme.palette.button?.main,
               },
             }}
           />
@@ -199,33 +204,21 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
             fullWidth
             disabled={sending || !contenido.trim()}
             sx={{
-              // estilos copiados del StyledButton
               backgroundColor:
-                !sending && contenido.trim() ? theme.palette.button?.main || '#f25600' : '#bbb', // gris cuando está deshabilitado
+                !sending && contenido.trim() ? theme.palette.button?.main || '#f25600' : '#bbb',
               color: '#FFFFFF',
               padding: '12px 0',
               fontSize: '1rem',
               fontWeight: 'bold',
               borderRadius: '30px',
 
-              // hover
               '&:hover': {
-                backgroundColor: !sending && contenido.trim() ? '#cc4800' : '#aaa', // gris más fuerte si está deshabilitado
+                backgroundColor: !sending && contenido.trim() ? '#cc4800' : '#aaa',
               },
             }}
           >
             {sending ? 'Enviando...' : 'Comentar'}
           </Button>
-          {sendError && (
-            <Typography color="error" mt={1}>
-              {sendError}
-            </Typography>
-          )}
-          {successMsg && (
-            <Typography color="success.main" mt={1}>
-              {successMsg}
-            </Typography>
-          )}
         </Box>
       </form>
     </Box>
