@@ -13,11 +13,11 @@ import SideMenu from '@/components/layout/SideMenu';
 // --- CONFIGURACIÓN DE TEMA ---
 const theme = createTheme({
   palette: {
-    // Color principal basado en el mockup de Figma (naranja fuerte)
+    // Primary theme color
     primary: {
       main: '#f25600',
     },
-    // Color secundario para el fondo de la interfaz
+    // Background color
     background: {
       default: '#f5f5f5',
     },
