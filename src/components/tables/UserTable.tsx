@@ -19,15 +19,22 @@ import {
   Snackbar,
   styled,
   Alert,
+  Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DownloadIcon from '@mui/icons-material/Download';
 import { API_BASE_URL } from '@/environments/api';
 import UserForm from '@/components/forms/UserForm';
 import type { UserFormData } from '@/components/forms/UserForm';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import type { User } from '@/types';
+import { downloadCsv } from '@/utils/downloadCsv';
 
 const ROWS_PER_PAGE = 5;
 
@@ -61,6 +68,7 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [page, setPage] = useState<number>(1);
+  const [roleFilter, setRoleFilter] = useState('todos');
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
   const [userToDeleteId, setUserToDeleteId] = useState<number | null>(null);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -82,6 +90,35 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
 
   const handleChangePage = (event: ChangeEvent<unknown>, newPage: number) => {
     setPage(newPage);
+  };
+
+  const filteredUsers =
+    roleFilter === 'todos' ? users : users.filter((user) => user.rol === roleFilter);
+
+  const handleDownload = () => {
+    downloadCsv(
+      `usuarios-${roleFilter}.csv`,
+      [
+        'ID',
+        'Nombre',
+        'Email',
+        'Rol',
+        'Fecha de registro',
+        'Perfil completo',
+        'URL de avatar',
+        'Nivel educativo',
+      ],
+      filteredUsers.map((user) => [
+        user.usuario_id,
+        user.nombre,
+        user.email,
+        user.rol,
+        user.fecha_registro,
+        user.perfil_completo,
+        user.avatar_url,
+        user.nivel_educativo,
+      ])
+    );
   };
 
   const handleSnackbarClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
@@ -200,13 +237,49 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
     );
   }
 
-  const pageCount = Math.ceil(users.length / ROWS_PER_PAGE);
+  const pageCount = Math.ceil(filteredUsers.length / ROWS_PER_PAGE);
   const startIndex = (page - 1) * ROWS_PER_PAGE;
-  const currentUsers = users.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  const currentUsers = filteredUsers.slice(startIndex, startIndex + ROWS_PER_PAGE);
 
   // 5. Renderizamos la tabla con los datos de los usuarios.
   return (
     <>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 2,
+          mt: 3,
+        }}
+      >
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel id="users-role-filter-label">Filtrar por rol</InputLabel>
+          <Select
+            labelId="users-role-filter-label"
+            value={roleFilter}
+            label="Filtrar por rol"
+            onChange={(event) => {
+              setRoleFilter(event.target.value);
+              setPage(1);
+            }}
+          >
+            <MenuItem value="todos">Todos los roles</MenuItem>
+            <MenuItem value="alumno">Alumno</MenuItem>
+            <MenuItem value="docente">Docente</MenuItem>
+            <MenuItem value="administrador">Administrador</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          variant="contained"
+          startIcon={<DownloadIcon />}
+          onClick={handleDownload}
+          disabled={filteredUsers.length === 0}
+          sx={{ backgroundColor: 'button.main', textTransform: 'none' }}
+        >
+          Descargar CSV
+        </Button>
+      </Box>
       <TableContainer component={Paper} sx={{ width: '100%', maxWidth: 1200, mt: 3 }}>
         <Table aria-label="tabla de usuarios">
           <TableHead>
@@ -221,7 +294,13 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
             </TableRow>
           </TableHead>
           <TableBody>
-            {currentUsers.map((user) => (
+            {currentUsers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  No hay usuarios para el rol seleccionado.
+                </TableCell>
+              </TableRow>
+            ) : currentUsers.map((user) => (
               <TableRow key={user.usuario_id}>
                 <TableCell>
                   <Avatar alt={user.nombre} src={user.avatar_url ?? undefined}>
