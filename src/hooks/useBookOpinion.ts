@@ -3,31 +3,19 @@ import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/environments/api';
 import type { Opinion, OpinionAPI } from '@/types';
 
-export const useBookOpinion = (libroId: number | string | undefined) => {
+export const useBookOpinion = (bookId: number | string | undefined) => {
   const [opinions, setOpinions] = useState<Opinion[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchOpinions = async () => {
+    if (!bookId) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/reviews/libro/${libroId}`);
-      if (!res.ok) throw new Error('Error al cargar opiniones.');
-      const data: OpinionAPI[] = await res.json();
-
-      const transformed: Opinion[] = data.map((op) => ({
-        id: op.opinion_id,
-        comentario: op.comentario,
-        calificacion: op.calificacion,
-        usuario: {
-          nombre: op.usuario_nombre || 'Usuario',
-          rol: op.usuario_rol || 'Lector',
-        },
-        destacado: op.destacado || false,
-        fecha: op.fecha,
-      }));
-
-      setOpinions(transformed);
+      const res = await fetch(`${API_BASE_URL}/api/v1/reviews/book/${bookId}`);
+      if (!res.ok) throw new Error('Error al cargar reseñas.');
+      const data: Opinion[] = await res.json();
+      setOpinions(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(err);
@@ -39,7 +27,7 @@ export const useBookOpinion = (libroId: number | string | undefined) => {
 
   useEffect(() => {
     fetchOpinions();
-  }, [libroId]);
+  }, [bookId]);
 
   return { opinions, setOpinions, loading, error };
 };
