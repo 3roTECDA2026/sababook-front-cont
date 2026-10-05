@@ -1,8 +1,8 @@
 // src/hooks/useBookTrivia.ts
 import { useCallback, useEffect, useState } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import { useAuth } from './useAuth';
-import type { TriviaQuestion, TriviaModo } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import { useAuth } from '@/hooks/useAuth';
+import type { TriviaQuestion, TriviaModo } from '@/types';
 
 /**
  * Hook para administrar las preguntas de trivia de un libro, filtradas por

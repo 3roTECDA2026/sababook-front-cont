@@ -1,11 +1,14 @@
 // src/components/ui/TriviaPlaySection.tsx
 import {
+  Alert,
+  type AlertColor,
   Box,
   Typography,
   Button,
   TextField,
   Select,
   MenuItem,
+  Snackbar,
   ToggleButton,
   ToggleButtonGroup,
   LinearProgress,
@@ -176,6 +179,24 @@ const ClozeControl = ({ text, values, wordBank, onChange }: ClozeControlProps) =
   );
 };
 
+interface PlayNoticeProps {
+  notice: { message: string; severity: AlertColor } | null;
+  onClose: () => void;
+}
+
+const PlayNotice = ({ notice, onClose }: PlayNoticeProps) => (
+  <Snackbar
+    open={!!notice}
+    autoHideDuration={4000}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+    onClose={onClose}
+  >
+    <Alert onClose={onClose} severity={notice?.severity ?? 'info'} variant="filled" sx={{ width: '100%' }}>
+      {notice?.message ?? ''}
+    </Alert>
+  </Snackbar>
+);
+
 const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
   const { token, loading: authLoading } = useAuth();
   const {
@@ -199,7 +220,11 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
     goToPrev,
     backToEntry,
     submit,
+  notice,
+    clearNotice,
   } = useTriviaPlay(bookId);
+
+  const playNotice = <PlayNotice notice={notice} onClose={clearNotice} />;
 
   if (authLoading || !isStudent || loading || !hasContent) return null;
 
@@ -213,6 +238,7 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
   if (phase === 'entry') {
     return (
       <>
+        {playNotice}
         {triviaQuestions.length > 0 && (
           <Button
             variant="contained"
@@ -266,6 +292,7 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
 
   return (
     <Modal open onClose={backToEntry} aria-labelledby="trivia-play-modal">
+      <>
       <Box className={styles.formModal}>
         {phase === 'play' && current && (
           <>
@@ -426,6 +453,8 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
           </>
         )}
       </Box>
+      {playNotice}
+      </>
     </Modal>
   );
 };

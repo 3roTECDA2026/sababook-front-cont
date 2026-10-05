@@ -1,12 +1,15 @@
 // src/pages/TriviaPage.tsx
-import { useState } from 'react';
+import { useState, SyntheticEvent } from 'react';
 import {
+  Alert,
+  AlertColor,
   Typography,
   Button,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
   TextField,
 } from '@mui/material';
 import QuizIcon from '@mui/icons-material/Quiz';
@@ -16,16 +19,22 @@ import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import BookTriviaSection from '@/components/ui/BookTriviaSection';
 import EvaluationResponsesDialog from '@/components/ui/EvaluationResponsesDialog';
-import { useBookData } from '../hooks/useBookData';
-import { useEvaluations } from '../hooks/useEvaluations';
-import type { Book, TriviaModo } from '../types';
-import styles from '../styles/trivia.module.css';
+import { useBookData } from '@/hooks/useBookData';
+import { useEvaluations } from '@/hooks/useEvaluations';
+import type { Book, TriviaModo } from '@/types';
+import styles from '@/styles/trivia.module.css';
 
 interface TriviaSelection {
   book: Book;
   mode: TriviaModo;
   deadline: string | null;
   evaluationId: number | null;
+}
+
+interface SnackbarState {
+  open: boolean;
+  message: string;
+  severity: AlertColor;
 }
 
 const TriviaPage = () => {
@@ -41,7 +50,18 @@ const TriviaPage = () => {
   const [responsesOpen, setResponsesOpen] = useState(false);
   const [responsesEvaluationId, setResponsesEvaluationId] = useState<number | null>(null);
 
+  const [snackbar, setSnackbar] = useState<SnackbarState>({
+    open: false,
+    message: '',
+    severity: 'error',
+  });
+
   const handleMenuClose = () => setMenuOpen(false);
+
+  const handleSnackbarClose = (event?: SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') return;
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const openResponses = async (book: Book) => {
     const evaluaciones = await fetchEvaluations(book.libro_id);
@@ -71,13 +91,21 @@ const TriviaPage = () => {
   const enterEvaluationMode = async () => {
     if (!evaluationBook) return;
     if (!deadline) {
-      alert('Elegí una fecha límite para la evaluación.');
+      setSnackbar({
+        open: true,
+        message: 'Elegí una fecha límite para la evaluación.',
+        severity: 'warning',
+      });
       return;
     }
 
     const evaluacion = await createEvaluation(evaluationBook.libro_id, deadline);
     if (!evaluacion) {
-      alert('No se pudo crear la evaluación.');
+      setSnackbar({
+        open: true,
+        message: 'No se pudo crear la evaluación.',
+        severity: 'error',
+      });
       return;
     }
 
@@ -213,6 +241,22 @@ const TriviaPage = () => {
         onClose={() => setResponsesOpen(false)}
         evaluationId={responsesEvaluationId}
       />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

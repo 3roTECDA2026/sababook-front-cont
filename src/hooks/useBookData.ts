@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/environments/api';
 import type { Book, FeaturedBook } from '@/types';
-// import LibroImage from '../assets/libro.jpg' // Requerido para el DEFAULT_FEATURED_BOOK
+// import LibroImage from '@/assets/libro.jpg' // Requerido para el DEFAULT_FEATURED_BOOK
 
 // const FEATURED_BOOK_ID = 9;
 

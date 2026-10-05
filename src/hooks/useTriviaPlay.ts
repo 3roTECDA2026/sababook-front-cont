@@ -1,9 +1,10 @@
 // src/hooks/useTriviaPlay.ts
 import { useCallback, useEffect, useState } from 'react';
+import type { AlertColor } from '@mui/material';
 import moment from 'moment';
-import { API_BASE_URL } from '../environments/api';
-import { useAuth } from './useAuth';
-import type { Evaluacion, PlayAnswer, PlayCheckResponse, PlayQuestion, TriviaModo } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import { useAuth } from '@/hooks/useAuth';
+import type { Evaluacion, PlayAnswer, PlayCheckResponse, PlayQuestion, TriviaModo } from '@/types';
 
 export type TriviaPlayPhase = 'entry' | 'play' | 'result';
 
@@ -15,6 +16,7 @@ export type TriviaPlayPhase = 'entry' | 'play' | 'result';
 export const useTriviaPlay = (bookId: number) => {
   const { token, user } = useAuth();
 
+  const [notice, setNotice] = useState<{ message: string; severity: AlertColor } | null>(null);
   const [triviaQuestions, setTriviaQuestions] = useState<PlayQuestion[]>([]);
   const [activeEvaluation, setActiveEvaluation] = useState<Evaluacion | null>(null);
   const [answered, setAnswered] = useState<boolean | null>(null);
@@ -131,7 +133,10 @@ export const useTriviaPlay = (bookId: number) => {
       if (res.status === 409) {
         setPhase('entry');
         setAnswered(true);
-        alert('Ya respondiste esta evaluación. No se pueden volver a enviar respuestas.');
+        setNotice({
+          message: 'Ya respondiste esta evaluación. No se pueden volver a enviar respuestas.',
+          severity: 'warning',
+        });
         return;
       }
       if (!res.ok) {
@@ -144,13 +149,15 @@ export const useTriviaPlay = (bookId: number) => {
       if (playMode === 'evaluacion') setAnswered(true);
     } catch (err) {
       console.error('Error corrigiendo respuestas:', err);
-      alert('No se pudo corregir la trivia.');
+      setNotice({ message: 'No se pudo corregir la trivia.', severity: 'error' });
     } finally {
       setChecking(false);
     }
   };
 
   return {
+    notice,
+    clearNotice: () => setNotice(null),
     triviaQuestions,
     activeEvaluation,
     answered,

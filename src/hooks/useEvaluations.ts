@@ -1,8 +1,8 @@
 // src/hooks/useEvaluations.ts
 import { useCallback, useState } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import { useAuth } from './useAuth';
-import type { Evaluacion } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import { useAuth } from '@/hooks/useAuth';
+import type { Evaluacion } from '@/types';
 
 /**
  * Hook para listar las evaluaciones de un libro y crear nuevas.

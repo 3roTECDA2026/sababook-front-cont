@@ -1,10 +1,13 @@
 // src/components/forms/TriviaQuestionForm.tsx
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, SyntheticEvent } from 'react';
 import {
+  Alert,
+  AlertColor,
   Box,
   Typography,
   Button,
   Modal,
+  Snackbar,
   TextField,
   Checkbox,
   ToggleButton,
@@ -21,6 +24,12 @@ const TRUE_FALSE_OPTIONS = ['Verdadero', 'Falso'];
 const BLANK_MARKER = '{blank}';
 
 type TriviaQuestionInput = Omit<TriviaQuestion, 'id'>;
+
+interface SnackbarState {
+  open: boolean;
+  message: string;
+  severity: AlertColor;
+}
 
 interface TriviaQuestionFormProps {
   open: boolean;
@@ -47,6 +56,16 @@ const TriviaQuestionForm = ({
   const [text, setText] = useState('');
   const [answers, setAnswers] = useState<string[]>(['']);
   const [addedCount, setAddedCount] = useState(0);
+  const [snackbar, setSnackbar] = useState<SnackbarState>({
+    open: false,
+    message: '',
+    severity: 'warning',
+  });
+
+  const handleSnackbarClose = (event?: SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') return;
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const formatOptions: { value: TriviaFormato; label: string }[] = [
     { value: 'multiple', label: 'Opción múltiple' },
@@ -129,15 +148,15 @@ const TriviaQuestionForm = ({
   const handleSubmit = () => {
     if (format === 'multiple' || format === 'truefalse') {
       if (!question.trim()) {
-        alert('Escribí el enunciado de la pregunta.');
+        setSnackbar({ open: true, message: 'Escribí el enunciado de la pregunta.', severity: 'warning' });
         return;
       }
       if (options.some((option) => !option.trim())) {
-        alert('Completá todas las opciones.');
+        setSnackbar({ open: true, message: 'Completá todas las opciones.', severity: 'warning' });
         return;
       }
       if (correct < 0) {
-        alert('Marcá cuál es la respuesta correcta.');
+        setSnackbar({ open: true, message: 'Marcá cuál es la respuesta correcta.', severity: 'warning' });
         return;
       }
 
@@ -152,7 +171,7 @@ const TriviaQuestionForm = ({
     } else if (format === 'conexion') {
       const validPairs = pairs.filter((pair) => pair.left.trim() && pair.right.trim());
       if (validPairs.length < 2) {
-        alert('Completá al menos 2 pares para armar la conexión de nodos.');
+        setSnackbar({ open: true, message: 'Completá al menos 2 pares para armar la conexión de nodos.', severity: 'warning' });
         return;
       }
 
@@ -168,15 +187,15 @@ const TriviaQuestionForm = ({
       });
     } else {
       if (!text.trim()) {
-        alert('Escribí el texto con los espacios a completar.');
+        setSnackbar({ open: true, message: 'Escribí el texto con los espacios a completar.', severity: 'warning' });
         return;
       }
       if (blanksCount(text) === 0) {
-        alert(`Marcá los espacios vacíos con ${BLANK_MARKER}.`);
+        setSnackbar({ open: true, message: `Marcá los espacios vacíos con ${BLANK_MARKER}.`, severity: 'warning' });
         return;
       }
       if (answers.some((answer) => !answer.trim())) {
-        alert('Completá todas las respuestas del texto.');
+        setSnackbar({ open: true, message: 'Completá todas las respuestas del texto.', severity: 'warning' });
         return;
       }
 
@@ -199,6 +218,7 @@ const TriviaQuestionForm = ({
 
   return (
     <Modal open={open} onClose={onClose} aria-labelledby="trivia-modal-title">
+      <>
       <Box className={styles.formModal}>
         <Typography id="trivia-modal-title" variant="h6" component="h2" mb={2}>
           {isEvaluation ? 'Nueva pregunta de evaluación' : 'Nueva pregunta de trivia'}
@@ -360,6 +380,23 @@ const TriviaQuestionForm = ({
           </Typography>
         )}
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+      </>
     </Modal>
   );
 };

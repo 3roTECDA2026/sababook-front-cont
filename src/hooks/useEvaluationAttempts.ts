@@ -1,8 +1,8 @@
 // src/hooks/useEvaluationAttempts.ts
 import { useCallback, useEffect, useState } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import { useAuth } from './useAuth';
-import type { TriviaAttempt } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import { useAuth } from '@/hooks/useAuth';
+import type { TriviaAttempt } from '@/types';
 
 /**
  * Hook para cargar los intentos de una evaluación (vista del docente).

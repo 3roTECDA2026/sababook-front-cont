@@ -7,7 +7,7 @@ import moment from 'moment';
 import 'moment/locale/es';
 import { useBookTrivia } from '@/hooks/useBookTrivia';
 import type { Book, TriviaModo } from '@/types';
-import TriviaQuestionCard from './TriviaQuestionCard';
+import TriviaQuestionCard from '@/components/ui/TriviaQuestionCard';
 import TriviaQuestionForm from '@/components/forms/TriviaQuestionForm';
 import styles from '@/styles/trivia.module.css';
 
