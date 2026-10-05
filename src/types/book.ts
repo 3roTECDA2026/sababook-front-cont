@@ -27,26 +27,22 @@ export interface FeaturedBook {
   coverUrl: string;
 }
 
-export interface OpinionAPI {
-  opinionId: number;
-  userId: number;
-  userName?: string;
-  userRole?: string;
-  bookId: number;
-  rating: number;
-  comment: string;
-  createdAt: string;
-  isFeatured?: boolean;
-}
-
 export interface Opinion {
-  id: number;
-  comment: string;
-  rating: number;
-  user: {
+  opinion_id?: number;
+  id?: number;
+  usuario_id?: number;
+  usuario_nombre?: string;
+  libro_id?: number;
+  calificacion?: number;
+  comentario?: string;
+  fecha?: string | Date;
+  destacado?: boolean;
+  comment?: string;
+  rating?: number;
+  user?: {
     name: string;
     role: string;
   };
-  isFeatured: boolean;
-  createdAt: string;
+  isFeatured?: boolean;
+  createdAt?: string;
 }

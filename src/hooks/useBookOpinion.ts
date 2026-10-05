@@ -13,22 +13,9 @@ export const useBookOpinion = (bookId: number | string | undefined) => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/reviews/book/${bookId}`);
-      if (!res.ok) throw new Error('Error loading reviews.');
-      const data: OpinionAPI[] = await res.json();
-
-      const transformed: Opinion[] = data.map((op) => ({
-        id: op.opinionId,
-        comment: op.comment,
-        rating: op.rating,
-        user: {
-          name: op.userName || 'User',
-          role: op.userRole || 'Reader',
-        },
-        isFeatured: op.isFeatured || false,
-        createdAt: op.createdAt,
-      }));
-
-      setOpinions(transformed);
+      if (!res.ok) throw new Error('Error al cargar reseñas.');
+      const data: Opinion[] = await res.json();
+      setOpinions(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(err);
