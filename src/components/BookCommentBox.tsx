@@ -1,6 +1,6 @@
 // src/components/BookCommentBox.tsx
-import React, { Dispatch, SetStateAction } from 'react';
-import { Box, Typography, Rating } from '@mui/material';
+import React, { Dispatch, SetStateAction, useState } from 'react';
+import { Box, Typography, Rating, CircularProgress } from '@mui/material';
 import type { Theme } from '@mui/material';
 import NavButton from './ui/NavButton';
 import { API_BASE_URL } from '@/environments/api';
@@ -31,7 +31,11 @@ const BookCommentBox = ({
   setShowCommentBox,
   setOpinions,
 }: BookCommentBoxProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+
     if (!newComment.trim() || newRating === 0) {
       alert('Por favor, escribe un comentario y selecciona una calificación.');
       return;
@@ -44,6 +48,7 @@ const BookCommentBox = ({
       comentario: newComment,
     };
 
+    setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No autenticado.');
@@ -57,9 +62,21 @@ const BookCommentBox = ({
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Error al guardar el comentario.');
+      const data = await res.json().catch(() => null);
 
-      const savedOpinion = await res.json();
+      if (res.status === 202 || data?.error === 'EN_REVISION') {
+        alert(data?.mensaje || 'Tu reseña quedó en revisión por un responsable antes de publicarse.');
+        setNewComment('');
+        setNewRating(0);
+        setShowCommentBox(false);
+        return;
+      }
+
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.mensaje || data?.error || 'Error al guardar el comentario.');
+      }
+
+      const savedOpinion = data;
 
       // Aquí usamos el nombre real que devuelve la API
       const newOpinion: Opinion = {
@@ -80,7 +97,10 @@ const BookCommentBox = ({
       setShowCommentBox(false);
     } catch (err) {
       console.error(err);
-      alert('No se pudo guardar el comentario.');
+      const message = err instanceof Error ? err.message : 'No se pudo guardar el comentario.';
+      alert(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -102,6 +122,7 @@ const BookCommentBox = ({
         value={newComment}
         onChange={(e) => setNewComment(e.target.value)}
         placeholder="Escribe tu comentario..."
+        disabled={isSubmitting}
         style={{
           width: '100%',
           minHeight: '80px',
@@ -113,17 +134,31 @@ const BookCommentBox = ({
       />
       <NavButton
         onClick={handleSubmit}
+        disabled={isSubmitting || !newComment.trim() || newRating === 0}
         sx={{
           mt: 2,
           width: '100%',
-          bgcolor: ORANGE_COLOR + ' !important',
+          bgcolor: isSubmitting ? theme.palette.grey[400] : ORANGE_COLOR + ' !important',
           color: 'white',
           fontWeight: 'bold',
           borderRadius: '8px !important',
-          '&:hover': { bgcolor: '#cc4800 !important' },
+          cursor: isSubmitting ? 'not-allowed' : 'pointer',
+          '&:hover': { bgcolor: isSubmitting ? theme.palette.grey[400] : '#cc4800 !important' },
+          '&:disabled': {
+            bgcolor: theme.palette.grey[400] + ' !important',
+            color: 'white !important',
+            cursor: 'not-allowed',
+          },
         }}
       >
-        Publicar comentario
+        {isSubmitting ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+            <CircularProgress size={18} color="inherit" />
+            <span>Analizando y publicando...</span>
+          </Box>
+        ) : (
+          'Publicar comentario'
+        )}
       </NavButton>
     </Box>
   );
