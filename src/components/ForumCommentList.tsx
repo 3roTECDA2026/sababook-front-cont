@@ -93,7 +93,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box>
               <Typography variant="body2" fontWeight="bold">
-                {comment.name || 'Usuario'}
+                {comment.usuario_nombre || comment.nombre || comment.name || (comment as any).userName || 'Usuario'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {comment.email || ''}
@@ -101,9 +101,9 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
             </Box>
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="caption" color="text.secondary">
-                {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ''}
+                {comment.fecha || comment.createdAt ? new Date(comment.fecha || comment.createdAt || '').toLocaleString() : ''}
               </Typography>
-              {usuarioId && Number(comment.userId) === Number(usuarioId) && (
+              {usuarioId && Number(comment.userId || (comment as any).usuario_id) === Number(usuarioId) && (
                 <IconButton
                   onClick={async () => {
                     if (window.confirm('¿Seguro que quieres eliminar este comentario?')) {
@@ -143,7 +143,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
             mt={1}
             sx={{ fontStyle: 'italic', color: theme?.palette?.text?.primary }}
           >
-            {comment.content || ''}
+            {comment.contenido || (comment as any).comentario || comment.content || ''}
           </Typography>
           {comment.destacado && (
             <Box display="flex" justifyContent="flex-end" mt={1}>

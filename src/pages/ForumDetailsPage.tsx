@@ -149,19 +149,19 @@ const ForumDetailsPage = () => {
             ) : (
               <List>
                 {(forum.comments || localComments).map((c: any) => (
-                  <ListItem key={c.commentId || c.id || c.comentario_id} alignItems="flex-start">
+                  <ListItem key={c.comentario_id || c.id || c.commentId} alignItems="flex-start">
                     <ListItemAvatar>
-                      <Avatar src={(c.userAvatar || c.avatar_url || c.usuario_avatar) ?? undefined} alt={c.userName || c.nombre || c.usuario_nombre}>
-                        {(c.userName || c.nombre || c.usuario_nombre)?.[0]}
+                      <Avatar src={(c.usuario_avatar || c.avatar_url || c.userAvatar) ?? undefined} alt={c.usuario_nombre || c.nombre || c.userName || 'Usuario'}>
+                        {(c.usuario_nombre || c.nombre || c.userName || 'U')?.[0]}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={c.userName || c.nombre || c.usuario_nombre}
+                      primary={c.usuario_nombre || c.nombre || c.userName || 'Usuario'}
                       secondary={
                         <>
-                          <Typography variant="body2">{c.content || c.contenido || c.comment}</Typography>
+                          <Typography variant="body2">{c.contenido || c.comentario || c.content}</Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {new Date(c.createdAt || c.fecha || '').toLocaleString()}
+                            {new Date(c.fecha || c.createdAt || '').toLocaleString()}
                           </Typography>
                         </>
                       }
