@@ -1,7 +1,15 @@
 import React from 'react';
 import { Box, Typography, Paper, Tooltip } from '@mui/material';
 
-export const ReadingStreak = ({ rachaActual = 3, recordRacha = 7 }) => {
+interface ReadingStreakProps {
+  rachaActual?: number;
+  recordRacha?: number;
+}
+
+export const ReadingStreak: React.FC<ReadingStreakProps> = ({ 
+  rachaActual = 3, 
+  recordRacha = 7 
+}) => {
   const diasSemana = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
   return (
@@ -36,7 +44,6 @@ export const ReadingStreak = ({ rachaActual = 3, recordRacha = 7 }) => {
         Récord histórico: <strong style={{ color: '#666' }}>{recordRacha} días</strong>
       </Typography>
 
-      {/* Indicadores de días de la semana */}
       <Box 
         display="flex" 
         justifyContent="space-between" 
@@ -47,7 +54,7 @@ export const ReadingStreak = ({ rachaActual = 3, recordRacha = 7 }) => {
       >
         {diasSemana.map((dia, index) => (
           <Tooltip title={`Día ${index + 1}`} key={index} arrow>
-            <Box display="flex" flex={1} flexDirection="col" alignItems="center" gap={0.5} textAlign="center">
+            <Box display="flex" flex={1} flexDirection="column" alignItems="center" gap={0.5} textAlign="center">
               <Typography variant="caption" fontSize={10} color="text.disabled" fontWeight="bold">
                 {dia}
               </Typography>
