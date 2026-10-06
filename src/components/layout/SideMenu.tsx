@@ -41,11 +41,15 @@ interface SideMenuProps {
 export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuProps) {
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
   const navigate = useNavigate();
-  const userRolId = localStorage.getItem('rol');
+  const roleName = localStorage.getItem('roleName')?.trim().toLocaleLowerCase();
+  const isAdmin =
+    localStorage.getItem('rol') === '3' ||
+    roleName === 'administrador' ||
+    roleName === 'admin';
 
   let menuItems: MenuItem[];
 
-  if (userRolId === '1' || userRolId === '3') {
+  if (isAdmin) {
     // Menú para administradores
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
