@@ -3,6 +3,7 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoImage from '@/assets/logo.png';
 import { useNavigate, useLocation } from "react-router-dom";
+import ReadingStreak from './ReadingStreak';
 
 // 1. Creamos la interfaz para definir los tipos de las props
 interface AppHeaderProps {

@@ -29,8 +29,7 @@ import type { Book, Forum, User, ReadingGoal } from '@/types';
 import UserTable from './tables/UserTable';
 import BookTable from './tables/BookTable';
 import ForumTable from './tables/ForumTable';
-// @ts-ignore
-import GoalTable from './GoalTable';
+import GoalTable from './tables/GoalTable';
 
 const DashboardContainer = Box;
 

@@ -20,18 +20,45 @@ const ActionButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
-const GoalTable = ({ goals, loading, error, onDeleteGoal, onEditGoal }) => {
+interface Goal {
+  meta_id?: string | number;
+  id?: string | number;
+  usuario?: { nombre: string };
+  usuario_nombre?: string;
+  usuario_id?: string | number | { nombre: string };
+  periodo_nombre?: string;
+  cantidad_libros: number;
+  libros_leidos?: number;
+  progreso?: number;
+  fecha_fin?: string;
+}
+
+interface GoalTableProps {
+  goals: Goal[];
+  loading: boolean;
+  error?: string | null;
+  onDeleteGoal: (goalId: string | number) => void;
+  onEditGoal: (goal: Goal) => void;
+}
+
+const GoalTable: React.FC<GoalTableProps> = ({
+  goals,
+  loading,
+  error,
+  onDeleteGoal,
+  onEditGoal
+}) => {
   const theme = useTheme();
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (_event: React.ChangeEvent<unknown>, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setPage(1); // Reiniciar a la primera página cuando se busca
+    setPage(1);
   };
 
   if (loading) {
@@ -50,15 +77,13 @@ const GoalTable = ({ goals, loading, error, onDeleteGoal, onEditGoal }) => {
     );
   }
 
-  // Helper para resolver el nombre del usuario según cómo devuelva los datos el backend
-  const getUserName = (goal) => {
+  const getUserName = (goal: Goal): string => {
     if (goal.usuario?.nombre) return goal.usuario.nombre;
     if (goal.usuario_nombre) return goal.usuario_nombre;
     if (typeof goal.usuario_id === 'object' && goal.usuario_id?.nombre) return goal.usuario_id.nombre;
     return goal.usuario_id ? `Estudiante ID: ${goal.usuario_id}` : 'N/A';
   };
 
-  // Filtrado por nombre de estudiante
   const filteredGoals = (goals || []).filter((goal) => {
     const studentName = getUserName(goal).toLowerCase();
     return studentName.includes(searchTerm.toLowerCase());
@@ -70,7 +95,6 @@ const GoalTable = ({ goals, loading, error, onDeleteGoal, onEditGoal }) => {
 
   return (
     <>
-      {/* BARRA DE BÚSQUEDA CON LUPA */}
       <Box display="flex" justifyContent="flex-end" mb={2}>
         <TextField
           variant="outlined"
@@ -89,7 +113,6 @@ const GoalTable = ({ goals, loading, error, onDeleteGoal, onEditGoal }) => {
         />
       </Box>
 
-      {/* TABLA DE METAS */}
       <TableContainer component={Paper} sx={{ borderRadius: '12px', boxShadow: 3 }}>
         <Table sx={{ minWidth: 650 }}>
           <TableHead sx={{ backgroundColor: '#F5F5F5' }}>
@@ -158,7 +181,6 @@ const GoalTable = ({ goals, loading, error, onDeleteGoal, onEditGoal }) => {
         </Table>
       </TableContainer>
 
-      {/* PAGINACIÓN IDÉNTICA A LA TABLA DE USUARIOS */}
       {pageCount > 1 && (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
           <Pagination
