@@ -36,7 +36,7 @@ interface BookCardProps {
   rating?: number;
   featured?: boolean;
   isFavorite?: boolean;
-  onFavoriteToggle?: () => boolean | Promise<boolean> | void;
+  onFavoriteToggle?: () => boolean | Promise<boolean | void> | void;
   readingStatus?: ReadingStatus;
   onReadingStatusChange?: (status: ReadingStatus) => void;
   showReadingStatusControl?: boolean;

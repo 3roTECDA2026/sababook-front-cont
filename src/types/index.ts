@@ -1,4 +1,5 @@
 export * from './book';
+export * from './cafe';
 export * from './user';
 export * from './list';
 export * from './forum';

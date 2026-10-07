@@ -17,6 +17,7 @@ import ForumDetailsPage from './pages/ForumDetailsPage';
 import TriviaPage from './pages/TriviaPage';
 import BookCommentsAdmin from './pages/BookCommentsAdmin';
 import ForumCommentsAdmin from './pages/ForumCommentsAdmin';
+import CafesLiterarios from './pages/CafesLiterarios';
 
 // Importaciones de Nuevos Módulos (Radio Sábato y Feed Muro)
 import { RadioPlayer } from './components/RadioPlayer';
@@ -173,6 +174,15 @@ function App() {
         element={
           <ProtectedRoute>
             <Insignias />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/cafes"
+        element={
+          <ProtectedRoute>
+            <CafesLiterarios />
           </ProtectedRoute>
         }
       />

@@ -27,16 +27,19 @@ const BookPreview = ({ book: propBook, onCommentClick }: BookPreviewProps) => {
 
   useEffect(() => {
     if (!propBook && id) {
-      fetch(`${API_BASE_URL}/api/v1/books/${id}`)
+      const controller = new AbortController();
+      fetch(`${API_BASE_URL}/api/v1/books/${id}`, { signal: controller.signal })
         .then((res) => res.json())
         .then((data: BookWithAliases) => {
           setBook(data);
           setLoading(false);
         })
         .catch((err) => {
+          if (err.name === 'AbortError') return;
           console.error("Error cargando libro:", err);
           setLoading(false);
         });
+      return () => controller.abort();
     } else if (propBook) {
       setBook(propBook);
       setLoading(false);

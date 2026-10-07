@@ -24,7 +24,10 @@ export function useBookData() {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/v1/books`)
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    fetch(`${API_BASE_URL}/api/v1/books`, { signal })
       .then((res) => res.json())
       .then((data: Book[]) => {
         setBooks(data);
@@ -47,12 +50,15 @@ export function useBookData() {
         // }
       })
       .catch((err) => {
+        if (err.name === 'AbortError') return;
         console.error('Error cargando libros:', err);
         // Opcional: manejar estado de error
       })
       .finally(() => {
         setLoading(false);
       });
+
+    return () => controller.abort();
   }, []);
 
   return { books, setBooks, featuredBook, setFeaturedBook, loading };

@@ -20,6 +20,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ForumIcon from '@mui/icons-material/Forum';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import LocalCafeIcon from '@mui/icons-material/LocalCafe';
 import QuizIcon from '@mui/icons-material/Quiz';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -51,6 +52,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio', icon: <RadioIcon />, path: '/radio' },
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
@@ -61,6 +63,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
       { text: 'Favoritos', icon: <FavoriteIcon />, path: '/favoritos' },
+      { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
       { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },

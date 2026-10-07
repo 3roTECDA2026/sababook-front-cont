@@ -28,6 +28,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Cargar usuario desde localStorage al iniciar la aplicación
   useEffect(() => {
+    const controller = new AbortController();
+
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem("token");
       const storedUserId = localStorage.getItem("userId");
@@ -42,6 +44,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 Authorization: `Bearer ${storedToken}`,
                 "Content-Type": "application/json",
               },
+              signal: controller.signal,
             },
           );
 
@@ -60,6 +63,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             logout();
           }
         } catch (error) {
+          if ((error as { name?: string })?.name === 'AbortError') return;
           console.error("Error al cargar datos del usuario:", error);
           logout();
         }
@@ -68,6 +72,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     initializeAuth();
+    return () => controller.abort();
   }, [logout]);
 
   const login = async (
