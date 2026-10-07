@@ -113,8 +113,17 @@ const BookCommentBox = ({
       <Typography variant="subtitle2" fontWeight="bold" mb={1}>
         Escribe tu opinión
       </Typography>
-      <Rating value={newRating} onChange={(e, newValue) => setNewRating(newValue ?? 0)} sx={{ mb: 1 }} />
+      <Rating
+        name="reviewRating"
+        value={newRating}
+        onChange={(e, newValue) => setNewRating(newValue ?? 0)}
+        sx={{ mb: 1 }}
+      />
       <textarea
+        id="reviewComment"
+        name="reviewText"
+        autoComplete="off"
+        aria-label="Comentario de la reseña"
         value={newComment}
         onChange={(e) => setNewComment(e.target.value)}
         placeholder="Escribe tu comentario..."
