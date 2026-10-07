@@ -20,6 +20,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ForumIcon from '@mui/icons-material/Forum';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import QuizIcon from '@mui/icons-material/Quiz';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
 import RadioIcon from '@mui/icons-material/Radio';
@@ -53,6 +54,16 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio', icon: <RadioIcon />, path: '/radio' },
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+    ];
+  } else if (userRolId == '2') {
+    // Menú para docentes
+    menuItems = [
+      { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
+      { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Favoritos', icon: <FavoriteIcon />, path: '/favoritos' },
+      { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
+      { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
+      { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
     ];
   } else {
     // Menú para usuarios normales / estudiantes / docentes

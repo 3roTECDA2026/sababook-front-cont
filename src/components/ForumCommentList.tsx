@@ -117,7 +117,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
                         if (typeof refetch === 'function') await refetch();
                       } catch (err) {
                         const message = err instanceof Error ? err.message : String(err);
-                        alert(message);
+                        setSendError(message);
                       }
                     }
                   }}

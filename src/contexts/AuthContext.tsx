@@ -48,9 +48,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           if (response.ok) {
             const userData = await parseJsonResponse(response);
             if (userData) {
+              const numericUserId = Number(userData.usuario_id || storedUserId);
               setUser({
                 ...userData,
-                userId: storedUserId,
+                usuario_id: numericUserId,
+                userId: String(numericUserId),
                 rol: localStorage.getItem("rol"),
               });
             }
@@ -122,9 +124,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         localStorage.setItem("username", profileData.nombre);
       }
 
+      const numericUserId = Number(profileData?.usuario_id || data.userId);
+
       setUser({
         ...profileData,
-        userId: data.userId,
+        usuario_id: numericUserId,
+        userId: String(numericUserId),
         rol: data.rol,
       });
 

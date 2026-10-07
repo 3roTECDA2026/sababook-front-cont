@@ -1,21 +1,15 @@
-// src/components/BookCommentBox.tsx
-import React, { Dispatch, SetStateAction, useState } from 'react';
-import { Alert, AlertColor, Box, Typography, Rating, Snackbar } from '@mui/material';
+import React, { Dispatch, SetStateAction } from 'react';
+import { Box, Typography, Rating } from '@mui/material';
 import type { Theme } from '@mui/material';
 import NavButton from './ui/NavButton';
 import { API_BASE_URL } from '@/environments/api';
 import type { User, Opinion } from '@/types';
+import { useNotification } from '@/contexts/NotificationContext';
 
 const ORANGE_COLOR = '#FF6633';
 
 /** Mínimo que acepta el backend (SAB-039: opinion-content.service.ts). */
 const MIN_COMENTARIO = 10;
-
-interface SnackbarState {
-  open: boolean;
-  message: string;
-  severity: AlertColor;
-}
 
 interface BookCommentBoxProps {
   theme: Theme;
@@ -40,39 +34,24 @@ const BookCommentBox = ({
   setShowCommentBox,
   setOpinions,
 }: BookCommentBoxProps) => {
-  const [snackbar, setSnackbar] = useState<SnackbarState>({
-    open: false,
-    message: '',
-    severity: 'warning',
-  });
-
-  const handleSnackbarClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') return;
-    setSnackbar({ ...snackbar, open: false });
-  };
+  const { showNotification } = useNotification();
 
   const handleSubmit = async () => {
     if (!newComment.trim() || newRating === 0) {
-      setSnackbar({
-        open: true,
-        message: 'Por favor, escribe un comentario y selecciona una calificación.',
-        severity: 'warning',
-      });
+      showNotification('Por favor, escribe un comentario y selecciona una calificación.', 'warning');
       return;
     }
 
     if (newComment.trim().length < MIN_COMENTARIO) {
-      setSnackbar({
-        open: true,
-        message: `Contá un poco más: la reseña necesita al menos ${MIN_COMENTARIO} caracteres.`,
-        severity: 'warning',
-      });
+      showNotification(`Contá un poco más: la reseña necesita al menos ${MIN_COMENTARIO} caracteres.`, 'warning');
       return;
     }
 
+    const resolvedUserId = Number(user.usuario_id || user.userId);
+
     const payload = {
       libro_id: Number(id),
-      usuario_id: user.usuario_id,
+      usuario_id: resolvedUserId,
       calificacion: newRating,
       comentario: newComment,
     };
@@ -98,7 +77,6 @@ const BookCommentBox = ({
 
       const savedOpinion = await res.json();
 
-      // Aquí usamos el nombre real que devuelve la API
       const newOpinion: Opinion = {
         id: savedOpinion.opinion_id || Date.now(),
         comentario: savedOpinion.comentario || newComment,
@@ -115,14 +93,10 @@ const BookCommentBox = ({
       setNewComment('');
       setNewRating(0);
       setShowCommentBox(false);
-      setSnackbar({ open: true, message: 'Tu reseña se publicó correctamente.', severity: 'success' });
+      showNotification('Tu reseña se publicó correctamente.', 'success');
     } catch (err) {
       console.error(err);
-      setSnackbar({
-        open: true,
-        message: err instanceof Error ? err.message : 'No se pudo guardar el comentario.',
-        severity: 'error',
-      });
+      showNotification(err instanceof Error ? err.message : 'No se pudo guardar el comentario.', 'error');
     }
   };
 
@@ -167,22 +141,6 @@ const BookCommentBox = ({
       >
         Publicar comentario
       </NavButton>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        onClose={handleSnackbarClose}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };
