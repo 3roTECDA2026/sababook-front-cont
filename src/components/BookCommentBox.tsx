@@ -8,6 +8,9 @@ import { useNotification } from '@/contexts/NotificationContext';
 
 const ORANGE_COLOR = '#FF6633';
 
+/** Mínimo que acepta el backend (SAB-039: opinion-content.service.ts). */
+const MIN_COMENTARIO = 10;
+
 interface BookCommentBoxProps {
   theme: Theme;
   id: number | string | undefined;
@@ -39,6 +42,11 @@ const BookCommentBox = ({
       return;
     }
 
+    if (newComment.trim().length < MIN_COMENTARIO) {
+      showNotification(`Contá un poco más: la reseña necesita al menos ${MIN_COMENTARIO} caracteres.`, 'warning');
+      return;
+    }
+
     const resolvedUserId = Number(user.usuario_id || user.userId);
 
     const payload = {
@@ -61,7 +69,11 @@ const BookCommentBox = ({
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Error al guardar el comentario.');
+      if (!res.ok) {
+        // El backend responde con el motivo del rechazo (SAB-039 y moderación).
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error || body?.mensaje || 'No se pudo guardar el comentario.');
+      }
 
       const savedOpinion = await res.json();
 
@@ -81,10 +93,10 @@ const BookCommentBox = ({
       setNewComment('');
       setNewRating(0);
       setShowCommentBox(false);
-      showNotification('Comentario guardado correctamente.', 'success');
+      showNotification('Tu reseña se publicó correctamente.', 'success');
     } catch (err) {
       console.error(err);
-      showNotification('No se pudo guardar el comentario.', 'error');
+      showNotification(err instanceof Error ? err.message : 'No se pudo guardar el comentario.', 'error');
     }
   };
 
