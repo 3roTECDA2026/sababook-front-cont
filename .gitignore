@@ -27,9 +27,6 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
-
-<<<<<<< HEAD
 # Agentes y herramientas locales
 .agents/
 .claude/

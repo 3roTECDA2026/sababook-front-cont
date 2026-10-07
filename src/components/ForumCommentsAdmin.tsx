@@ -33,6 +33,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { API_BASE_URL } from '../environments/api';
 import { useForumComments } from '../hooks/useForumComments';
+import { useForumCommentsAdmin } from '../hooks/useForumCommentsAdmin';
 import type { ForumComment, Forum } from '../types';
 
 const StyledTableContainer = styled(Paper)(({ theme }) => ({
@@ -94,11 +95,6 @@ const ForumCommentsAdmin = () => {
   const { foroId } = useParams<{ foroId: string }>();
   const navigate = useNavigate();
 
-  // Estado foro
-  const [forumInfo, setForumInfo] = useState<Partial<Forum> | null>(null);
-  const [loadingForum, setLoadingForum] = useState<boolean>(true);
-  const [errorForum, setErrorForum] = useState<string | null>(null);
-
   // Estados de edición
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editedComment, setEditedComment] = useState<EditedComment>({ comentario: '' });
@@ -114,10 +110,6 @@ const ForumCommentsAdmin = () => {
     severity: 'success',
   });
 
-  // Loading de operaciones
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const [isUpdating, setIsUpdating] = useState<boolean>(false);
-
   // Hook de comentarios
   const {
     comments: rawComments,
@@ -125,6 +117,17 @@ const ForumCommentsAdmin = () => {
     error: errorComments,
     refetch,
   } = useForumComments(foroId);
+
+  // Hook de administración de foro y acciones
+  const {
+    forumInfo,
+    loadingForum,
+    errorForum,
+    updateComment,
+    deleteComment,
+    isUpdating,
+    isDeleting,
+  } = useForumCommentsAdmin(foroId, refetch);
 
   const comments: DisplayComment[] = (rawComments as RawComment[]).map((c) => ({
     comentario_id: c.id ?? c.comentario_id,
@@ -136,44 +139,6 @@ const ForumCommentsAdmin = () => {
     usuario_id: c.usuario_id ?? c.usuario?.id ?? null,
   }));
 
-  // Fetch info del foro
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchForum = async () => {
-      setLoadingForum(true);
-      setErrorForum(null);
-
-      const token = localStorage.getItem('token');
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/foro/${foroId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          await res.text();
-          throw new Error('Error al cargar el foro');
-        }
-
-        const data = await res.json();
-
-        setForumInfo(data);
-      } catch (err) {
-        if ((err as { name?: string })?.name === 'AbortError') return;
-        const message = err instanceof Error ? err.message : String(err);
-        console.error('🚨 ERROR FETCH FORO:', err);
-        setErrorForum(message);
-      } finally {
-        setLoadingForum(false);
-      }
-    };
-
-    fetchForum();
-    return () => controller.abort();
-  }, [foroId]);
-
   // Editar comentario
   const handleEditClick = (comment: DisplayComment) => {
     setEditingCommentId(comment.comentario_id);
@@ -184,19 +149,8 @@ const ForumCommentsAdmin = () => {
     setEditedComment({ comentario: '' });
   };
   const handleSaveEdit = async (comentarioId: number) => {
-    setIsUpdating(true);
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/comentario/${comentarioId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(editedComment),
-      });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al actualizar comentario');
-      }
-      await refetch();
+      await updateComment(comentarioId, editedComment.comentario);
       setEditingCommentId(null);
       setSnackbar({
         open: true,
@@ -207,8 +161,6 @@ const ForumCommentsAdmin = () => {
       const message = err instanceof Error ? err.message : String(err);
       console.error(err);
       setSnackbar({ open: true, message: `❌ Error: ${message}`, severity: 'error' });
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -219,18 +171,8 @@ const ForumCommentsAdmin = () => {
   };
   const handleConfirmDelete = async () => {
     if (!commentToDelete) return;
-    setIsDeleting(true);
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/comentario/${commentToDelete.comentario_id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al eliminar comentario');
-      }
-      await refetch();
+      await deleteComment(commentToDelete.comentario_id);
       setSnackbar({
         open: true,
         message: '✅ Comentario eliminado correctamente',
@@ -241,7 +183,6 @@ const ForumCommentsAdmin = () => {
       console.error(err);
       setSnackbar({ open: true, message: `❌ Error: ${message}`, severity: 'error' });
     } finally {
-      setIsDeleting(false);
       setDeleteDialogOpen(false);
       setCommentToDelete(null);
     }
