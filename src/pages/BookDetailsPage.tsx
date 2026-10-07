@@ -27,6 +27,7 @@ const BookDetailsPage = () => {
   const [showCommentBox, setShowCommentBox] = useState<boolean>(false);
   const [newComment, setNewComment] = useState<string>('');
   const [newRating, setNewRating] = useState<number>(0);
+  const [currentProgress, setCurrentProgress] = useState<number | null>(null);
 
   const { book, loading: bookLoading, error: bookError } = useBookDetails(id);
   const { opinions, setOpinions, loading: opinionsLoading } = useBookOpinion(id);
@@ -48,6 +49,23 @@ const BookDetailsPage = () => {
   if (bookError) return <div>{bookError}</div>;
   if (!book) return <div>No se encontró el libro.</div>;
 
+   const handleUpdateProgress = async (newPage: number) => {
+    if (!id) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/libros/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pagina_actual: newPage }),
+      });
+
+      if (!res.ok) throw new Error('Error al actualizar');
+
+      setCurrentProgress(newPage);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   // Mapeo seguro para obtener la URL de portada independiente de la convención de nombres (camelCase / snake_case)
   const bookWithAlias = book as typeof book & { coverImage?: string; portadaUrl?: string };
   const coverImageSrc =
@@ -81,6 +99,12 @@ const BookDetailsPage = () => {
           coverImageSrc={coverImageSrc}
           authorStyle={authorStyle}
           actions={<TriviaPlaySection bookId={book.libro_id} />}
+        />
+
+        {/* Componente de Progreso de Lectura con la prop correcta: onUpdateProgress */}
+        <ReadingProgress
+        currentPage={currentProgress !== null ? currentProgress : ((book as any).pagina_actual ?? 0)}
+        totalPages={(book as any).paginas_totales > 0 ? (book as any).paginas_totales : 100}        onUpdateProgress={handleUpdateProgress}
         />
 
         {showCommentBox && user && (
@@ -119,7 +143,6 @@ const BookDetailsPage = () => {
 
         <Divider sx={{ my: 3 }} />
 
-        {/* Lista de opiniones */}
         <BookOpinionList opinions={opinions} theme={theme} />
       </Box>
     </Box>
