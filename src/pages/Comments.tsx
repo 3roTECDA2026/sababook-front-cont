@@ -113,6 +113,9 @@ const CommentInputFormMUI = ({ onCommentSubmit, onCancel }: CommentInputFormMUIP
         rows={3}
         variant="outlined"
         label="Escribe tu comentario aquí..."
+        id="commentText"
+        name="commentText"
+        autoComplete="off"
         value={commentText}
         onChange={(e) => setCommentText(e.target.value)}
         sx={{ mb: 2 }}
