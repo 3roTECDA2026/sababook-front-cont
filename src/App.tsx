@@ -14,6 +14,7 @@ import MyComments from './pages/MyComments';
 import Comments from './pages/Comments';
 import Insignias from './pages/Insignias';
 import ForumDetailsPage from './pages/ForumDetailsPage';
+import TriviaPage from './pages/TriviaPage';
 import BookCommentsAdmin from './pages/BookCommentsAdmin';
 import ForumCommentsAdmin from './pages/ForumCommentsAdmin';
 
@@ -136,6 +137,16 @@ function App() {
       />
 
       <Route path="/dashboard/forum-comments/:foroId" element={<ForumCommentsAdmin />} />
+
+      {/* Ruta para generar trivia (Docentes) */}
+      <Route
+        path="/trivia"
+        element={
+          <ProtectedRoute>
+            <TriviaPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Ruta principal de administración */}
       <Route
