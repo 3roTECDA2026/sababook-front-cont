@@ -34,9 +34,10 @@ export const useTriviaPlay = (bookId: number) => {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
     Promise.all([
-      fetch(`${API_BASE_URL}/api/v1/trivia/jugar/libro/${bookId}`).then((res) => res.json()),
-      fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/libro/${bookId}`).then((res) => res.json()),
+      fetch(`${API_BASE_URL}/api/v1/trivia/jugar/libro/${bookId}`, { headers }).then((res) => res.json()),
+      fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/libro/${bookId}`, { headers }).then((res) => res.json()),
     ])
       .then(([questions, evaluations]: [PlayQuestion[], Evaluacion[]]) => {
         if (!mounted) return;
@@ -89,6 +90,7 @@ export const useTriviaPlay = (bookId: number) => {
     if (mode === 'evaluacion' && activeEvaluation) {
       const res = await fetch(
         `${API_BASE_URL}/api/v1/trivia/jugar/evaluacion/${activeEvaluation.evaluationId}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : undefined },
       );
       questions = await res.json();
     } else {
