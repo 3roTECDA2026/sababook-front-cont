@@ -23,13 +23,13 @@ import type { UserFormData } from './forms/UserForm';
 import ForumForm from './forms/ForumForm';
 import BookForm from './forms/BookForm';
 import GoalForm from './GoalForm';
+import ModerationAdmin from './ModerationAdmin';
 import { API_BASE_URL } from '@/environments/api';
 import type { Book, Forum, User, ReadingGoal } from '@/types';
 import UserTable from './tables/UserTable';
 import BookTable from './tables/BookTable';
 import ForumTable from './tables/ForumTable';
-// @ts-ignore
-import GoalTable from './GoalTable';
+import GoalTable from './tables/GoalTable';
 
 const DashboardContainer = Box;
 
@@ -98,7 +98,7 @@ const Dashboard = () => {
       setUserError(null);
       const token = localStorage.getItem('token');
 
-      const res = await fetch(`${API_BASE_URL}/api/v1/user`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -124,7 +124,7 @@ const Dashboard = () => {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No autenticado.');
 
-      const res = await fetch(`${API_BASE_URL}/api/v1/libros`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/books`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -147,7 +147,7 @@ const Dashboard = () => {
       setForumsLoading(true);
       setForumsError(null);
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE_URL}/api/v1/foro`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/forums`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -239,7 +239,7 @@ const Dashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/v1/user`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -267,8 +267,8 @@ const Dashboard = () => {
 
     const isEditing = !!bookData.libro_id;
     const endpoint = isEditing
-      ? `${API_BASE_URL}/api/v1/libros/${bookData.libro_id}`
-      : `${API_BASE_URL}/api/v1/libros`;
+      ? `${API_BASE_URL}/api/v1/books/${bookData.libro_id}`
+      : `${API_BASE_URL}/api/v1/books`;
     const method = isEditing ? 'PUT' : 'POST';
 
     try {
@@ -321,7 +321,7 @@ const Dashboard = () => {
 
     setIsApiLoading(true);
     const token = localStorage.getItem('token');
-    const endpoint = `${API_BASE_URL}/api/v1/libros/${bookToDeleteId}`;
+    const endpoint = `${API_BASE_URL}/api/v1/books/${bookToDeleteId}`;
 
     try {
       const response = await fetch(endpoint, {
@@ -426,8 +426,8 @@ const Dashboard = () => {
 
     const isEditing = !!forumData.foro_id;
     const endpoint = isEditing
-      ? `${API_BASE_URL}/api/v1/foro/${forumData.foro_id}`
-      : `${API_BASE_URL}/api/v1/foro`;
+      ? `${API_BASE_URL}/api/v1/forums/${forumData.foro_id}`
+      : `${API_BASE_URL}/api/v1/forums`;
     const method = isEditing ? 'PUT' : 'POST';
 
     // Asegúrate de que los datos enviados incluyan creador_id si es POST, o solo los campos editados si es PUT
@@ -485,7 +485,7 @@ const Dashboard = () => {
 
     setIsApiLoading(true);
     const token = localStorage.getItem('token');
-    const endpoint = `${API_BASE_URL}/api/v1/foro/${forumToDeleteId}`;
+    const endpoint = `${API_BASE_URL}/api/v1/forums/${forumToDeleteId}`;
 
     try {
       const response = await fetch(endpoint, {
@@ -598,6 +598,8 @@ const Dashboard = () => {
             }}
           />
         );
+      case 'moderation':
+        return <ModerationAdmin />;
       default:
         return null;
     }

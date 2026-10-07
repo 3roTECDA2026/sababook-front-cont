@@ -11,7 +11,7 @@ export const useBookOpinion = (libroId: number | string | undefined) => {
   const fetchOpinions = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/opinion/libro/${libroId}`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/reviews/libro/${libroId}`);
       if (!res.ok) throw new Error('Error al cargar opiniones.');
       const data: OpinionAPI[] = await res.json();
 

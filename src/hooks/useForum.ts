@@ -9,7 +9,7 @@ export const useForums = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/v1/foro`)
+    fetch(`${API_BASE_URL}/api/v1/forums`)
       .then((res) => {
         if (!res.ok) throw new Error('Error al cargar los foros');
         return res.json();

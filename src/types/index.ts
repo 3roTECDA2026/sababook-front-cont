@@ -4,3 +4,4 @@ export * from './list';
 export * from './forum';
 export * from './medal';
 export * from './goal';
+export * from './trivia';

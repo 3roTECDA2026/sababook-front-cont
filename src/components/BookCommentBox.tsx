@@ -1,10 +1,10 @@
-// src/components/BookCommentBox.tsx
 import React, { Dispatch, SetStateAction } from 'react';
 import { Box, Typography, Rating } from '@mui/material';
 import type { Theme } from '@mui/material';
 import NavButton from './ui/NavButton';
 import { API_BASE_URL } from '@/environments/api';
 import type { User, Opinion } from '@/types';
+import { useNotification } from '@/contexts/NotificationContext';
 
 const ORANGE_COLOR = '#FF6633';
 
@@ -31,15 +31,19 @@ const BookCommentBox = ({
   setShowCommentBox,
   setOpinions,
 }: BookCommentBoxProps) => {
+  const { showNotification } = useNotification();
+
   const handleSubmit = async () => {
     if (!newComment.trim() || newRating === 0) {
-      alert('Por favor, escribe un comentario y selecciona una calificación.');
+      showNotification('Por favor, escribe un comentario y selecciona una calificación.', 'warning');
       return;
     }
 
+    const resolvedUserId = Number(user.usuario_id || user.userId);
+
     const payload = {
       libro_id: Number(id),
-      usuario_id: user.usuario_id,
+      usuario_id: resolvedUserId,
       calificacion: newRating,
       comentario: newComment,
     };
@@ -48,7 +52,7 @@ const BookCommentBox = ({
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No autenticado.');
 
-      const res = await fetch(`${API_BASE_URL}/api/v1/opinion`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/reviews`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -61,7 +65,6 @@ const BookCommentBox = ({
 
       const savedOpinion = await res.json();
 
-      // Aquí usamos el nombre real que devuelve la API
       const newOpinion: Opinion = {
         id: savedOpinion.opinion_id || Date.now(),
         comentario: savedOpinion.comentario || newComment,
@@ -78,9 +81,10 @@ const BookCommentBox = ({
       setNewComment('');
       setNewRating(0);
       setShowCommentBox(false);
+      showNotification('Comentario guardado correctamente.', 'success');
     } catch (err) {
       console.error(err);
-      alert('No se pudo guardar el comentario.');
+      showNotification('No se pudo guardar el comentario.', 'error');
     }
   };
 

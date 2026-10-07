@@ -119,7 +119,7 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/v1/user/${userToEdit.usuario_id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/users/${userToEdit.usuario_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
     try {
       const token = localStorage.getItem('token');
       // 2. Llamar a la API con el método DELETE
-      const response = await fetch(`${API_BASE_URL}/api/v1/user/${userToDeleteId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/users/${userToDeleteId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,

@@ -3,18 +3,17 @@ import { useState } from 'react';
 import { Box, Divider, useTheme } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import SideMenu from '../components/SideMenu';
-import AppHeader from '../components/AppHeader';
-import NavButton from '../components/NavButton';
-import { useAuth } from '../hooks/useAuth';
-import { useBookDetails } from '../hooks/useBookDetails';
-import { useBookOpinion } from '../hooks/useBookOpinion';
-import BookDetailsHeader from '../components/BookDetailsHeader';
-import BookCommentBox from '../components/BookCommentBox';
-import BookOpinionList from '../components/BookOpinionList';
-import BookDescription from '../components/BookDescription';
-import ReadingProgress from '../components/ReadingProgress';
-import { API_BASE_URL } from '../environments/api';
+import SideMenu from '@/components/layout/SideMenu';
+import AppHeader from '@/components/layout/AppHeader';
+import NavButton from '@/components/ui/NavButton';
+import { useAuth } from '@/hooks/useAuth';
+import { useBookDetails } from '@/hooks/useBookDetails';
+import { useBookOpinion } from '@/hooks/useBookOpinion';
+import BookDetailsHeader from '@/components/ui/BookDetailsHeader';
+import BookCommentBox from '@/components/BookCommentBox';
+import BookOpinionList from '@/components/ui/BookOpinionList';
+import BookDescription from '@/components/ui/BookDescription';
+import TriviaPlaySection from '@/components/ui/TriviaPlaySection';
 
 const ORANGE_COLOR = '#FF6633';
 
@@ -95,7 +94,12 @@ const BookDetailsPage = () => {
       <SideMenu open={menuOpen} onClose={handleMenuClose} active="Inicio" />
 
       <Box sx={{ pt: 0 }}>
-        <BookDetailsHeader book={book} coverImageSrc={coverImageSrc} authorStyle={authorStyle} />
+        <BookDetailsHeader
+          book={book}
+          coverImageSrc={coverImageSrc}
+          authorStyle={authorStyle}
+          actions={<TriviaPlaySection bookId={book.libro_id} />}
+        />
 
         {/* Componente de Progreso de Lectura con la prop correcta: onUpdateProgress */}
         <ReadingProgress

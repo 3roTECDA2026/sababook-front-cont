@@ -27,7 +27,7 @@ const BookPreview = ({ book: propBook, onCommentClick }: BookPreviewProps) => {
 
   useEffect(() => {
     if (!propBook && id) {
-      fetch(`${API_BASE_URL}/api/v1/libros/${id}`)
+      fetch(`${API_BASE_URL}/api/v1/books/${id}`)
         .then((res) => res.json())
         .then((data: BookWithAliases) => {
           setBook(data);

@@ -37,7 +37,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
     setSuccessMsg('');
     try {
       const payload = { foro_id: foroId, contenido, usuario_id: usuarioId };
-      const res = await fetch(`${API_BASE_URL}/api/v1/comentario`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -108,7 +108,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
                     if (window.confirm('¿Seguro que quieres eliminar este comentario?')) {
                       try {
                         const res = await fetch(
-                          `${API_BASE_URL}/api/v1/comentario/${comment.comentario_id}`,
+                          `${API_BASE_URL}/api/v1/comments/${comment.comentario_id}`,
                           {
                             method: 'DELETE',
                           }
@@ -117,7 +117,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
                         if (typeof refetch === 'function') await refetch();
                       } catch (err) {
                         const message = err instanceof Error ? err.message : String(err);
-                        alert(message);
+                        setSendError(message);
                       }
                     }
                   }}
