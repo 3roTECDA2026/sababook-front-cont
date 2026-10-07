@@ -1,42 +1,113 @@
-// src/components/ForumAddComent.tsx
+// src/components/ui/ForumAddComent.tsx
 import { useState } from 'react';
-import { Box, Button, TextField } from '@mui/material';
-// TODO: el módulo '../services/comments' no existe en el proyecto.
-// Componente sin uso actualmente. A definir si se completa o se elimina.
-// import { addComment } from "../services/comments";
+import { Box, Button, TextField, Alert, Typography } from '@mui/material';
+import { API_BASE_URL } from '@/environments/api';
+import type { ForumDetailComment } from '@/types';
+
+const MAX_COMMENT_LENGTH = 250;
 
 interface ForumAddCommentProps {
-  foroId: number | string;
+  forumId: number | string;
   userId: number | string;
-  onCommentAdded?: () => void;
+  userName?: string;
+  userAvatar?: string | null;
+  onCommentAdded?: (comment: ForumDetailComment) => void;
 }
 
-const ForumAddComment = ({ foroId, userId, onCommentAdded }: ForumAddCommentProps) => {
-  const [texto, setTexto] = useState<string>('');
+const ForumAddComment = ({
+  forumId,
+  userId,
+  userName,
+  userAvatar,
+  onCommentAdded,
+}: ForumAddCommentProps) => {
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    severity: 'error' | 'warning' | 'success' | 'info';
+    message: string;
+  } | null>(null);
 
   const handleSend = async () => {
-    if (!texto.trim()) return;
+    if (!text.trim() || text.length > MAX_COMMENT_LENGTH) return;
 
-    // await addComment({ foroId, userId, contenido: texto });
-    setTexto('');
+    setSending(true);
+    setFeedback(null);
 
-    // Avisar al padre que debe refrescar comentarios
-    onCommentAdded?.();
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/forums/${forumId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, content: text }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || res.status === 202 || data.ok === false) {
+        const severity =
+          res.status === 202 || data.error === 'EN_REVISION' ? 'info' : 'error';
+        setFeedback({ severity, message: data.mensaje || data.error || 'Error al agregar el comentario' });
+        setText('');
+        return;
+      }
+
+      const newComment: ForumDetailComment = {
+        ...data,
+        userName,
+        userAvatar: userAvatar ?? null,
+      };
+
+      setText('');
+      setFeedback({ severity: 'success', message: 'Comentario agregado con éxito.' });
+      onCommentAdded?.(newComment);
+    } catch {
+      setFeedback({
+        severity: 'error',
+        message: 'No se pudo agregar el comentario. Verificá la conexión con el servidor.',
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
-    <Box mt={2}>
+    <Box display="flex" flexDirection="column" gap={2}>
+      {feedback && (
+        <Alert severity={feedback.severity} onClose={() => setFeedback(null)}>
+          {feedback.message}
+        </Alert>
+      )}
+
+      <Typography variant="subtitle1" fontWeight="bold">
+        Agregar un comentario
+      </Typography>
+
       <TextField
-        fullWidth
         multiline
-        rows={3}
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        placeholder="Escribe un comentario..."
+        minRows={2}
+        fullWidth
+        value={text}
+        onChange={(e) => setText(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
+        placeholder="Escribe tu comentario..."
+        inputProps={{ maxLength: MAX_COMMENT_LENGTH }}
+        helperText={
+          <Typography
+            component="span"
+            variant="caption"
+            color={text.length >= MAX_COMMENT_LENGTH ? 'error' : 'text.secondary'}
+          >
+            {text.length} / {MAX_COMMENT_LENGTH}
+          </Typography>
+        }
       />
 
-      <Button variant="contained" sx={{ mt: 2 }} onClick={handleSend}>
-        Publicar
+      <Button
+        variant="contained"
+        color="warning"
+        onClick={handleSend}
+        disabled={sending || !text.trim() || text.length > MAX_COMMENT_LENGTH}
+      >
+        {sending ? 'Enviando...' : 'Publicar comentario'}
       </Button>
     </Box>
   );
