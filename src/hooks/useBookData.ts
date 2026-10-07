@@ -1,8 +1,8 @@
 // src/hooks/useBookData.ts
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import type { Book, FeaturedBook } from '../types';
-// import LibroImage from '../assets/libro.jpg' // Requerido para el DEFAULT_FEATURED_BOOK
+import { API_BASE_URL } from '@/environments/api';
+import type { Book, FeaturedBook } from '@/types';
+// import LibroImage from '@/assets/libro.jpg' // Requerido para el DEFAULT_FEATURED_BOOK
 
 // const FEATURED_BOOK_ID = 9;
 
@@ -21,12 +21,13 @@ const DEFAULT_FEATURED_BOOK: FeaturedBook = {
 export function useBookData() {
   const [books, setBooks] = useState<Book[]>([]);
   const [featuredBook, setFeaturedBook] = useState<Partial<FeaturedBook>>({});
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
 
-    fetch(`${API_BASE_URL}/api/v1/libros`, { signal })
+    fetch(`${API_BASE_URL}/api/v1/books`, { signal })
       .then((res) => res.json())
       .then((data: Book[]) => {
         setBooks(data);
@@ -52,10 +53,13 @@ export function useBookData() {
         if (err.name === 'AbortError') return;
         console.error('Error cargando libros:', err);
         // Opcional: manejar estado de error
+      })
+      .finally(() => {
+        setLoading(false);
       });
 
     return () => controller.abort();
   }, []);
 
-  return { books, setBooks, featuredBook, setFeaturedBook };
+  return { books, setBooks, featuredBook, setFeaturedBook, loading };
 }

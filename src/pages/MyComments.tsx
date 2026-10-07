@@ -19,9 +19,9 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-import AppHeader from '../components/AppHeader';
-import SideMenu from '../components/SideMenu';
-import SearchBar from '../components/SearchBar';
+import AppHeader from '@/components/layout/AppHeader';
+import SideMenu from '@/components/layout/SideMenu';
+import SearchBar from '@/components/ui/SearchBar';
 
 interface MockComment {
   id: number;

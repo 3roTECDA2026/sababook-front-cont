@@ -30,8 +30,8 @@ import ForumIcon from '@mui/icons-material/Forum';
 import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
 
-import AppHeader from '../components/AppHeader';
-import SideMenu from '../components/SideMenu';
+import AppHeader from '@/components/layout/AppHeader';
+import SideMenu from '@/components/layout/SideMenu';
 import AsistenciaToggle from '../components/AsistenciaToggle';
 import theme from '../theme/theme';
 import { useAuth } from '../hooks/useAuth';

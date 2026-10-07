@@ -4,7 +4,7 @@ import { Box, Button, Typography, CircularProgress } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircleTwoTone';
 import theme from '../theme/theme';
-import ConfirmationModal from './ConfirmationModal';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 interface AsistenciaToggleProps {
   asistencia?: string | null;

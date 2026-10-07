@@ -4,13 +4,13 @@ import { Box, Typography, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 // Importa los componentes de la carpeta 'components'
-import AppHeader from '../components/AppHeader';
-import InsigniaUnica from '../components/InsigniaUnica';
+import AppHeader from '@/components/layout/AppHeader';
+import InsigniaUnica from '@/components/ui/InsigniaUnica';
 
 // Importa el hook de autenticación
-import { useAuth } from '../hooks/useAuth';
-import { getCatalogoMedals } from '../services/apiService';
-import type { Medal } from '../types';
+import { useAuth } from '@/hooks/useAuth';
+import { getCatalogoMedals } from '@/services/apiService';
+import type { Medal } from '@/types';
 
 const Insignias = () => {
   const theme = useTheme();

@@ -1,12 +1,12 @@
 // src/components/ForumCommentList.tsx
 import { Box, Typography, Paper, CircularProgress, Button, TextField, IconButton } from '@mui/material';
 import type { Theme } from '@mui/material';
-import { useForumComments } from '../hooks/useForumComments';
-import { useAuth } from '../hooks/useAuth';
+import { useForumComments } from '@/hooks/useForumComments';
+import { useAuth } from '@/hooks/useAuth';
 import { useState, FormEvent } from 'react';
-import { API_BASE_URL } from '../environments/api';
+import { API_BASE_URL } from '@/environments/api';
 import DeleteIcon from '@mui/icons-material/Delete';
-import type { ForumComment } from '../types';
+import type { ForumComment } from '@/types';
 
 type CommentDisplay = ForumComment & {
   nombre?: string;
@@ -37,7 +37,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
     setSuccessMsg('');
     try {
       const payload = { foro_id: foroId, contenido, usuario_id: usuarioId };
-      const res = await fetch(`${API_BASE_URL}/api/v1/comentario`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -108,7 +108,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
                     if (window.confirm('¿Seguro que quieres eliminar este comentario?')) {
                       try {
                         const res = await fetch(
-                          `${API_BASE_URL}/api/v1/comentario/${comment.comentario_id}`,
+                          `${API_BASE_URL}/api/v1/comments/${comment.comentario_id}`,
                           {
                             method: 'DELETE',
                           }
@@ -117,7 +117,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
                         if (typeof refetch === 'function') await refetch();
                       } catch (err) {
                         const message = err instanceof Error ? err.message : String(err);
-                        alert(message);
+                        setSendError(message);
                       }
                     }
                   }}

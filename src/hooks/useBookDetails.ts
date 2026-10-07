@@ -1,7 +1,7 @@
 // src/hooks/useBookDetails.ts
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import type { Book } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { Book } from '@/types';
 
 export const useBookDetails = (id: number | string | undefined) => {
   const [book, setBook] = useState<Book | null>(null);
@@ -15,7 +15,7 @@ export const useBookDetails = (id: number | string | undefined) => {
     const controller = new AbortController();
     const { signal } = controller;
 
-    fetch(`${API_BASE_URL}/api/v1/libros/${id}`, { signal })
+    fetch(`${API_BASE_URL}/api/v1/books/${id}`, { signal })
       .then((res) => {
         if (!res.ok) throw new Error('No se encontró el libro.');
         return res.json();

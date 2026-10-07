@@ -1,0 +1,195 @@
+// src/components/SideMenu.tsx
+import React, { useState, ReactNode } from 'react';
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Box,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+} from '@mui/material';
+import HomeIcon from '@mui/icons-material/Home';
+import PersonIcon from '@mui/icons-material/Person';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import ForumIcon from '@mui/icons-material/Forum';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import LocalCafeIcon from '@mui/icons-material/LocalCafe';
+import QuizIcon from '@mui/icons-material/Quiz';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import LogoutIcon from '@mui/icons-material/Logout';
+import RadioIcon from '@mui/icons-material/Radio';
+import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
+import { Link, useNavigate } from 'react-router-dom';
+
+interface MenuItem {
+  text: string;
+  icon: ReactNode;
+  path: string;
+}
+
+interface SideMenuProps {
+  open: boolean;
+  onClose: () => void;
+  active?: string;
+}
+
+export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuProps) {
+  const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
+  const navigate = useNavigate();
+  const userRolId = localStorage.getItem('rol');
+
+  let menuItems: MenuItem[];
+
+  if (userRolId === '1' || userRolId === '3') {
+    // Menú para administradores
+    menuItems = [
+      { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
+      { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
+      { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
+      { text: 'Radio', icon: <RadioIcon />, path: '/radio' },
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+    ];
+  } else if (userRolId == '2') {
+    // Menú para docentes
+    menuItems = [
+      { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
+      { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Favoritos', icon: <FavoriteIcon />, path: '/favoritos' },
+      { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
+      { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
+      { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
+      { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
+    ];
+  } else {
+    // Menú para usuarios normales / estudiantes / docentes
+    menuItems = [
+      { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
+      { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
+      { text: 'Radio Sábato', icon: <RadioIcon />, path: '/radio' },
+      { text: 'Favoritos', icon: <FavoriteIcon />, path: '/favoritos' },
+      { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
+      { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
+    ];
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('rol');
+    localStorage.removeItem('userId');
+    navigate('/');
+    setConfirmOpen(false);
+    onClose();
+  };
+
+  return (
+    <>
+      <Drawer
+        anchor="left"
+        open={open}
+        onClose={onClose}
+        transitionDuration={400}
+       ModalProps={{
+          disableEnforceFocus: true,
+         
+        }}
+        slotProps= {{
+          paper: {
+            sx: {
+              width: 240,
+              backgroundColor: 'rgba(255, 250, 245, 0.95)',
+              backdropFilter: 'blur(8px)',
+              borderTopRightRadius: '20px',
+              borderBottomRightRadius: '20px',
+              boxShadow: '4px 0 15px rgba(0,0,0,0.1)',
+              color: '#4b2c15',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              p: 1,
+            },
+          },
+        }}
+      >
+        <Box>
+          <List>
+            {menuItems.map((item, i) => {
+              const isActive = item.text === active;
+              return (
+                <ListItem key={i} disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemButton
+                    component={Link}
+                    to={item.path}
+                    onClick={onClose}
+                    sx={{
+                      borderRadius: 3,
+                      bgcolor: isActive ? '#ff8a00' : 'transparent',
+                      color: isActive ? '#837878' : '#4b2c15',
+                      '&:hover': {
+                        bgcolor: isActive ? '#ff9e2a' : 'rgba(0,0,0,0.04)',
+                      },
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        color: isActive ? '#fff' : '#4b2c15',
+                        minWidth: 40,
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText primary={item.text} primaryTypographyProps={{ fontWeight: 500 }} />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          </List>
+        </Box>
+
+        <Box textAlign="center" pb={2}>
+          <ListItemButton onClick={() => {
+             onClose();           // cierra el Drawer ya
+             setConfirmOpen(true)
+            }}>
+            <ListItemIcon sx={{ color: '#4b2c15' }}>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText primary="Salir" />
+          </ListItemButton>
+        </Box>
+      </Drawer>
+
+      {/* Diálogo de Confirmación */}
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        disableRestoreFocus
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{'Confirmar cierre de sesión'}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            ¿Estás seguro de que quieres cerrar la sesión?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={handleLogout} color="primary" autoFocus>
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}

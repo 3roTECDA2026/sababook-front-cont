@@ -1,7 +1,7 @@
 // src/hooks/useForum.ts
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import type { Forum } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { Forum } from '@/types';
 
 export const useForums = () => {
   const [forums, setForums] = useState<Forum[]>([]);
@@ -12,7 +12,7 @@ export const useForums = () => {
     const controller = new AbortController();
     const { signal } = controller;
 
-    fetch(`${API_BASE_URL}/api/v1/foro`, { signal })
+    fetch(`${API_BASE_URL}/api/v1/forums`, { signal })
       .then((res) => {
         if (!res.ok) throw new Error('Error al cargar los foros');
         return res.json();

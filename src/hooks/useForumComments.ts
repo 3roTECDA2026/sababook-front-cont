@@ -1,7 +1,7 @@
 // src/hooks/useForumComments.ts
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../environments/api';
-import type { ForumComment } from '../types';
+import { API_BASE_URL } from '@/environments/api';
+import type { ForumComment } from '@/types';
 
 export const useForumComments = (foroId: number | string | undefined) => {
   const [comments, setComments] = useState<ForumComment[]>([]);
@@ -15,7 +15,7 @@ export const useForumComments = (foroId: number | string | undefined) => {
 
     const token = localStorage.getItem('token'); // <- Token agregado
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/comentario/${foroId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/comments/${foroId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

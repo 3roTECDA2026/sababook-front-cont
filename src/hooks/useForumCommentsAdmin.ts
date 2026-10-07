@@ -26,7 +26,7 @@ export const useForumCommentsAdmin = (foroId: string | undefined, refetchComment
       const token = localStorage.getItem('token');
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/foro/${foroId}`, {
+        const res = await fetch(`${API_BASE_URL}/api/v1/forums/${foroId}`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
         });
@@ -57,7 +57,7 @@ export const useForumCommentsAdmin = (foroId: string | undefined, refetchComment
       setIsUpdating(true);
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/comentario/${comentarioId}`, {
+        const res = await fetch(`${API_BASE_URL}/api/v1/comments/${comentarioId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ comentario }),
@@ -81,7 +81,7 @@ export const useForumCommentsAdmin = (foroId: string | undefined, refetchComment
       setIsDeleting(true);
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/comentario/${comentarioId}`, {
+        const res = await fetch(`${API_BASE_URL}/api/v1/comments/${comentarioId}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
         });

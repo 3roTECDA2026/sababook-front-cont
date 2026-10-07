@@ -1,14 +1,15 @@
 // src/pages/Comments.tsx
 import { Box, Button, createTheme, DialogActions, Rating, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
+import { useNotification } from '@/contexts/NotificationContext';
 
 // Iconos de MUI
 import StarIcon from '@mui/icons-material/Star';
 
-import AppHeader from '../components/AppHeader';
-import RatingAndCommentForm from '../components/RatingAndCommentForm';
-import type { RatingSubmitData } from '../components/RatingAndCommentForm';
-import SideMenu from '../components/SideMenu';
+import AppHeader from '@/components/layout/AppHeader';
+import RatingAndCommentForm from '@/components/forms/RatingAndCommentForm';
+import type { RatingSubmitData } from '@/components/forms/RatingAndCommentForm';
+import SideMenu from '@/components/layout/SideMenu';
 
 // --- CONFIGURACIÓN DE TEMA ---
 const theme = createTheme({
@@ -137,6 +138,7 @@ const CommentInputFormMUI = ({ onCommentSubmit, onCancel }: CommentInputFormMUIP
 
 // --- PÁGINA PRINCIPAL: BookDetailsPage (simula el mockup) ---
 function BookDetailsPageMUI() {
+  const { showNotification } = useNotification();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isCommenting, setIsCommenting] = useState<boolean>(false);
   const [isRating, setIsRating] = useState<boolean>(false);
@@ -155,7 +157,7 @@ function BookDetailsPageMUI() {
     };
     setComments([submittedComment, ...comments]); // Agrega el nuevo al inicio
     setIsCommenting(false);
-    console.log('Comentario publicado:', submittedComment);
+    showNotification('Comentario publicado correctamente.', 'success');
   };
 
   const handleRatingSubmit = async (ratingData: RatingSubmitData) => {
@@ -163,7 +165,7 @@ function BookDetailsPageMUI() {
     const userHasCommented = comments.some((comment) => comment.name === 'Usuario Actual');
 
     if (userHasCommented) {
-      alert('Ya has enviado una calificación para este libro. Solo puedes enviar una por usuario.');
+      showNotification('Ya has enviado una calificación para este libro. Solo puedes enviar una por usuario.', 'warning');
       setIsRating(false);
       return;
     }

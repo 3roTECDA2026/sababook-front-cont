@@ -20,6 +20,7 @@
 | Componente | Tecnología | Propósito |
 | :--- | :--- | :--- |
 | **Framework** | **React.js** | Librería principal para construir la interfaz. |
+| **Lenguaje** | **TypeScript** | Tipado estático para mayor robustez y mantenibilidad. |
 | **Tooling** | **Vite** | Empaquetador y servidor de desarrollo rápido. |
 | **UI/Estilos** | **Material-UI (MUI)** | Componentes de diseño para una interfaz intuitiva (RNF2). |
 | **Llamadas API**|  Fetch | Gestión de la comunicación con el Backend. |
@@ -47,9 +48,27 @@ VITE_API_URL="http://localhost:3000/api/v1"
 
 *npm run dev
 *La aplicación estará disponible en http://localhost:5173.
+
 ## Estructura del Proyecto (RNF9)
-El proyecto sigue una estructura modular para garantizar la Mantenibilidad (RNF9):
-*src/components: Componentes reutilizables de UI (ej. TarjetaLibro, Header).
-*src/pages: Vistas principales de la aplicación (ej. /Home, /BookDetails).
-*src/services: Módulos para las llamadas a la API (separa la lógica de datos de la UI).
-*src/themes: Configuración de estilos y temas de MUI.
+
+El proyecto sigue una estructura modular y en capas para garantizar la Mantenibilidad (RNF9). Todo el código fuente vive en `src/`, organizado así:
+src/
+├── components/ # Componentes reutilizables de UI, agrupados por tipo
+│ ├── ui/ # Piezas chicas y genéricas (botones, modales, barra de búsqueda, chips de filtro)
+│ ├── layout/ # Estructura de navegación (header, menú lateral, layout del dashboard)
+│ ├── forms/ # Formularios (libros, usuarios, foros, login, calificación)
+│ ├── tables/ # Tablas de datos (libros, usuarios, foros)
+│ └── auth/ # Componentes de autenticación (registro)
+├── pages/ # Vistas principales ruteadas por la app (Home, BookDetails, Dashboard, etc.)
+├── hooks/ # Custom hooks con la lógica de negocio y de datos
+├── contexts/ # Contextos globales de React (autenticación)
+├── services/ # Módulos para las llamadas a la API (separa la lógica de datos de la UI)
+├── environments/ # Configuración del entorno (URL base de la API)
+├── theme/ # Configuración de estilos y tema de MUI
+├── utils/ # Funciones auxiliares reutilizables
+├── assets/ # Imágenes, íconos y recursos estáticos
+├── types.ts # Definiciones de tipos TypeScript compartidas en todo el proyecto
+├── App.tsx # Definición de rutas de la aplicación
+└── main.tsx # Punto de entrada de la aplicación
+
+**Nota:** existen además las carpetas `store/` y `layouts/`, actualmente vacías — reservadas para uso futuro (a definir por el equipo).
