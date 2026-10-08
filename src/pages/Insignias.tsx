@@ -29,13 +29,19 @@ const Insignias = () => {
 
     useEffect(() => {
     if (user?.usuario_id) {
+      const controller = new AbortController();
       setCargando(true);
-      getCatalogoMedals(user.usuario_id)
+      getCatalogoMedals(user.usuario_id, controller.signal)
         .then((medals) => {
           setInsigniasUsuario(Array.isArray(medals) ? medals : []);
         })
-        .catch(() => setInsigniasUsuario([]))
+        .catch((err) => {
+          if (err.name === 'AbortError') return;
+          setInsigniasUsuario([]);
+        })
         .finally(() => setCargando(false));
+
+      return () => controller.abort();
     }
   }, [user?.usuario_id]);
 

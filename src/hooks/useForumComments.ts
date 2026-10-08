@@ -8,7 +8,7 @@ export const useForumComments = (foroId: number | string | undefined) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchComments = async () => {
+  const fetchComments = async (signal?: AbortSignal) => {
     if (!foroId) return;
     setLoading(true);
     setError(null);
@@ -19,11 +19,13 @@ export const useForumComments = (foroId: number | string | undefined) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        signal,
       });
       if (!res.ok) throw new Error('Error al cargar comentarios del foro.');
       const data: ForumComment[] = await res.json();
       setComments(data);
     } catch (err) {
+      if ((err as { name?: string })?.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
       setComments([]);
@@ -33,7 +35,9 @@ export const useForumComments = (foroId: number | string | undefined) => {
   };
 
   useEffect(() => {
-    fetchComments();
+    const controller = new AbortController();
+    fetchComments(controller.signal);
+    return () => controller.abort();
   }, [foroId]);
 
   return { comments, loading, error, refetch: fetchComments };

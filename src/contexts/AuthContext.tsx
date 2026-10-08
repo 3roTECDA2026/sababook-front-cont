@@ -28,6 +28,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Cargar usuario desde localStorage al iniciar la aplicación
   useEffect(() => {
+    const controller = new AbortController();
+
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem("token");
       const storedUserId = localStorage.getItem("userId");
@@ -42,15 +44,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 Authorization: `Bearer ${storedToken}`,
                 "Content-Type": "application/json",
               },
+              signal: controller.signal,
             },
           );
 
           if (response.ok) {
             const userData = await parseJsonResponse(response);
             if (userData) {
+              const numericUserId = Number(userData.usuario_id || storedUserId);
               setUser({
                 ...userData,
-                userId: storedUserId,
+                usuario_id: numericUserId,
+                userId: String(numericUserId),
                 rol: localStorage.getItem("rol"),
               });
             }
@@ -58,6 +63,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             logout();
           }
         } catch (error) {
+          if ((error as { name?: string })?.name === 'AbortError') return;
           console.error("Error al cargar datos del usuario:", error);
           logout();
         }
@@ -66,6 +72,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     initializeAuth();
+    return () => controller.abort();
   }, [logout]);
 
   const login = async (
@@ -122,9 +129,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         localStorage.setItem("username", profileData.nombre);
       }
 
+      const numericUserId = Number(profileData?.usuario_id || data.userId);
+
       setUser({
         ...profileData,
-        userId: data.userId,
+        usuario_id: numericUserId,
+        userId: String(numericUserId),
         rol: data.rol,
       });
 

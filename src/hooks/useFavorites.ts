@@ -11,7 +11,7 @@ export function useFavorites() {
   const { token } = useAuth() || {};
 
   // Fetch favoritos del usuario
-  const fetchFavorites = useCallback(async () => {
+  const fetchFavorites = useCallback(async (signal?: AbortSignal) => {
     if (!token) {
       setLoading(false);
       return;
@@ -20,12 +20,14 @@ export function useFavorites() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/favorites`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal,
       });
       if (!res.ok) throw new Error('Error al obtener favoritos');
       const data: Book[] = await res.json();
       setFavoriteBooks(data);
       console.log('FAVORITOS', data);
     } catch (err) {
+      if ((err as { name?: string })?.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
       console.error('Error al cargar favoritos:', err);
@@ -35,7 +37,9 @@ export function useFavorites() {
   }, [token]);
 
   useEffect(() => {
-    fetchFavorites();
+    const controller = new AbortController();
+    fetchFavorites(controller.signal);
+    return () => controller.abort();
   }, [fetchFavorites]);
 
   // Agregar favorito

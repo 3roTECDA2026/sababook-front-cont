@@ -198,6 +198,9 @@ export default function RatingAndCommentForm({
           rows={4}
           variant="outlined"
           label="Agregar un comentario"
+          id="reviewComment"
+          name="reviewText"
+          autoComplete="off"
           value={commentText}
           onChange={(e) => {
             setCommentText(e.target.value);
