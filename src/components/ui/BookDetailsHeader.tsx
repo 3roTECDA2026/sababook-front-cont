@@ -3,6 +3,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import BookRatingSection from './BookRatingSection';
+import SafeImage from './SafeImage';
 import type { Book } from '@/types';
 
 type BookWithAliases = Book & {
@@ -22,8 +23,7 @@ const BookDetailsHeader = ({ book, coverImageSrc, authorStyle, actions }: BookDe
     <Box display="flex" alignItems="flex-start" gap={2} mb={3}>
       <Box sx={{ position: 'relative' }}>
         {coverImageSrc ? (
-          <Box
-            component="img"
+          <SafeImage
             src={coverImageSrc}
             alt={`Cubierta de ${book.title || book.titulo}`}
             sx={{
