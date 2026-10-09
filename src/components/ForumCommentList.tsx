@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useState, FormEvent } from 'react';
 import { API_BASE_URL } from '@/environments/api';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { destructiveButtonSx } from '@/theme/theme';
 import type { ForumComment } from '@/types';
 
 type CommentDisplay = ForumComment & {
@@ -122,12 +123,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
                     }
                   }}
                   sx={{
-                    bgcolor: theme.palette.button?.main,
-                    color: '#fff',
-                    '&:hover': {
-                      bgcolor: theme.palette.button?.main,
-                      opacity: 0.85,
-                    },
+                    ...destructiveButtonSx,
                     width: 32,
                     height: 32,
                   }}

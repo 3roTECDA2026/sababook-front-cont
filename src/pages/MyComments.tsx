@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { destructiveButtonSx } from '@/theme/theme';
 
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
@@ -93,7 +94,7 @@ const CommentItem = ({ id, title, author, image, onView, onEdit, onDelete }: Com
       {/* 3. BOTÓN ELIMINAR */}
       <IconButton
         onClick={() => onDelete(id, title)}
-        sx={{ bgcolor: '#f25600', color: '#ffffff', '&:hover': { bgcolor: 'orange.700' } }}
+        sx={destructiveButtonSx}
       >
         <DeleteIcon fontSize="small" />
       </IconButton>
@@ -236,14 +237,14 @@ export default function MyComments() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} sx={{ color: '#4b2c15' }}>
+          <Button onClick={handleCloseDialog}>
             Cancelar
           </Button>
           <Button
             onClick={handleConfirmDelete}
             autoFocus
             variant="contained"
-            sx={{ bgcolor: '#f25600', '&:hover': { bgcolor: '#cc4800' } }}
+            color="error"
           >
             Eliminar
           </Button>
