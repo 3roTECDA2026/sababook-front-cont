@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { ReadingGoal } from '@/types/goal';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, IconButton, CircularProgress, Typography, LinearProgress, Box,
@@ -20,25 +21,18 @@ const ActionButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
-interface Goal {
-  meta_id?: string | number;
-  id?: string | number;
+interface Goal extends ReadingGoal {
+  id?: number;
   usuario?: { nombre: string };
   usuario_nombre?: string;
-  usuario_id?: string | number | { nombre: string };
-  periodo_nombre?: string;
-  cantidad_libros: number;
-  libros_leidos?: number;
-  progreso?: number;
-  fecha_fin?: string;
 }
 
 interface GoalTableProps {
   goals: Goal[];
   loading: boolean;
   error?: string | null;
-  onDeleteGoal: (goalId: string | number) => void;
-  onEditGoal: (goal: Goal) => void;
+  onDeleteGoal: (goalId: number) => void;
+  onEditGoal: (goal: ReadingGoal) => void;
 }
 
 const GoalTable: React.FC<GoalTableProps> = ({
@@ -80,7 +74,7 @@ const GoalTable: React.FC<GoalTableProps> = ({
   const getUserName = (goal: Goal): string => {
     if (goal.usuario?.nombre) return goal.usuario.nombre;
     if (goal.usuario_nombre) return goal.usuario_nombre;
-    if (typeof goal.usuario_id === 'object' && goal.usuario_id?.nombre) return goal.usuario_id.nombre;
+    
     return goal.usuario_id ? `Estudiante ID: ${goal.usuario_id}` : 'N/A';
   };
 
@@ -168,7 +162,7 @@ const GoalTable: React.FC<GoalTableProps> = ({
                         <ActionButton onClick={() => onEditGoal(goal)} title="Editar" size="small">
                           <EditIcon sx={{ fontSize: '1.1rem' }} />
                         </ActionButton>
-                        <ActionButton onClick={() => onDeleteGoal(goal.meta_id || goal.id)} title="Eliminar" size="small" color="error">
+                        <ActionButton onClick={() => ((goal.meta_id ?? goal.id) !== undefined && onDeleteGoal((goal.meta_id ?? goal.id)!))} title="Eliminar" size="small" color="error">
                           <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                         </ActionButton>
                       </Box>

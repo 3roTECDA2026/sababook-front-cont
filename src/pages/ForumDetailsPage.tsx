@@ -21,7 +21,7 @@ import type { ForumDetailComment } from '@/types';
 
 const ForumDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { forum, loading, error } = useForumDetail(id);
+  const { foro: forum, loading, error } = useForumDetail(id);
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [localComments, setLocalComments] = useState<ForumDetailComment[]>([]);
@@ -31,7 +31,7 @@ const ForumDetailsPage = () => {
     setLocalComments((prev) => [...prev, comment]);
   };
 
-  const allComments = [...(forum?.comments ?? []), ...localComments];
+  const allComments = [...(forum?.comentarios ?? []), ...localComments];
 
   return (
     <Box
@@ -67,16 +67,16 @@ const ForumDetailsPage = () => {
             </Avatar>
             <Box flexGrow={1}>
               <Typography variant="h6" fontWeight="bold">
-                {forum.title ?? (forum as any).titulo}
+                {forum.titulo}
               </Typography>
               <Typography variant="body2" color="text.secondary" mb={1}>
-                {forum.description ?? (forum as any).descripcion}
+                {forum.descripcion}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Creado por: {forum.creatorName ?? (forum as any).creador_nombre ?? 'Usuario'}
+                Creado por: {forum.creador_nombre ?? 'Usuario'}
               </Typography>
               <Typography variant="caption" color="text.secondary" display="block">
-                Fecha: {new Date(forum.createdAt ?? (forum as any).fecha_creacion ?? '').toLocaleString()}
+                Fecha: {new Date(forum.fecha_creacion).toLocaleString()}
               </Typography>
             </Box>
           </Box>
@@ -99,8 +99,8 @@ const ForumDetailsPage = () => {
             <ForumAddComment
               forumId={id!}
               userId={user.userId ?? (user as any).usuario_id}
-              userName={user.name ?? (user as any).nombre}
-              userAvatar={user.avatarUrl ?? (user as any).avatar_url ?? null}
+              userName={user.nombre}
+              userAvatar={user.avatar_url ?? null}
               onCommentAdded={handleCommentAdded}
             />
           ) : (

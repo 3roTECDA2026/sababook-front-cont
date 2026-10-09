@@ -37,11 +37,11 @@ const CommentSection = ({ comments, loading = false }: CommentSectionProps) => {
 
       <List disablePadding>
         {comments.map((c) => {
-          const id = c.comentario_id ?? c.commentId;
-          const name = c.usuario_nombre ?? c.userName ?? 'Usuario';
-          const content = c.contenido ?? c.content ?? '';
-          const avatar = c.usuario_avatar ?? c.userAvatar ?? undefined;
-          const date = c.fecha ?? c.createdAt ?? '';
+          const id = c.comentario_id;
+          const name = c.usuario_nombre ?? 'Usuario';
+          const content = c.contenido ?? '';
+          const avatar = c.usuario_avatar ?? undefined;
+          const date = c.fecha ?? '';
 
           return (
             <ListItem key={id} alignItems="flex-start" disableGutters>
