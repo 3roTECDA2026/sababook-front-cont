@@ -32,6 +32,7 @@ interface Column {
 }
 
 const columns: Column[] = [
+  { id: 'portada_url', label: 'Portada' },
   { id: 'titulo', label: 'Título' },
   { id: 'autor', label: 'Autor' },
   { id: 'genero', label: 'Género' },
@@ -203,6 +204,32 @@ const BookTable = ({
                               <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                             </ActionButton>
                           </Box>
+                        </TableCell>
+                      );
+                    }
+
+                    if (column.id === 'portada_url') {
+                      return (
+                        <TableCell key={column.id}>
+                          {row.portada_url ? (
+                            <Box
+                              component="img"
+                              src={row.portada_url}
+                              alt={`Portada de ${row.titulo}`}
+                              loading="lazy"
+                              sx={{
+                                width: 45,
+                                height: 65,
+                                objectFit: 'cover',
+                                borderRadius: '6px',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                              }}
+                            />
+                          ) : (
+                            <Typography variant="caption" color="text.secondary">
+                              Sin portada
+                            </Typography>
+                          )}
                         </TableCell>
                       );
                     }

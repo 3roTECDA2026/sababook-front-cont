@@ -454,7 +454,7 @@ export const CrearListaModal: React.FC<CrearListaModalProps> = ({
           component="div"
           sx={{ fontWeight: 'bold' }}
         >
-          Crear Recomendación
+          Recomendar Libro
         </Typography>
 
         <IconButton
@@ -466,43 +466,12 @@ export const CrearListaModal: React.FC<CrearListaModalProps> = ({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ overflowY: 'visible' }}>
+      <DialogContent dividers>
         {errorMsg && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {errorMsg}
           </Alert>
         )}
-
-        <Box
-          sx={{
-            borderBottom: 1,
-            borderColor: 'divider',
-            mb: 3,
-          }}
-        >
-          <Tabs
-            value={tabIndex}
-            onChange={(_, value: number) => {
-              setTabIndex(value);
-              setErrorMsg(null);
-            }}
-            variant="fullWidth"
-          >
-            <Tab
-              icon={<AutoStoriesIcon />}
-              iconPosition="start"
-              label="Elegir Existente"
-              disabled={guardando}
-            />
-
-            <Tab
-              icon={<AddCircleOutlineIcon />}
-              iconPosition="start"
-              label="Cargar Nuevo Libro"
-              disabled={guardando}
-            />
-          </Tabs>
-        </Box>
 
         <form
           id="crear-lista-form"
@@ -527,39 +496,70 @@ export const CrearListaModal: React.FC<CrearListaModalProps> = ({
                   <CircularProgress size={30} />
                 </Box>
               ) : (
-                <FormControl fullWidth>
-                  <InputLabel id="select-libro-label">
-                    Seleccionar Libro
-                  </InputLabel>
-
-                  <Select
-                    labelId="select-libro-label"
-                    value={libroId}
-                    label="Seleccionar Libro"
-                    disabled={guardando}
-                    onChange={(e) =>
-                      setLibroId(String(e.target.value))
-                    }
-                    MenuProps={{
-                      PaperProps: {
-                        style: { maxHeight: 250 },
-                      },
-                      disablePortal: false,
-                    }}
-                  >
-                    {libros.map((item) => (
-                      <MenuItem
-                        key={String(item.id)}
-                        value={String(item.id)}
-                      >
-                        {item.titulo}
-                        {item.autor
-                          ? ` - ${item.autor}`
-                          : ''}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Box sx={{
+                    maxHeight: 350,
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1
+                  }}>
+                    {libros.map((item) => {
+                      const activo = libroId === String(item.id);
+                      return (
+                        <Box
+                          key={String(item.id)}
+                          onClick={() => !guardando && setLibroId(String(item.id))}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 2,
+                            p: 1.5,
+                            border: '2px solid',
+                            borderColor: activo ? '#f25600' : '#e5e7eb',
+                            borderRadius: 2,
+                            bgcolor: activo ? '#fff4ed' : 'white',
+                            cursor: 'pointer',
+                            '&:hover': { bgcolor: '#fff4ed' }
+                          }}
+                        >
+                          {item.portadaUrl ? (
+                            <Box
+                              component="img"
+                              src={item.portadaUrl}
+                              alt={item.titulo}
+                              sx={{
+                                width: 55,
+                                height: 75,
+                                objectFit: 'cover',
+                                borderRadius: 1
+                              }}
+                            />
+                          ) : (
+                            <Box sx={{
+                              width: 55,
+                              height: 75,
+                              bgcolor: '#eee',
+                              display: 'grid',
+                              placeItems: 'center'
+                            }}>
+                              📚
+                            </Box>
+                          )}
+                          <Box sx={{ flex: 1 }}>
+                            <Typography fontWeight="bold">
+                              {item.titulo}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {item.autor || 'Autor no informado'}
+                            </Typography>
+                          </Box>
+                          <Typography color={activo ? '#f25600' : '#999'}>
+                            {activo ? '●' : '○'}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
               )}
 
               {!cargandoLibros && libros.length === 0 && (
@@ -567,47 +567,6 @@ export const CrearListaModal: React.FC<CrearListaModalProps> = ({
                   No hay libros disponibles en el catálogo.
                 </Alert>
               )}
-            </Box>
-          )}
-
-          {tabIndex === 1 && (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}
-            >
-              <TextField
-                label="Título del Libro"
-                fullWidth
-                required
-                disabled={guardando}
-                value={nuevoTitulo}
-                onChange={(e) =>
-                  setNuevoTitulo(e.target.value)
-                }
-              />
-
-              <TextField
-                label="Autor / Autora"
-                fullWidth
-                disabled={guardando}
-                value={nuevoAutor}
-                onChange={(e) =>
-                  setNuevoAutor(e.target.value)
-                }
-              />
-
-              <TextField
-                label="URL de Portada (Opcional)"
-                fullWidth
-                disabled={guardando}
-                value={nuevaPortadaUrl}
-                onChange={(e) =>
-                  setNuevaPortadaUrl(e.target.value)
-                }
-              />
             </Box>
           )}
 
