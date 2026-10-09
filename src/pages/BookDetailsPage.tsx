@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "@/environments/api";
+import ReadingProgress from "../components/ReadingProgress";
 // src/pages/BookDetailsPage.tsx
 import { useState } from 'react';
 import { Box, Divider, useTheme } from '@mui/material';
