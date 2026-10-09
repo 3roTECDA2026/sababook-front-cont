@@ -19,6 +19,7 @@ import {
 
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { destructiveButtonSx } from '@/theme/theme';
 import type { Forum } from '@/types';
 
 const ROWS_PER_PAGE = 5;
@@ -151,6 +152,7 @@ const ForumTable = ({
                               onDeleteForum(row.foro_id);
                             }}
                             title="Eliminar"
+                            sx={destructiveButtonSx}
                           >
                             <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                           </ActionButton>

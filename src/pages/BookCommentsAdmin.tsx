@@ -32,6 +32,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import { destructiveButtonSx } from '@/theme/theme';
 import { API_BASE_URL } from '@/environments/api';
 import type { Book, OpinionAPI } from '@/types';
 
@@ -373,7 +374,7 @@ const BookCommentsAdmin = () => {
                             <ActionButton onClick={() => handleEditClick(comment)} title="Editar">
                               <EditIcon sx={{ fontSize: '1.1rem' }} />
                             </ActionButton>
-                            <ActionButton onClick={() => handleDeleteClick(comment)} title="Eliminar">
+                            <ActionButton onClick={() => handleDeleteClick(comment)} title="Eliminar" sx={destructiveButtonSx}>
                               <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                             </ActionButton>
                           </>

@@ -123,7 +123,7 @@ const CommentInputFormMUI = ({ onCommentSubmit, onCancel }: CommentInputFormMUIP
 
       {/* Botones de Acción */}
       <DialogActions sx={{ p: 0 }}>
-        <Button onClick={onCancel} color="inherit" sx={{ color: 'text.secondary' }}>
+        <Button onClick={onCancel}>
           Cancelar
         </Button>
         <Button

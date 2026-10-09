@@ -22,6 +22,7 @@ import type { Book } from '@/types';
 // Se eliminan imports relacionados con la API, Dialogs, Snackbar, y useNavigate
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { destructiveButtonSx } from '@/theme/theme';
 
 // 1. Definición de las constantes
 const ROWS_PER_PAGE = 5;
@@ -199,6 +200,7 @@ const BookTable = ({
                                 handleDelete(row.libro_id || (row.id as number));
                               }}
                               title="Eliminar"
+                              sx={destructiveButtonSx}
                             >
                               <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                             </ActionButton>

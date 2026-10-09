@@ -7,6 +7,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
+import { destructiveButtonSx } from '@/theme/theme';
 
 const ROWS_PER_PAGE = 5;
 
@@ -168,7 +169,7 @@ const GoalTable: React.FC<GoalTableProps> = ({
                         <ActionButton onClick={() => onEditGoal(goal)} title="Editar" size="small">
                           <EditIcon sx={{ fontSize: '1.1rem' }} />
                         </ActionButton>
-                        <ActionButton onClick={() => onDeleteGoal(goal.meta_id || goal.id)} title="Eliminar" size="small" color="error">
+                        <ActionButton onClick={() => onDeleteGoal(goal.meta_id || goal.id)} title="Eliminar" size="small" sx={destructiveButtonSx}>
                           <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                         </ActionButton>
                       </Box>

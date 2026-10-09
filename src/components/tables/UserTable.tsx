@@ -23,6 +23,7 @@ import {
 import type { AlertColor } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { destructiveButtonSx } from '@/theme/theme';
 import { API_BASE_URL } from '@/environments/api';
 import UserForm from '@/components/forms/UserForm';
 import type { UserFormData } from '@/components/forms/UserForm';
@@ -246,7 +247,7 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
                       onClick={() => handleDelete(user.usuario_id)}
                       title="Eliminar"
                       size="small"
-                      color="error"
+                      sx={destructiveButtonSx}
                     >
                       <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                     </ActionButton>
