@@ -21,7 +21,7 @@ import type { ForumDetailComment } from '@/types';
 
 const ForumDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { forum, loading, error } = useForumDetail(id);
+  const { foro: forum, loading, error } = useForumDetail(id);
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [localComments, setLocalComments] = useState<ForumDetailComment[]>([]);
@@ -99,8 +99,8 @@ const ForumDetailsPage = () => {
             <ForumAddComment
               forumId={id!}
               userId={user.userId ?? (user as any).usuario_id}
-              userName={user.name ?? (user as any).nombre}
-              userAvatar={user.avatarUrl ?? (user as any).avatar_url ?? null}
+              userName={user.nombre}
+              userAvatar={user.avatar_url ?? null}
               onCommentAdded={handleCommentAdded}
             />
           ) : (
