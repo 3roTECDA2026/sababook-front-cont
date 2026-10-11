@@ -31,7 +31,7 @@ const ForumDetailsPage = () => {
     setLocalComments((prev) => [...prev, comment]);
   };
 
-  const allComments = [...(forum?.comments ?? []), ...localComments];
+  const allComments = [...(forum?.comentarios ?? []), ...localComments];
 
   return (
     <Box
@@ -67,16 +67,16 @@ const ForumDetailsPage = () => {
             </Avatar>
             <Box flexGrow={1}>
               <Typography variant="h6" fontWeight="bold">
-                {forum.title ?? (forum as any).titulo}
+                {forum.titulo}
               </Typography>
               <Typography variant="body2" color="text.secondary" mb={1}>
-                {forum.description ?? (forum as any).descripcion}
+                {forum.descripcion}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Creado por: {forum.creatorName ?? (forum as any).creador_nombre ?? 'Usuario'}
+                Creado por: {forum.creador_nombre ?? 'Usuario'}
               </Typography>
               <Typography variant="caption" color="text.secondary" display="block">
-                Fecha: {new Date(forum.createdAt ?? (forum as any).fecha_creacion ?? '').toLocaleString()}
+                Fecha: {new Date(forum.fecha_creacion ?? '').toLocaleString()}
               </Typography>
             </Box>
           </Box>
