@@ -26,7 +26,7 @@ interface GoalTableProps {
   goals: ReadingGoal[];
   loading: boolean;
   error?: string | null;
-  onDeleteGoal: (goalId: string | number) => void;
+  onDeleteGoal: (goalId: number) => void;
   onEditGoal: (goal: ReadingGoal) => void;
 }
 
