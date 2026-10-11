@@ -1,7 +1,7 @@
 // src/pages/Home.tsx
 import { Box, Typography, Button } from "@mui/material";
 import RecommendationIcon from "@mui/icons-material/AutoAwesome";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo} from "react";
 import { useLocation } from "react-router-dom";
 
 import AppHeader from '@/components/layout/AppHeader';
@@ -12,12 +12,13 @@ import SearchBar from '@/components/ui/SearchBar';
 import type { SearchBarHandle } from '@/components/ui/SearchBar';
 import SideMenu from '@/components/layout/SideMenu';
 import { CrearListaModal } from '@/components/CrearListaModal';
-import { buscarLibros } from '@/services/apiService';
 import { normalizarTexto } from '@/utils/normalize';
+import { buscarLibrosPaginado } from '@/services/apiService';
+import { usePagination } from '@/hooks/usePagination';
+import InfiniteScroll from '@/components/ui/InfiniteScroll';
 
 // Importaciones de Lógica (Custom Hooks)
 import { useAuth } from '@/hooks/useAuth';
-import { useBookData } from '@/hooks/useBookData'; // NUEVO: Lógica de carga de libros
 import { useFavorites } from '@/hooks/useFavorites'; // Lógica de manejo de favoritos
 import type { Book, BookFilters } from '@/types';
 import { useReadingStatus } from '@/hooks/useReadingStatus';
@@ -39,7 +40,29 @@ export default function Home() {
   const { user } = useAuth();
 
   // --- LÓGICA DE DATOS ---
-  const { books, setBooks } = useBookData();
+  const fetchBooks = useCallback(
+  (page: number, limit: number, signal?: AbortSignal) => {
+    const filtros: BookFilters = { ...currentFilters };
+    const q = normalizarTexto(currentQuery);
+    if (q) filtros.query = q;
+    return buscarLibrosPaginado(filtros, page, limit, signal);
+  },
+  [currentFilters, currentQuery]
+);
+
+const resetKey = useMemo(
+  () => JSON.stringify({ q: normalizarTexto(currentQuery), ...currentFilters }),
+  [currentQuery, currentFilters]
+);
+
+const {
+  items: books,
+  loading,
+  error,
+  hasMore,
+  loadMore,
+  reload,
+} = usePagination<Book>({ fetchPage: fetchBooks, limit: 6, mode: 'append', resetKey });
   const { toggleFavorite, isBookFavorite } = useFavorites();
   const { getReadingStatus, setReadingStatus } = useReadingStatus();
 
@@ -109,32 +132,12 @@ export default function Home() {
     }
   }, [books, libroRecomendado]);
 
-  const handleSearch = async (query: string) => {
-    setCurrentQuery(query);
-    try {
-      const queryNormalizada = normalizarTexto(query);
-      const filtrosCombinados: BookFilters = { ...currentFilters };
-      if (queryNormalizada) filtrosCombinados.query = queryNormalizada;
-      const resultados = await buscarLibros(filtrosCombinados);
-      setBooks(resultados);
-    } catch {
-      setBooks([]);
-    }
+  const handleSearch = (query: string) => {
+  setCurrentQuery(query);
   };
 
-  const handleFilterChange = async (
-    _resultados: Book[],
-    filtros: BookFilters,
-  ) => {
-    setCurrentFilters(filtros);
-    try {
-      const filtrosCombinados: BookFilters = { ...filtros };
-      if (currentQuery) filtrosCombinados.query = normalizarTexto(currentQuery);
-      const resultadosActualizados = await buscarLibros(filtrosCombinados);
-      setBooks(resultadosActualizados);
-    } catch {
-      setBooks([]);
-    }
+  const handleFilterChange = (_resultados: Book[], filtros: BookFilters) => {
+  setCurrentFilters(filtros);
   };
 
   return (
@@ -261,42 +264,50 @@ export default function Home() {
         </Box>
       )}
 
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          gap: 4,
-        }}
-      >
-        {books.length === 0 ? (
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{ textAlign: "center", py: 4 }}
-          >
-            El libro que usted está buscando no se encuentra disponible
-          </Typography>
-        ) : (
-          books.map((book) => (
-            <BookCard
-              key={book.libro_id}
-              image={book.portada_url}
-              autor={book.autor}
-              gender={book.genero}
-              title={book.titulo}
-              rating={book.calificacion_promedio}
-              isFavorite={isBookFavorite(book.libro_id)}
-              libro_id={book.libro_id}
-              onFavoriteToggle={() => handleFavoriteToggle(book.libro_id)}
-              readingStatus={getReadingStatus(book.libro_id)}
-              onReadingStatusChange={(status) =>
-                setReadingStatus(book.libro_id, status)
-              }
-            />
-          ))
-        )}
-      </Box>
+      <InfiniteScroll
+  hasMore={hasMore}
+  loading={loading}
+  error={!!error}
+  onLoadMore={loadMore}
+  endMessage={
+    books.length > 0 ? (
+      <Typography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+        Llegaste al final del catálogo
+      </Typography>
+    ) : undefined
+  }
+>
+  <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4 }}>
+    {books.map((book) => (
+      <BookCard
+        key={book.libro_id}
+        image={book.portada_url}
+        autor={book.autor}
+        gender={book.genero}
+        title={book.titulo}
+        rating={book.calificacion_promedio}
+        isFavorite={isBookFavorite(book.libro_id)}
+        libro_id={book.libro_id}
+        onFavoriteToggle={() => handleFavoriteToggle(book.libro_id)}
+        readingStatus={getReadingStatus(book.libro_id)}
+        onReadingStatusChange={(status) => setReadingStatus(book.libro_id, status)}
+      />
+    ))}
+  </Box>
+</InfiniteScroll>
+
+{!loading && !error && books.length === 0 && (
+  <Typography variant="h6" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+    El libro que usted está buscando no se encuentra disponible
+  </Typography>
+)}
+
+{error && (
+  <Box sx={{ textAlign: 'center', py: 3 }}>
+    <Typography color="error" mb={1}>{error}</Typography>
+    <Button variant="outlined" onClick={reload}>Reintentar</Button>
+  </Box>
+)}
     </Box>
   );
 }

@@ -1,6 +1,6 @@
 // src/services/apiService.ts
 import { API_BASE_URL } from '@/environments/api';
-import type { Book, Medal, BookFilters, CafeLiterario, ReadingGoal } from '@/types';
+import type { Book, Medal, BookFilters, CafeLiterario, ReadingGoal, Paginated, User } from '@/types';
 
 /**
  * Función genérica para hacer peticiones HTTP
@@ -59,6 +59,34 @@ export async function buscarLibros(filtros: BookFilters = {}): Promise<Book[]> {
   const endpoint = queryString ? `/libros/buscar?${queryString}` : '/libros/buscar';
 
   return await apiRequest<Book[]>(endpoint);
+}
+
+export async function buscarLibrosPaginado(
+  filtros: BookFilters = {},
+  page = 1,
+  limit = 10,
+  signal?: AbortSignal
+): Promise<Paginated<Book>> {
+  const params = new URLSearchParams();
+
+  Object.entries(filtros).forEach(([key, value]) => {
+    if (value && value.trim()) params.append(key, value.trim());
+  });
+  params.set('page', String(page));
+  params.set('limit', String(limit));
+
+  return await apiRequest<Paginated<Book>>(`/libros/buscar?${params.toString()}`, { signal });
+}
+
+export async function getUsersPaginated(
+  page = 1,
+  limit = 5,
+  signal?: AbortSignal
+): Promise<Paginated<User>> {
+  return await apiRequest<Paginated<User>>(`/users?page=${page}&limit=${limit}`, {
+    headers: getAuthHeaders(),
+    signal,
+  });
 }
 
 /**

@@ -1,5 +1,5 @@
 // src/components/UserTable.tsx
-import { useState, ChangeEvent } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -14,8 +14,6 @@ import {
   Avatar,
   IconButton,
   Modal,
-  Pagination,
-  useTheme,
   Snackbar,
   styled,
   Alert,
@@ -28,8 +26,8 @@ import UserForm from '@/components/forms/UserForm';
 import type { UserFormData } from '@/components/forms/UserForm';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import type { User } from '@/types';
+import PaginationControls from '@/components/ui/PaginationControls';
 
-const ROWS_PER_PAGE = 5;
 
 const ActionButton = styled(IconButton)(({ theme }) => ({
   backgroundColor: theme.palette.button?.main || '#f25600',
@@ -48,6 +46,9 @@ interface UserTableProps {
   loading?: boolean;
   error?: string | null;
   onUserUpdate: () => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 interface SnackbarState {
@@ -56,11 +57,9 @@ interface SnackbarState {
   severity: AlertColor;
 }
 
-export default function UserTable({ users, loading, error, onUserUpdate }: UserTableProps) {
-  const theme = useTheme();
+export default function UserTable({ users, loading, error, onUserUpdate, page, totalPages, onPageChange }: UserTableProps) {
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
-  const [page, setPage] = useState<number>(1);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
   const [userToDeleteId, setUserToDeleteId] = useState<number | null>(null);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -80,9 +79,6 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
     setUserToEdit(null);
   };
 
-  const handleChangePage = (event: ChangeEvent<unknown>, newPage: number) => {
-    setPage(newPage);
-  };
 
   const handleSnackbarClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
@@ -200,9 +196,6 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
     );
   }
 
-  const pageCount = Math.ceil(users.length / ROWS_PER_PAGE);
-  const startIndex = (page - 1) * ROWS_PER_PAGE;
-  const currentUsers = users.slice(startIndex, startIndex + ROWS_PER_PAGE);
 
   // 5. Renderizamos la tabla con los datos de los usuarios.
   return (
@@ -221,7 +214,7 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
             </TableRow>
           </TableHead>
           <TableBody>
-            {currentUsers.map((user) => (
+            {users.map((user) => (
               <TableRow key={user.usuario_id}>
                 <TableCell>
                   <Avatar alt={user.nombre} src={user.avatar_url ?? undefined}>
@@ -258,26 +251,7 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
         </Table>
       </TableContainer>
 
-      {pageCount > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <Pagination
-            count={pageCount}
-            page={page}
-            onChange={handleChangePage}
-            shape="rounded"
-            color="primary" // Se mantiene por si sx falla, pero sx tiene prioridad
-            sx={{
-              '& .MuiPaginationItem-root.Mui-selected': {
-                backgroundColor: theme.palette.button?.main || '#f25600',
-                color: '#FFFFFF',
-                '&:hover': {
-                  backgroundColor: '#cc4800', // Un naranja un poco más oscuro para el hover
-                },
-              },
-            }}
-          />
-        </Box>
-      )}
+      <PaginationControls page={page} totalPages={totalPages} onChange={onPageChange} />
 
       <Modal open={openModal} onClose={handleCloseModal}>
         {/* Este Box centra el formulario en la pantalla */}
