@@ -1,13 +1,22 @@
 // src/pages/DashboardPage.tsx
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import Dashboard from '@/components/Dashboard';
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 
 const DashboardPage = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
+
+  const roleName = localStorage.getItem('roleName')?.trim().toLocaleLowerCase();
+  const isAdmin =
+    localStorage.getItem('rol') === '3' ||
+    roleName === 'administrador' ||
+    roleName === 'admin';
+  if (!isAdmin) {
+    return <Navigate to="/home" replace />;
+  }
 
   return (
     <Box

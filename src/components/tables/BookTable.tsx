@@ -15,6 +15,7 @@ import {
   styled,
   useTheme,
   CircularProgress,
+  Button,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { Book } from '@/types';
@@ -22,6 +23,8 @@ import type { Book } from '@/types';
 // Se eliminan imports relacionados con la API, Dialogs, Snackbar, y useNavigate
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DownloadIcon from '@mui/icons-material/Download';
+import { downloadCsv } from '@/utils/downloadCsv';
 
 // 1. Definición de las constantes
 const ROWS_PER_PAGE = 5;
@@ -115,13 +118,53 @@ const BookTable = ({
     navigate(`/dashboard/book-comments/${bookId}`);
   };
 
+  const handleDownload = () => {
+    downloadCsv(
+      'libros.csv',
+      [
+        'ID',
+        'Título',
+        'Autor',
+        'Género',
+        'Descripción',
+        'URL de portada',
+        'Nivel educativo',
+        'Calificación promedio',
+        'Activo',
+      ],
+      books.map((book) => [
+        book.libro_id,
+        book.titulo,
+        book.autor,
+        book.genero,
+        book.descripcion,
+        book.portada_url,
+        book.nivel_educativo,
+        book.calificacion_promedio,
+        book.activo,
+      ])
+    );
+  };
+
   // 🚨 Nota: Toda la lógica de DELETE, confirmación (Dialog), Snackbar y estados de loading/error internos
   // ha sido eliminada de este componente para simplificar y centralizar el estado en DashboardPage.jsx.
 
   //  Renderizado
   return (
-    <StyledTableContainer>
-      <TableContainer>
+    <>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<DownloadIcon />}
+          onClick={handleDownload}
+          disabled={books.length === 0 || isLoading || Boolean(error)}
+          sx={{ backgroundColor: 'button.main', textTransform: 'none' }}
+        >
+          Descargar CSV
+        </Button>
+      </Box>
+      <StyledTableContainer>
+        <TableContainer>
         <Table stickyHeader aria-label="tabla de libros">
           <TableHead>
             <TableRow>
@@ -215,7 +258,7 @@ const BookTable = ({
             )}
           </TableBody>
         </Table>
-      </TableContainer>
+        </TableContainer>
 
       {/* Footer y Paginación */}
       {books.length > ROWS_PER_PAGE && !error && (
@@ -251,7 +294,8 @@ const BookTable = ({
           />
         </Box>
       )}
-    </StyledTableContainer>
+      </StyledTableContainer>
+    </>
   );
 };
 
