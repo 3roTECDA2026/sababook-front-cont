@@ -48,6 +48,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
     localStorage.getItem('rol') === '3' ||
     roleName === 'administrador' ||
     roleName === 'admin';
+  const userRolId = localStorage.getItem('rol');
 
   let menuItems: MenuItem[];
 
