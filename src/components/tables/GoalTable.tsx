@@ -1,26 +1,16 @@
 import React, { useState } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, IconButton, CircularProgress, Typography, LinearProgress, Box,
-  Pagination, TextField, InputAdornment, useTheme, styled
+  Paper, CircularProgress, Typography, LinearProgress, Box,
+  Pagination, TextField, InputAdornment, useTheme
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
-import { destructiveButtonSx } from '@/theme/theme';
+import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
 import type { ReadingGoal } from '@/types';
 
 const ROWS_PER_PAGE = 5;
-
-const ActionButton = styled(IconButton)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  color: '#FFFFFF',
-  borderRadius: '8px',
-  padding: '6px',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-}));
 
 
 interface GoalTableProps {
@@ -157,17 +147,16 @@ const GoalTable: React.FC<GoalTableProps> = ({
                         <ActionButton onClick={() => onEditGoal(goal)} title="Editar" size="small">
                           <EditIcon sx={{ fontSize: '1.1rem' }} />
                         </ActionButton>
-                        <ActionButton
+                        <DeleteButton
                           onClick={() => {
                             const id = goal.meta_id ?? goal.id;
                             if (id !== undefined) onDeleteGoal(id);
                           }}
                           title="Eliminar"
                           size="small"
-                          sx={destructiveButtonSx}
                         >
                           <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                        </ActionButton>
+                        </DeleteButton>
                       </Box>
                     </TableCell>
                   </TableRow>

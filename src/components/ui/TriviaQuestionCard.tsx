@@ -1,7 +1,7 @@
 // src/components/ui/TriviaQuestionCard.tsx
-import { Box, Typography, IconButton, Chip } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { destructiveButtonSx } from '@/theme/theme';
+import { DeleteButton } from '@/components/ui/ActionButton';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import moment from 'moment';
 import 'moment/locale/es';
@@ -50,9 +50,9 @@ const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardPro
           {index + 1}. {question.format === 'completar' ? 'Completá el texto' : question.question}
         </Typography>
         {onDelete && (
-          <IconButton size="small" onClick={() => onDelete(question.id)} aria-label="Eliminar pregunta" sx={destructiveButtonSx}>
+          <DeleteButton size="small" onClick={() => onDelete(question.id)} aria-label="Eliminar pregunta">
             <DeleteIcon fontSize="small" />
-          </IconButton>
+          </DeleteButton>
         )}
       </Box>
 

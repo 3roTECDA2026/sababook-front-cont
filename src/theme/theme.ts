@@ -1,5 +1,5 @@
 // src/theme/theme.ts
-import { createTheme, type Components, type SxProps, type Theme } from '@mui/material/styles';
+import { createTheme, type Components } from '@mui/material/styles';
 
 // Extendemos los tipos de MUI para incluir los colores custom del proyecto
 declare module '@mui/material/styles' {
@@ -14,13 +14,13 @@ declare module '@mui/material/styles' {
 }
 
 // Color único de todos los botones (naranja de la marca)
-const BUTTON_ORANGE = '#f25600';
-const BUTTON_ORANGE_DARK = '#cc4800';
+export const BUTTON_ORANGE = '#f25600';
+export const BUTTON_ORANGE_DARK = '#cc4800';
 
 // Naranja más claro para acciones destructivas (Eliminar), así se distinguen
-const DELETE_ORANGE = '#ffb877';
-const DELETE_ORANGE_DARK = '#ff9e4d';
-const DELETE_TEXT = '#4b2c15';
+export const DELETE_ORANGE = '#ffb877';
+export const DELETE_ORANGE_DARK = '#ff9e4d';
+export const DELETE_TEXT = '#4b2c15';
 
 // Estilo único: todos los botones son "contained" naranja,
 // sin importar variante ni color declarados en cada componente.
@@ -62,15 +62,6 @@ const destructiveButton = {
     opacity: 0.5,
   },
 };
-
-// Reutilizable en botones de ícono de eliminar (styled IconButton / IconButton)
-export const destructiveButtonSx = {
-  backgroundColor: DELETE_ORANGE,
-  color: DELETE_TEXT,
-  '&:hover': {
-    backgroundColor: DELETE_ORANGE_DARK,
-  },
-} satisfies SxProps<Theme>;
 
 const unifiedButtonOverrides: Record<string, typeof unifiedButton | typeof destructiveButton> = {
   root: unifiedButton,

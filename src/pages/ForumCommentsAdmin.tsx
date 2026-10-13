@@ -31,7 +31,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { destructiveButtonSx } from '@/theme/theme';
+import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
 import { useForumComments } from '@/hooks/useForumComments';
 import { useForumCommentsAdmin } from '@/hooks/useForumCommentsAdmin';
 import type { ForumComment, Forum } from '@/types';
@@ -48,16 +48,6 @@ const StyledTableCellHeader = styled(TableCell)(({ theme }) => ({
   fontWeight: 'bold',
   fontSize: '0.9rem',
   borderBottom: `2px solid ${theme.palette.grey[200]}`,
-}));
-
-const ActionButton = styled(IconButton)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  color: '#FFFFFF',
-  borderRadius: '8px',
-  padding: '6px',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
 }));
 
 // Forma cruda que puede llegar del hook, con nombres alternativos
@@ -321,9 +311,9 @@ const ForumCommentsAdmin = () => {
                           </>
                         ) : (
                           <>
-                            <ActionButton onClick={() => handleDeleteClick(comment)} title="Eliminar" sx={destructiveButtonSx}>
+                            <DeleteButton onClick={() => handleDeleteClick(comment)} title="Eliminar">
                               <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                            </ActionButton>
+                            </DeleteButton>
                           </>
                         )}
                       </Box>

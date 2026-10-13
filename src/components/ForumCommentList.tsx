@@ -1,12 +1,12 @@
 // src/components/ForumCommentList.tsx
-import { Box, Typography, Paper, CircularProgress, Button, TextField, IconButton } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Button, TextField } from '@mui/material';
 import type { Theme } from '@mui/material';
 import { useForumComments } from '@/hooks/useForumComments';
 import { useAuth } from '@/hooks/useAuth';
 import { useState, FormEvent } from 'react';
 import { API_BASE_URL } from '@/environments/api';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { destructiveButtonSx } from '@/theme/theme';
+import { DeleteButton } from '@/components/ui/ActionButton';
 import type { ForumComment } from '@/types';
 
 type CommentDisplay = ForumComment & {
@@ -104,7 +104,7 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
                 {comment.fecha ? new Date(comment.fecha).toLocaleString() : ''}
               </Typography>
               {usuarioId && Number(comment.usuario_id) === Number(usuarioId) && (
-                <IconButton
+                <DeleteButton
                   onClick={async () => {
                     if (window.confirm('¿Seguro que quieres eliminar este comentario?')) {
                       try {
@@ -123,13 +123,12 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
                     }
                   }}
                   sx={{
-                    ...destructiveButtonSx,
                     width: 32,
                     height: 32,
                   }}
                 >
                   <DeleteIcon fontSize="small" />
-                </IconButton>
+                </DeleteButton>
               )}
             </Box>
           </Box>
