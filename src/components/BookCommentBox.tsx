@@ -1,12 +1,15 @@
-// src/components/BookCommentBox.tsx
 import React, { Dispatch, SetStateAction } from 'react';
 import { Box, Typography, Rating } from '@mui/material';
 import type { Theme } from '@mui/material';
 import NavButton from './ui/NavButton';
 import { API_BASE_URL } from '@/environments/api';
 import type { User, Opinion } from '@/types';
+import { useNotification } from '@/contexts/NotificationContext';
 
 const ORANGE_COLOR = '#FF6633';
+
+/** Mínimo que acepta el backend (SAB-039: opinion-content.service.ts). */
+const MIN_COMENTARIO = 10;
 
 interface BookCommentBoxProps {
   theme: Theme;
@@ -31,15 +34,24 @@ const BookCommentBox = ({
   setShowCommentBox,
   setOpinions,
 }: BookCommentBoxProps) => {
+  const { showNotification } = useNotification();
+
   const handleSubmit = async () => {
     if (!newComment.trim() || newRating === 0) {
-      alert('Por favor, escribe un comentario y selecciona una calificación.');
+      showNotification('Por favor, escribe un comentario y selecciona una calificación.', 'warning');
       return;
     }
 
+    if (newComment.trim().length < MIN_COMENTARIO) {
+      showNotification(`Contá un poco más: la reseña necesita al menos ${MIN_COMENTARIO} caracteres.`, 'warning');
+      return;
+    }
+
+    const resolvedUserId = Number(user.usuario_id || user.userId);
+
     const payload = {
       libro_id: Number(id),
-      usuario_id: user.usuario_id,
+      usuario_id: resolvedUserId,
       calificacion: newRating,
       comentario: newComment,
     };
@@ -57,11 +69,14 @@ const BookCommentBox = ({
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Error al guardar el comentario.');
+      if (!res.ok) {
+        // El backend responde con el motivo del rechazo (SAB-039 y moderación).
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error || body?.mensaje || 'No se pudo guardar el comentario.');
+      }
 
       const savedOpinion = await res.json();
 
-      // Aquí usamos el nombre real que devuelve la API
       const newOpinion: Opinion = {
         id: savedOpinion.opinion_id || Date.now(),
         comentario: savedOpinion.comentario || newComment,
@@ -78,9 +93,10 @@ const BookCommentBox = ({
       setNewComment('');
       setNewRating(0);
       setShowCommentBox(false);
+      showNotification('Tu reseña se publicó correctamente.', 'success');
     } catch (err) {
       console.error(err);
-      alert('No se pudo guardar el comentario.');
+      showNotification(err instanceof Error ? err.message : 'No se pudo guardar el comentario.', 'error');
     }
   };
 
@@ -97,8 +113,17 @@ const BookCommentBox = ({
       <Typography variant="subtitle2" fontWeight="bold" mb={1}>
         Escribe tu opinión
       </Typography>
-      <Rating value={newRating} onChange={(e, newValue) => setNewRating(newValue ?? 0)} sx={{ mb: 1 }} />
+      <Rating
+        name="reviewRating"
+        value={newRating}
+        onChange={(e, newValue) => setNewRating(newValue ?? 0)}
+        sx={{ mb: 1 }}
+      />
       <textarea
+        id="reviewComment"
+        name="reviewText"
+        autoComplete="off"
+        aria-label="Comentario de la reseña"
         value={newComment}
         onChange={(e) => setNewComment(e.target.value)}
         placeholder="Escribe tu comentario..."

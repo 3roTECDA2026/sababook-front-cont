@@ -1,4 +1,3 @@
-// src/main.tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -7,6 +6,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme/theme';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import './styles/index.css';
 
 const rootElement = document.getElementById('root');
@@ -21,8 +21,10 @@ ReactDOM.createRoot(rootElement).render(
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <App />
+          <NotificationProvider>
+            <CssBaseline />
+            <App />
+          </NotificationProvider>
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>

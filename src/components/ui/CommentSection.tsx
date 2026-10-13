@@ -1,130 +1,73 @@
-// src/components/CommentSection.tsx
-import React, { useState } from 'react';
+// src/components/ui/CommentSection.tsx
 import {
   Box,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
   Typography,
-  TextField,
-  Button,
-  Paper,
-  Divider,
   Avatar,
-  styled,
-  useTheme,
+  CircularProgress,
 } from '@mui/material';
+import type { ForumDetailComment } from '@/types';
 
-interface HardcodedComment {
-  id: number;
-  user: string;
-  time: string;
-  text: string;
+interface CommentSectionProps {
+  comments: ForumDetailComment[];
+  loading?: boolean;
 }
 
-const COMMENTS: HardcodedComment[] = [
-  {
-    id: 1,
-    user: 'Ana G.',
-    time: 'Hace 5 horas',
-    text: '¡Excelente libro! La narrativa te atrapa desde la primera página.',
-  },
-  {
-    id: 2,
-    user: 'Pedro L.',
-    time: 'Ayer',
-    text: 'Esperaba un poco más del final, pero la construcción de personajes es impecable.',
-  },
-];
+const CommentSection = ({ comments, loading = false }: CommentSectionProps) => {
+  if (loading) {
+    return <CircularProgress size={24} />;
+  }
 
-const StyledSendButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-  color: '#FFFFFF',
-  padding: '10px 20px',
-  fontWeight: 'bold',
-  borderRadius: '10px',
-  textTransform: 'none',
-  minWidth: '100px',
-}));
-
-const CommentBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(2),
-  padding: theme.spacing(2, 0),
-  borderBottom: `1px solid ${theme.palette.grey[200]}`,
-  '&:last-child': {
-    borderBottom: 'none',
-  },
-}));
-
-const CommentSection = () => {
-  const theme = useTheme();
-  const [newComment, setNewComment] = useState<string>('');
-
-  const handleCommentSubmit = () => {
-    if (newComment.trim()) {
-      console.log('Enviando comentario:', newComment);
-      setNewComment('');
-    }
-  };
+  if (comments.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        Aún no hay comentarios en este foro.
+      </Typography>
+    );
+  }
 
   return (
-    <Paper elevation={3} sx={{ p: { xs: 2, md: 3 }, borderRadius: '12px', mt: 4 }}>
-      <Typography
-        variant="h5"
-        fontWeight="bold"
-        gutterBottom
-        sx={{ color: theme.palette.body?.main || '#4A4C52' }}
-      >
-        Comentarios ({COMMENTS.length})
+    <Box>
+      <Typography variant="subtitle1" fontWeight="bold" mb={2}>
+        Comentarios
       </Typography>
-      <Divider sx={{ mb: 3 }} />
 
-      <Box mb={4}>
-        <Typography variant="subtitle1" fontWeight="bold" mb={1}>
-          Deja tu comentario
-        </Typography>
-        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={1}>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            variant="outlined"
-            placeholder="Escribe aquí tu opinión o consulta..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            sx={{ bgcolor: theme.palette.grey[50], borderRadius: '8px' }}
-          />
-          <StyledSendButton
-            onClick={handleCommentSubmit}
-            disabled={!newComment.trim()}
-            sx={{ height: { xs: '56px', sm: 'auto' }, minWidth: { xs: '100%', sm: '120px' } }}
-          >
-            Enviar
-          </StyledSendButton>
-        </Box>
-      </Box>
+      <List disablePadding>
+        {comments.map((c) => {
+          const id = c.comentario_id ?? c.commentId;
+          const name = c.usuario_nombre ?? c.userName ?? 'Usuario';
+          const content = c.contenido ?? c.content ?? '';
+          const avatar = c.usuario_avatar ?? c.userAvatar ?? undefined;
+          const date = c.fecha ?? c.createdAt ?? '';
 
-      <Box>
-        {COMMENTS.map((comment) => (
-          <CommentBox key={comment.id}>
-            <Avatar
-              src={`https://i.pravatar.cc/150?img=${comment.id + 10}`}
-              sx={{ width: 40, height: 40 }}
-            />
-            <Box flexGrow={1}>
-              <Typography variant="subtitle2" fontWeight="bold">
-                {comment.user}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-                {comment.time}
-              </Typography>
-              <Typography variant="body2">{comment.text}</Typography>
-            </Box>
-          </CommentBox>
-        ))}
-      </Box>
-    </Paper>
+          return (
+            <ListItem key={id} alignItems="flex-start" disableGutters>
+              <ListItemAvatar>
+                <Avatar src={avatar} alt={name}>
+                  {name[0]}
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={name}
+                secondary={
+                  <>
+                    <Typography variant="body2">{content}</Typography>
+                    {date && (
+                      <Typography variant="caption" color="text.secondary">
+                        {new Date(date).toLocaleString()}
+                      </Typography>
+                    )}
+                  </>
+                }
+              />
+            </ListItem>
+          );
+        })}
+      </List>
+    </Box>
   );
 };
 

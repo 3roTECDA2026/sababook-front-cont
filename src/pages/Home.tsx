@@ -11,7 +11,6 @@ import FilterChips from '@/components/ui/FilterChips';
 import SearchBar from '@/components/ui/SearchBar';
 import type { SearchBarHandle } from '@/components/ui/SearchBar';
 import SideMenu from '@/components/layout/SideMenu';
-import WelcomeModal from '@/components/ui/WelcomeModal';
 import { CrearListaModal } from '@/components/CrearListaModal';
 import { buscarLibros } from '@/services/apiService';
 import { normalizarTexto } from '@/utils/normalize';
@@ -26,7 +25,6 @@ import { useReadingStatus } from '@/hooks/useReadingStatus';
 export default function Home() {
   // --- Estados de UI ---
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
-  const [isWelcomeModalOpen, setWelcomeModalOpen] = useState<boolean>(false);
   const [isCrearListaOpen, setCrearListaOpen] = useState<boolean>(false);
 
   // Estado para almacenar dinámicamente el libro recomendado
@@ -111,16 +109,6 @@ export default function Home() {
     }
   }, [books, libroRecomendado]);
 
-  useEffect(() => {
-    const state = location.state as { fromLogin?: boolean } | null;
-    if (state?.fromLogin && user) {
-      setWelcomeModalOpen(true);
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state, user]);
-
-  const handleCloseWelcomeModal = () => setWelcomeModalOpen(false);
-
   const handleSearch = async (query: string) => {
     setCurrentQuery(query);
     try {
@@ -174,11 +162,6 @@ export default function Home() {
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         active="Inicio"
-      />
-      <WelcomeModal
-        open={isWelcomeModalOpen}
-        onClose={handleCloseWelcomeModal}
-        user={user}
       />
 
       {/* Modal para Recomendar */}

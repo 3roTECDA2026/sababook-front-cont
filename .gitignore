@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
 # Environment variables
 .env
 .env.*
@@ -27,7 +33,15 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+# Agentes y herramientas locales
+.agents/
+.claude/
+
+# Locks de herramientas locales
+skills-lock.json
+
+# Dumps de base de datos
+dump.sql
 
 # Test and coverage output
 coverage/

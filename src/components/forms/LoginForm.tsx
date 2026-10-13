@@ -64,6 +64,7 @@ const LoginForm = ({ onLoginSubmit, error }: LoginFormProps) => {
             id="email"
             name="email"
             type="email"
+            autoComplete="email"
             variant="outlined"
             fullWidth
             margin="dense"
@@ -86,6 +87,7 @@ const LoginForm = ({ onLoginSubmit, error }: LoginFormProps) => {
           <TextField
             id="password"
             name="password"
+            autoComplete="current-password"
             variant="outlined"
             type="password"
             fullWidth

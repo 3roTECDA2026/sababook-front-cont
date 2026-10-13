@@ -2,6 +2,7 @@
 import React from 'react';
 import { Box, Button, styled, Typography } from '@mui/material';
 import NavButton from '@/components/ui/NavButton';
+import ReadingStreak from './ReadingStreak';
 
 export type DashboardView = 'users' | 'books' | 'forums' | 'goals' | 'forumCommentsAdmin' | 'moderation';
 
@@ -43,6 +44,9 @@ interface HeaderDashboardProps {
   onNavigate?: (view: DashboardView) => void;
   onAddClick?: () => void;
   isLoading?: boolean;
+  rachaActual?: number;
+  recordRacha?: number;
+  mostrarRacha?: boolean;
 }
 
 
@@ -51,6 +55,9 @@ const HeaderDashboard = ({
   activeView = 'users', // Valor por defecto
   onNavigate = () => console.log('Navegación Desactivada'), // Función vacía
   onAddClick = () => console.log('Agregar Desactivado'), // Función vacía
+  rachaActual = 3,
+  recordRacha = 7,
+  mostrarRacha = true,
 }: HeaderDashboardProps) => {
   const currentTitle = titleMap[activeView] || 'Título Desconocido';
   return (
@@ -83,13 +90,19 @@ const HeaderDashboard = ({
         {/* <SearchBar />  */}
       </Box>
 
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        {/* Título de la tabla actual */}
-        <Typography variant="h4" fontWeight="bold" sx={{ color: '#555555', mb: 2 }}>
-          {currentTitle}
-        </Typography>
-        {activeView !== 'moderation' && (
-          <StyledAddButton onClick={onAddClick}>{getAddButtonText(activeView)}</StyledAddButton>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <Box>
+          {/* Título de la tabla actual */}
+          <Typography variant="h4" fontWeight="bold" sx={{ color: '#555555', mb: 2 }}>
+            {currentTitle}
+          </Typography>
+          {activeView !== 'moderation' && (
+            <StyledAddButton onClick={onAddClick}>{getAddButtonText(activeView)}</StyledAddButton>
+          )}
+        </Box>
+        
+        {mostrarRacha && (
+          <ReadingStreak rachaActual={rachaActual} recordRacha={recordRacha} />
         )}
       </Box>
     </Box>

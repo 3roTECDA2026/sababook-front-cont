@@ -1,6 +1,7 @@
 // src/pages/Comments.tsx
 import { Box, Button, createTheme, DialogActions, Rating, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
+import { useNotification } from '@/contexts/NotificationContext';
 
 // Iconos de MUI
 import StarIcon from '@mui/icons-material/Star';
@@ -112,6 +113,9 @@ const CommentInputFormMUI = ({ onCommentSubmit, onCancel }: CommentInputFormMUIP
         rows={3}
         variant="outlined"
         label="Escribe tu comentario aquí..."
+        id="commentText"
+        name="commentText"
+        autoComplete="off"
         value={commentText}
         onChange={(e) => setCommentText(e.target.value)}
         sx={{ mb: 2 }}
@@ -137,6 +141,7 @@ const CommentInputFormMUI = ({ onCommentSubmit, onCancel }: CommentInputFormMUIP
 
 // --- PÁGINA PRINCIPAL: BookDetailsPage (simula el mockup) ---
 function BookDetailsPageMUI() {
+  const { showNotification } = useNotification();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isCommenting, setIsCommenting] = useState<boolean>(false);
   const [isRating, setIsRating] = useState<boolean>(false);
@@ -155,7 +160,7 @@ function BookDetailsPageMUI() {
     };
     setComments([submittedComment, ...comments]); // Agrega el nuevo al inicio
     setIsCommenting(false);
-    console.log('Comentario publicado:', submittedComment);
+    showNotification('Comentario publicado correctamente.', 'success');
   };
 
   const handleRatingSubmit = async (ratingData: RatingSubmitData) => {
@@ -163,7 +168,7 @@ function BookDetailsPageMUI() {
     const userHasCommented = comments.some((comment) => comment.name === 'Usuario Actual');
 
     if (userHasCommented) {
-      alert('Ya has enviado una calificación para este libro. Solo puedes enviar una por usuario.');
+      showNotification('Ya has enviado una calificación para este libro. Solo puedes enviar una por usuario.', 'warning');
       setIsRating(false);
       return;
     }

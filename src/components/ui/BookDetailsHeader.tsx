@@ -14,9 +14,10 @@ interface BookDetailsHeaderProps {
   book: BookWithAliases;
   coverImageSrc?: string;
   authorStyle?: SxProps<Theme>;
+  actions?: React.ReactNode;
 }
 
-const BookDetailsHeader = ({ book, coverImageSrc, authorStyle }: BookDetailsHeaderProps) => {
+const BookDetailsHeader = ({ book, coverImageSrc, authorStyle, actions }: BookDetailsHeaderProps) => {
   return (
     <Box display="flex" alignItems="flex-start" gap={2} mb={3}>
       <Box sx={{ position: 'relative' }}>
@@ -43,6 +44,19 @@ const BookDetailsHeader = ({ book, coverImageSrc, authorStyle }: BookDetailsHead
         </Typography>
         <BookRatingSection book={book} />
       </Box>
+
+      {actions && (
+        <Box
+          ml="auto"
+          alignSelf="flex-start"
+          display="flex"
+          flexDirection="column"
+          alignItems="flex-end"
+          gap={0.5}
+        >
+          {actions}
+        </Box>
+      )}
     </Box>
   );
 };
