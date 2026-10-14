@@ -1,61 +1,193 @@
-// src/components/ui/FeaturedBookSection.tsx
-import { Box, Typography } from '@mui/material';
-import BookCard from './BookCard';
-import type { FeaturedBook } from '@/types';
-import type { ReadingStatus } from '@/hooks/useReadingStatus';
-// import LibroImage from '../assets/libro.jpg'
 
-type FeaturedBookData = Partial<FeaturedBook> & {
+import { Box, Typography } from "@mui/material";
+import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
+import BookCard from "./BookCard";
+
+import type { FeaturedBook } from "@/types";
+import type { ReadingStatus } from "@/hooks/useReadingStatus";
+
+export type LibroDestacado = Partial<FeaturedBook> & {
+  libro_id: number;
   autor?: string;
   genero?: string;
   rating?: number;
+  explicacion?: string;
 };
 
 interface FeaturedBookSectionProps {
-  featuredBook: FeaturedBookData;
-  handleFavoriteToggle: (libroId: number) => boolean | Promise<boolean>;
-  isFavorite: boolean;
-  handleVerMas: (libroId: number | null | undefined) => void;
-  readingStatus: ReadingStatus;
-  onReadingStatusChange: (status: ReadingStatus) => void;
+  featuredBooks: LibroDestacado[];
+  handleFavoriteToggle: (
+    libroId: number
+  ) => boolean | Promise<boolean>;
+  isBookFavorite: (libroId: number) => boolean;
+  handleVerMas: (
+    libroId: number | null | undefined
+  ) => void;
+  getReadingStatus: (
+    libroId: number
+  ) => ReadingStatus;
+  setReadingStatus: (
+    libroId: number,
+    status: ReadingStatus
+  ) => void;
 }
 
 export default function FeaturedBookSection({
-  featuredBook,
+  featuredBooks,
   handleFavoriteToggle,
-  isFavorite,
+  isBookFavorite,
   handleVerMas,
-  readingStatus,
-  onReadingStatusChange,
+  getReadingStatus,
+  setReadingStatus,
 }: FeaturedBookSectionProps) {
-  //const bookId = featuredBook.id || featuredBook.libro_id;
+  if (featuredBooks.length === 0) return null;
 
   return (
-    <>
-      <Typography variant="h4" fontWeight="bold" color="secondary" mb={1}>
-        Nuestro recomendado
+    <Box sx={{ mt: 3, mb: 4 }}>
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        color="secondary"
+        sx={{ mb: 2 }}
+      >
+        Nuestros recomendados
       </Typography>
 
-      <Box display="flex" justifyContent="left" mt={2} mb={3}>
-        <BookCard
-          featured={true}
-          image={featuredBook.portada_url}
-          title={featuredBook.titulo}
-          autor={featuredBook.autor}
-          gender={featuredBook.genero}
-          rating={featuredBook.calificacion_promedio || featuredBook.rating}
-          isFavorite={isFavorite}
-          onFavoriteToggle={() => {
-            if (!featuredBook.libro_id) return false;
-            return handleFavoriteToggle(featuredBook.libro_id);
-          }}
-          // bookId={bookId}
-          libro_id={featuredBook.libro_id}
-          readingStatus={readingStatus}
-          onReadingStatusChange={onReadingStatusChange}
-          onVerMas={() => handleVerMas(featuredBook.libro_id)}
-        />
+      {/* CONTENEDOR PRINCIPAL */}
+
+      <Box
+        sx={{
+          backgroundColor: "#ffffff",
+          border: "1.5px solid #333333",
+          borderRadius: "16px",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+          padding: { xs: 2, md: 3 },
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            md:
+              featuredBooks.length > 1
+                ? "repeat(2, minmax(0, 1fr))"
+                : "1fr",
+          },
+          gap: 3,
+          alignItems: "start",
+        }}
+      >
+        {featuredBooks.map((book) => (
+          <Box
+            key={book.libro_id}
+            sx={{
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "stretch",
+              gap: 2,
+            }}
+          >
+            {/* TARJETA DEL LIBRO */}
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "flex-start",
+                minWidth: 0,
+                "& > *": {
+                  maxWidth: "100%",
+                },
+              }}
+            >
+              <BookCard
+                featured={true}
+                image={book.portada_url}
+                title={book.titulo}
+                autor={book.autor}
+                gender={book.genero}
+                rating={
+                  book.calificacion_promedio ??
+                  book.rating
+                }
+                isFavorite={isBookFavorite(
+                  book.libro_id
+                )}
+                onFavoriteToggle={() =>
+                  handleFavoriteToggle(
+                    book.libro_id
+                  )
+                }
+                libro_id={book.libro_id}
+                readingStatus={getReadingStatus(
+                  book.libro_id
+                )}
+                onReadingStatusChange={(status) =>
+                  setReadingStatus(
+                    book.libro_id,
+                    status
+                  )
+                }
+                onVerMas={() =>
+                  handleVerMas(book.libro_id)
+                }
+              />
+            </Box>
+
+            {/* EXPLICACIÓN DEBAJO DEL LIBRO */}
+
+            {book.explicacion?.trim() && (
+              <Box
+                sx={{
+                  backgroundColor: "#fafafa",
+                  border: "1px solid #dddddd",
+                  borderRadius: "12px",
+                  padding: 2,
+                  width: "100%",
+                  boxSizing: "border-box",
+                  minWidth: 0,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 1,
+                  }}
+                >
+                  <FormatQuoteIcon
+                    sx={{
+                      color: "#f25600",
+                      fontSize: 23,
+                    }}
+                  />
+
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    sx={{
+                      color: "#252525",
+                    }}
+                  >
+                    Comentario de la recomendación
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#333333",
+                    lineHeight: 1.7,
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {book.explicacion}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        ))}
       </Box>
-    </>
+    </Box>
   );
 }

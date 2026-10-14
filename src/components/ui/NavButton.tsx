@@ -1,7 +1,7 @@
-// src/components/NavButton.tsx
-import React, { ReactNode } from 'react';
+
+import type { ReactNode } from 'react';
 import { Button, styled } from '@mui/material';
-import type { SxProps, Theme } from '@mui/material'
+import type { SxProps, Theme } from '@mui/material';
 
 const StyledNavButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.button?.main || '#f25600',
@@ -22,23 +22,23 @@ interface NavButtonProps {
   children: ReactNode;
   onClick?: () => void;
   isActive?: boolean;
-}
-
-interface NavButtonProps {
-  children: ReactNode;
-  onClick?: () => void;
-}
-
-interface NavButtonProps {
-  children: ReactNode;
-  onClick?: () => void;
-  isActive?: boolean;
+  disabled?: boolean;
   sx?: SxProps<Theme>;
 }
 
-const NavButton = ({ children, onClick }: NavButtonProps) => {
+const NavButton = ({
+  children,
+  onClick,
+  disabled = false,
+  sx,
+}: NavButtonProps) => {
   return (
-    <StyledNavButton variant="contained" onClick={onClick}>
+    <StyledNavButton
+      variant="contained"
+      onClick={onClick}
+      disabled={disabled}
+      sx={sx}
+    >
       {children}
     </StyledNavButton>
   );

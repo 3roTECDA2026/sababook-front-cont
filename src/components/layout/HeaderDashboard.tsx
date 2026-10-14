@@ -43,6 +43,7 @@ interface HeaderDashboardProps {
   activeView?: DashboardView;
   onNavigate?: (view: DashboardView) => void;
   onAddClick?: () => void;
+  onRecommendClick?: () => void;
   isLoading?: boolean;
   rachaActual?: number;
   recordRacha?: number;
@@ -54,7 +55,8 @@ interface HeaderDashboardProps {
 const HeaderDashboard = ({
   activeView = 'users', // Valor por defecto
   onNavigate = () => console.log('Navegación Desactivada'), // Función vacía
-  onAddClick = () => console.log('Agregar Desactivado'), // Función vacía
+  onAddClick = () => console.log('Agregar Desactivado'),
+  onRecommendClick = () => {}, // Función vacía
   rachaActual = 3,
   recordRacha = 7,
   mostrarRacha = true,
@@ -97,7 +99,16 @@ const HeaderDashboard = ({
             {currentTitle}
           </Typography>
           {activeView !== 'moderation' && (
-            <StyledAddButton onClick={onAddClick}>{getAddButtonText(activeView)}</StyledAddButton>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              <StyledAddButton onClick={onAddClick}>
+                {getAddButtonText(activeView)}
+              </StyledAddButton>
+              {activeView === 'books' && (
+                <StyledAddButton onClick={onRecommendClick}>
+                  Recomendar Libro
+                </StyledAddButton>
+              )}
+            </Box>
           )}
         </Box>
         

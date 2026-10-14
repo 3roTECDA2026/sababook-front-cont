@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "@/environments/api";
+import ReadingProgress from "../components/ReadingProgress";
 // src/pages/BookDetailsPage.tsx
 import { API_BASE_URL } from '@/environments/api';
 import ReadingProgress from '@/components/ReadingProgress';
@@ -16,7 +18,6 @@ import BookCommentBox from '@/components/BookCommentBox';
 import BookOpinionList from '@/components/ui/BookOpinionList';
 import BookDescription from '@/components/ui/BookDescription';
 import TriviaPlaySection from '@/components/ui/TriviaPlaySection';
-import ReadingProgress from '@/components/ReadingProgress';
 
 const ORANGE_COLOR = '#FF6633';
 
