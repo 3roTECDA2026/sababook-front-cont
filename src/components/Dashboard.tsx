@@ -28,6 +28,7 @@ import { API_BASE_URL } from '@/environments/api';
 import type { Book, Forum, User, ReadingGoal } from '@/types';
 import UserTable from './tables/UserTable';
 import BookTable from './tables/BookTable';
+import { CrearListaModal } from './CrearListaModal';
 import ForumTable from './tables/ForumTable';
 import GoalTable from './tables/GoalTable';
 
@@ -55,7 +56,8 @@ const Dashboard = () => {
   // --- ESTADOS DE MODALES Y EDICIÓN ---
   const [openForumModal, setOpenForumModal] = useState<boolean>(false);
   const [openCreateModal, setOpenCreateModal] = useState<boolean>(false); // Modal para USUARIOS
-  const [openCreateBookModal, setOpenCreateBookModal] = useState<boolean>(false); // Modal para LIBROS
+  const [openCreateBookModal, setOpenCreateBookModal] = useState<boolean>(false);
+  const [openRecommendModal, setOpenRecommendModal] = useState<boolean>(false); // Modal para LIBROS
 
   const [goals, setGoals] = useState<ReadingGoal[]>([]);
   const [goalsLoading, setGoalsLoading] = useState<boolean>(true);
@@ -633,6 +635,7 @@ const Dashboard = () => {
         activeView={activeView}
         onNavigate={handleNavigate}
         onAddClick={handleAddClick}
+        onRecommendClick={() => setOpenRecommendModal(true)}
         isLoading={isApiLoading}
       />
 
@@ -653,6 +656,20 @@ const Dashboard = () => {
           <UserForm onSave={handleSaveNewUser} onCancel={handleCloseCreateModal} />
         </Box>
       </Modal>
+
+      {/* Modal de recomendaciones */}
+      <CrearListaModal
+        open={openRecommendModal}
+        onClose={() => setOpenRecommendModal(false)}
+        onListaCreada={() => {
+          setOpenRecommendModal(false);
+          setSnackbar({
+            open: true,
+            message: 'Libro recomendado correctamente',
+            severity: 'success',
+          });
+        }}
+      />
 
       {/* Modal Libro */}
       <Modal open={openCreateBookModal} onClose={handleCloseCreateBookModal}>
