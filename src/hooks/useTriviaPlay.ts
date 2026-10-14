@@ -82,7 +82,8 @@ export const useTriviaPlay = (bookId: number) => {
   }, [activeEvaluation, token]);
 
   const hasContent = triviaQuestions.length > 0 || !!activeEvaluation;
-  const isStudent = Number(user?.rol) === 1 || user?.rol_id === 1;
+  const userRole = Number(user?.rol ?? user?.rol_id);
+  const canPlay = userRole === 1 || userRole === 3;
   const current = playQuestions[currentIndex];
 
   const startPlay = async (mode: TriviaModo) => {
@@ -165,7 +166,7 @@ export const useTriviaPlay = (bookId: number) => {
     answered,
     loading,
     hasContent,
-    isStudent,
+    canPlay,
     phase,
     playMode,
     playQuestions,

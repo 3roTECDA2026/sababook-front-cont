@@ -62,6 +62,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio', icon: <RadioIcon />, path: '/radio' },
       { text: 'Libros por curso', icon: <MenuBookIcon />, path: '/cursos/libros' },
+      { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     ];
   } else if (userRolId == '2') {

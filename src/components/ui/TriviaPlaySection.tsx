@@ -205,7 +205,7 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
     answered,
     loading,
     hasContent,
-    isStudent,
+    canPlay,
     phase,
     playMode,
     playQuestions,
@@ -226,7 +226,7 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
 
   const playNotice = <PlayNotice notice={notice} onClose={clearNotice} />;
 
-  if (authLoading || !isStudent || loading || !hasContent) return null;
+  if (authLoading || !canPlay || loading || !hasContent) return null;
 
   const formatLabels: Record<string, string> = {
     multiple: 'Opción múltiple',
