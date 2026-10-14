@@ -1,4 +1,4 @@
-// src/components/SideMenu.tsx
+// src/components/layout/SideMenu.tsx
 import React, { useState, ReactNode } from 'react';
 import {
   Drawer,
@@ -26,6 +26,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
 import RadioIcon from '@mui/icons-material/Radio';
 import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { Link, useNavigate } from 'react-router-dom';
 
 interface MenuItem {
@@ -43,11 +44,16 @@ interface SideMenuProps {
 export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuProps) {
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
   const navigate = useNavigate();
+  const roleName = localStorage.getItem('roleName')?.trim().toLocaleLowerCase();
+  const isAdmin =
+    localStorage.getItem('rol') === '3' ||
+    roleName === 'administrador' ||
+    roleName === 'admin';
   const userRolId = localStorage.getItem('rol');
 
   let menuItems: MenuItem[];
 
-  if (userRolId === '1' || userRolId === '3') {
+  if (isAdmin) {
     // Menú para administradores
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
@@ -55,6 +61,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio', icon: <RadioIcon />, path: '/radio' },
+      { text: 'Libros por curso', icon: <MenuBookIcon />, path: '/cursos/libros' },
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     ];
   } else if (userRolId == '2') {
@@ -66,6 +73,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
+      { text: 'Libros por curso', icon: <MenuBookIcon />, path: '/cursos/libros' },
       { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
     ];
   } else {

@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("rol");
+    localStorage.removeItem("roleName");
     localStorage.removeItem("username");
     setUser(null);
     setToken(null);
@@ -51,6 +52,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           if (response.ok) {
             const userData = await parseJsonResponse(response);
             if (userData) {
+              if (userData.rol) {
+                localStorage.setItem("roleName", userData.rol);
+              }
               const numericUserId = Number(userData.usuario_id || storedUserId);
               setUser({
                 ...userData,
@@ -104,6 +108,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("userId", data.userId);
       localStorage.setItem("rol", data.rol);
+      localStorage.removeItem("roleName");
       setToken(data.token);
 
       // Obtener el perfil completo del usuario
@@ -127,6 +132,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (profileData?.nombre) {
         localStorage.setItem("username", profileData.nombre);
+      }
+      if (profileData?.rol) {
+        localStorage.setItem("roleName", profileData.rol);
       }
 
       const numericUserId = Number(profileData?.usuario_id || data.userId);

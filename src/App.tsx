@@ -18,6 +18,7 @@ import TriviaPage from './pages/TriviaPage';
 import BookCommentsAdmin from './pages/BookCommentsAdmin';
 import ForumCommentsAdmin from './pages/ForumCommentsAdmin';
 import CafesLiterarios from './pages/CafesLiterarios';
+import CourseBooksPage from './pages/CourseBooksPage';
 
 // Importaciones de Nuevos Módulos (Radio Sábato y Feed Muro)
 import { RadioPlayer } from './components/RadioPlayer';
@@ -121,7 +122,7 @@ function App() {
         element={
           <ProtectedRoute>
             <div className="container mx-auto px-4 py-6">
-              <RadioPlayer esDocenteOAdmin={true} />
+              <RadioPlayer />
             </div>
           </ProtectedRoute>
         }
@@ -183,6 +184,16 @@ function App() {
         element={
           <ProtectedRoute>
             <CafesLiterarios />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Asignación de libros a cursos (Administrador y Docente) */}
+      <Route
+        path="/cursos/libros"
+        element={
+          <ProtectedRoute>
+            <CourseBooksPage />
           </ProtectedRoute>
         }
       />
