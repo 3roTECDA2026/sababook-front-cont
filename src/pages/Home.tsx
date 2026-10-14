@@ -20,6 +20,11 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useReadingStatus } from "@/hooks/useReadingStatus";
 
 import type { Book, BookFilters } from "@/types";
+import type { LibroDestacado } from "@/components/ui/FeaturedBookSection";
+
+// --------------------------------------------------
+// TIPOS DE DATOS RECIBIDOS DESDE LA API
+// --------------------------------------------------
 
 interface LibroRecomendadoAPI {
   libro_id?: number;
@@ -36,6 +41,8 @@ interface LibroRecomendadoAPI {
   calificacion_promedio?: number;
   rating?: number;
   descripcion?: string;
+  explicacion?: string | null;
+  libro?: LibroRecomendadoAPI;
 }
 
 interface RecomendacionAPI {
@@ -47,6 +54,7 @@ interface RecomendacionAPI {
   created_at?: string;
   fecha_creacion?: string;
   libros?: LibroRecomendadoAPI[];
+  lista_libro?: LibroRecomendadoAPI[];
 }
 
 export default function Home() {
@@ -56,14 +64,8 @@ export default function Home() {
 
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
-  const [libroRecomendado, setLibroRecomendado] = useState<
-    Book | undefined
-  >(undefined);
-
-  const [
-    comentarioRecomendacion,
-    setComentarioRecomendacion,
-  ] = useState<string>("");
+  const [librosRecomendados, setLibrosRecomendados] =
+    useState<LibroDestacado[]>([]);
 
   const [currentFilters, setCurrentFilters] =
     useState<BookFilters>({});
@@ -104,7 +106,51 @@ export default function Home() {
   };
 
   // --------------------------------------------------
-  // RECOMENDACIÓN DESDE BASE DE DATOS
+  // NORMALIZAR LIBROS RECOMENDADOS
+  // --------------------------------------------------
+
+  const normalizarLibroRecomendado = (
+    item: LibroRecomendadoAPI
+  ): LibroDestacado | null => {
+    const rawBook = item.libro ?? item;
+
+    const idLibro = rawBook.libro_id ?? rawBook.id;
+
+    if (idLibro == null) return null;
+
+    return {
+      libro_id: idLibro,
+      titulo:
+        rawBook.titulo ??
+        rawBook.title ??
+        "Sin título",
+      autor:
+        rawBook.autor ??
+        rawBook.author ??
+        "",
+      genero:
+        rawBook.genero ??
+        rawBook.genre ??
+        "Recomendado",
+      portada_url:
+        rawBook.portada_url ??
+        rawBook.portadaUrl ??
+        rawBook.portada ??
+        "",
+      calificacion_promedio:
+        rawBook.calificacion_promedio ??
+        rawBook.rating ??
+        0,
+      descripcion: rawBook.descripcion ?? "",
+      explicacion:
+        item.explicacion ??
+        rawBook.explicacion ??
+        "",
+    } as LibroDestacado;
+  };
+
+  // --------------------------------------------------
+  // OBTENER ÚLTIMA RECOMENDACIÓN DESDE SUPABASE
   // --------------------------------------------------
 
   const obtenerUltimaRecomendacion = useCallback(async () => {
@@ -140,21 +186,26 @@ export default function Home() {
             ? respuesta.listas
             : [];
 
-      const recomendaciones = listas.filter(
-        (lista) =>
+      // Seleccionar únicamente las recomendaciones
+      // que contienen libros.
+
+      const recomendaciones = listas.filter((lista) => {
+        const libros = lista.libros ?? lista.lista_libro;
+
+        return (
           (lista.tipo === "RECOMENDACION" ||
             lista.tipo === "RECOMENDADA") &&
-          Array.isArray(lista.libros) &&
-          lista.libros.length > 0
-      );
+          Array.isArray(libros) &&
+          libros.length > 0
+        );
+      });
 
       if (recomendaciones.length === 0) {
-        setComentarioRecomendacion("");
+        setLibrosRecomendados([]);
         return;
       }
 
-      // Si la API incluye fecha, utilizar la más reciente.
-      // Si no incluye fecha, conservar el orden recibido.
+      // Obtener la fecha de cada recomendación.
 
       const obtenerFecha = (
         lista: RecomendacionAPI
@@ -171,89 +222,67 @@ export default function Home() {
         return Number.isFinite(fecha) ? fecha : null;
       };
 
-      const recomendacionesConFecha =
-        recomendaciones.filter(
-          (lista) => obtenerFecha(lista) !== null
+      // Ordenar por fecha y, en caso de empate,
+      // por ID de lista.
+
+      const recomendacionesOrdenadas = [
+        ...recomendaciones,
+      ].sort((a, b) => {
+        const fechaA = obtenerFecha(a);
+        const fechaB = obtenerFecha(b);
+
+        if (fechaA !== null && fechaB !== null) {
+          if (fechaA !== fechaB) {
+            return fechaB - fechaA;
+          }
+        } else if (fechaA !== null) {
+          return -1;
+        } else if (fechaB !== null) {
+          return 1;
+        }
+
+        const idA = a.lista_id ?? a.id ?? 0;
+        const idB = b.lista_id ?? b.id ?? 0;
+
+        return idB - idA;
+      });
+
+      const recomendacion = recomendacionesOrdenadas[0];
+
+      const librosAPI =
+        recomendacion.libros ??
+        recomendacion.lista_libro ??
+        [];
+
+      // Mostrar uno o dos libros de la misma lista.
+      // Cada libro conserva su explicación.
+
+      const libros = librosAPI
+        .slice(0, 2)
+        .map(normalizarLibroRecomendado)
+        .filter(
+          (libro): libro is LibroDestacado =>
+            libro !== null
         );
 
-      const recomendacion =
-        recomendacionesConFecha.length > 0
-          ? [...recomendacionesConFecha].sort(
-              (a, b) =>
-                (obtenerFecha(b) ?? 0) -
-                (obtenerFecha(a) ?? 0)
-            )[0]
-          : recomendaciones[0];
-
-      const rawBook = recomendacion.libros?.[0];
-
-      if (!rawBook) return;
-
-      // El comentario de la recomendación es diferente
-      // de la sinopsis original del libro.
-
-      setComentarioRecomendacion(
-        typeof recomendacion.descripcion === "string"
-          ? recomendacion.descripcion
-          : ""
-      );
-
-      const idLibro = rawBook.libro_id ?? rawBook.id;
-
-      if (idLibro == null) return;
-
-      const libro: Book = {
-        libro_id: idLibro,
-        titulo:
-          rawBook.titulo ??
-          rawBook.title ??
-          "Sin título",
-        autor:
-          rawBook.autor ??
-          rawBook.author ??
-          "",
-        genero:
-          rawBook.genero ??
-          rawBook.genre ??
-          "Recomendado",
-        portada_url:
-          rawBook.portada_url ??
-          rawBook.portadaUrl ??
-          rawBook.portada ??
-          "",
-        calificacion_promedio:
-          rawBook.calificacion_promedio ??
-          rawBook.rating ??
-          0,
-        descripcion: rawBook.descripcion ?? "",
-      } as Book;
-
-      setLibroRecomendado(libro);
+      setLibrosRecomendados(libros);
     } catch (error) {
       console.error(
         "Error al cargar la recomendación principal:",
         error
       );
+
+      // No cerramos la sesión por errores de red.
     }
   }, []);
 
   // --------------------------------------------------
-  // CARGAR RECOMENDACIÓN AL ENTRAR A HOME
+  // CARGAR RECOMENDACIONES AL ENTRAR AL HOME
   // --------------------------------------------------
 
   useEffect(() => {
     void obtenerUltimaRecomendacion();
   }, [obtenerUltimaRecomendacion]);
-
-  // --------------------------------------------------
-  // LIBRO POR DEFECTO
-  // --------------------------------------------------
-
-  useEffect(() => {
-    if (!libroRecomendado && books.length > 0) {
-      setLibroRecomendado(books[0]);
-    }
-  }, [books, libroRecomendado]);
 
   // --------------------------------------------------
   // BÚSQUEDA
@@ -263,8 +292,7 @@ export default function Home() {
     setCurrentQuery(query);
 
     try {
-      const queryNormalizada =
-        normalizarTexto(query);
+      const queryNormalizada = normalizarTexto(query);
 
       const filtrosCombinados: BookFilters = {
         ...currentFilters,
@@ -379,8 +407,7 @@ export default function Home() {
 
           if (
             searchBarRef.current &&
-            typeof searchBarRef.current.clear ===
-              "function"
+            typeof searchBarRef.current.clear === "function"
           ) {
             searchBarRef.current.clear();
           }
@@ -391,29 +418,15 @@ export default function Home() {
 
       {Object.keys(currentFilters).length === 0 &&
         !currentQuery &&
-        libroRecomendado && (
+        librosRecomendados.length > 0 && (
           <FeaturedBookSection
-            featuredBook={libroRecomendado}
-            comentarioRecomendacion={
-              comentarioRecomendacion
-            }
+            featuredBooks={librosRecomendados}
             handleFavoriteToggle={
               handleFavoriteToggle
             }
-            isFavorite={isBookFavorite(
-              libroRecomendado.libro_id ?? -1
-            )}
-            readingStatus={getReadingStatus(
-              libroRecomendado.libro_id ?? -1
-            )}
-            onReadingStatusChange={(status) => {
-              if (libroRecomendado.libro_id) {
-                setReadingStatus(
-                  libroRecomendado.libro_id,
-                  status
-                );
-              }
-            }}
+            isBookFavorite={isBookFavorite}
+            getReadingStatus={getReadingStatus}
+            setReadingStatus={setReadingStatus}
             handleVerMas={() => {}}
           />
         )}

@@ -1,35 +1,47 @@
 
-import { Box, Typography } from '@mui/material';
-import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
-import BookCard from './BookCard';
-import type { FeaturedBook } from '@/types';
-import type { ReadingStatus } from '@/hooks/useReadingStatus';
+import { Box, Typography } from "@mui/material";
+import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
+import BookCard from "./BookCard";
 
-type FeaturedBookData = Partial<FeaturedBook> & {
+import type { FeaturedBook } from "@/types";
+import type { ReadingStatus } from "@/hooks/useReadingStatus";
+
+export type LibroDestacado = Partial<FeaturedBook> & {
+  libro_id: number;
   autor?: string;
   genero?: string;
   rating?: number;
+  explicacion?: string;
 };
 
 interface FeaturedBookSectionProps {
-  featuredBook: FeaturedBookData;
-  comentarioRecomendacion?: string;
-  handleFavoriteToggle: (libroId: number) => boolean | Promise<boolean>;
-  isFavorite: boolean;
-  handleVerMas: (libroId: number | null | undefined) => void;
-  readingStatus: ReadingStatus;
-  onReadingStatusChange: (status: ReadingStatus) => void;
+  featuredBooks: LibroDestacado[];
+  handleFavoriteToggle: (
+    libroId: number
+  ) => boolean | Promise<boolean>;
+  isBookFavorite: (libroId: number) => boolean;
+  handleVerMas: (
+    libroId: number | null | undefined
+  ) => void;
+  getReadingStatus: (
+    libroId: number
+  ) => ReadingStatus;
+  setReadingStatus: (
+    libroId: number,
+    status: ReadingStatus
+  ) => void;
 }
 
 export default function FeaturedBookSection({
-  featuredBook,
-  comentarioRecomendacion,
+  featuredBooks,
   handleFavoriteToggle,
-  isFavorite,
+  isBookFavorite,
   handleVerMas,
-  readingStatus,
-  onReadingStatusChange,
+  getReadingStatus,
+  setReadingStatus,
 }: FeaturedBookSectionProps) {
+  if (featuredBooks.length === 0) return null;
+
   return (
     <Box sx={{ mt: 3, mb: 4 }}>
       <Typography
@@ -38,89 +50,143 @@ export default function FeaturedBookSection({
         color="secondary"
         sx={{ mb: 2 }}
       >
-        Nuestro recomendado
+        Nuestros recomendados
       </Typography>
+
+      {/* CONTENEDOR PRINCIPAL */}
 
       <Box
         sx={{
-          backgroundColor: '#ffffff',
-          border: '1.5px solid #333333',
-          borderRadius: '16px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+          backgroundColor: "#ffffff",
+          border: "1.5px solid #333333",
+          borderRadius: "16px",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
           padding: { xs: 2, md: 3 },
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          alignItems: { xs: 'center', md: 'flex-start' },
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            md:
+              featuredBooks.length > 1
+                ? "repeat(2, minmax(0, 1fr))"
+                : "1fr",
+          },
           gap: 3,
+          alignItems: "start",
         }}
       >
-        <Box sx={{ flexShrink: 0 }}>
-          <BookCard
-            featured={true}
-            image={featuredBook.portada_url}
-            title={featuredBook.titulo}
-            autor={featuredBook.autor}
-            gender={featuredBook.genero}
-            rating={
-              featuredBook.calificacion_promedio ??
-              featuredBook.rating
-            }
-            isFavorite={isFavorite}
-            onFavoriteToggle={() => {
-              if (!featuredBook.libro_id) return false;
-              return handleFavoriteToggle(featuredBook.libro_id);
-            }}
-            libro_id={featuredBook.libro_id}
-            readingStatus={readingStatus}
-            onReadingStatusChange={onReadingStatusChange}
-            onVerMas={() => handleVerMas(featuredBook.libro_id)}
-          />
-        </Box>
-
-        {comentarioRecomendacion?.trim() && (
+        {featuredBooks.map((book) => (
           <Box
+            key={book.libro_id}
             sx={{
-              flex: 1,
               minWidth: 0,
-              width: { xs: '100%', md: 'auto' },
-              backgroundColor: '#fafafa',
-              border: '1px solid #555555',
-              borderRadius: '12px',
-              padding: 3,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "stretch",
+              gap: 2,
             }}
           >
+            {/* TARJETA DEL LIBRO */}
+
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                mb: 2,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "flex-start",
+                minWidth: 0,
+                "& > *": {
+                  maxWidth: "100%",
+                },
               }}
             >
-              <FormatQuoteIcon sx={{ color: '#f25600' }} />
-
-              <Typography
-                variant="h6"
-                fontWeight="bold"
-                sx={{ color: '#252525' }}
-              >
-                Comentario de la recomendación
-              </Typography>
+              <BookCard
+                featured={true}
+                image={book.portada_url}
+                title={book.titulo}
+                autor={book.autor}
+                gender={book.genero}
+                rating={
+                  book.calificacion_promedio ??
+                  book.rating
+                }
+                isFavorite={isBookFavorite(
+                  book.libro_id
+                )}
+                onFavoriteToggle={() =>
+                  handleFavoriteToggle(
+                    book.libro_id
+                  )
+                }
+                libro_id={book.libro_id}
+                readingStatus={getReadingStatus(
+                  book.libro_id
+                )}
+                onReadingStatusChange={(status) =>
+                  setReadingStatus(
+                    book.libro_id,
+                    status
+                  )
+                }
+                onVerMas={() =>
+                  handleVerMas(book.libro_id)
+                }
+              />
             </Box>
 
-            <Typography
-              variant="body1"
-              sx={{
-                color: '#333333',
-                lineHeight: 1.8,
-                whiteSpace: 'pre-wrap',
-                overflowWrap: 'anywhere',
-              }}
-            >
-              {comentarioRecomendacion}
-            </Typography>
+            {/* EXPLICACIÓN DEBAJO DEL LIBRO */}
+
+            {book.explicacion?.trim() && (
+              <Box
+                sx={{
+                  backgroundColor: "#fafafa",
+                  border: "1px solid #dddddd",
+                  borderRadius: "12px",
+                  padding: 2,
+                  width: "100%",
+                  boxSizing: "border-box",
+                  minWidth: 0,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 1,
+                  }}
+                >
+                  <FormatQuoteIcon
+                    sx={{
+                      color: "#f25600",
+                      fontSize: 23,
+                    }}
+                  />
+
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    sx={{
+                      color: "#252525",
+                    }}
+                  >
+                    Comentario de la recomendación
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#333333",
+                    lineHeight: 1.7,
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {book.explicacion}
+                </Typography>
+              </Box>
+            )}
           </Box>
-        )}
+        ))}
       </Box>
     </Box>
   );
