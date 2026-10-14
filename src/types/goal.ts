@@ -1,6 +1,9 @@
 export interface ReadingGoal {
   meta_id?: number;
+  id?: number;
   usuario_id: number;
+  usuario_nombre?: string;
+  usuario?: { nombre: string };
   periodo_nombre?: string;
   cantidad_libros: number;
   libros_leidos?: number;

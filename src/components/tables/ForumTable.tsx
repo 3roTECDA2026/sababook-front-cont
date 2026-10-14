@@ -12,13 +12,13 @@ import {
   TableRow,
   TableCell,
   Pagination,
-  IconButton,
   styled,
   useTheme,
 } from '@mui/material';
 
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
 import type { Forum } from '@/types';
 
 const ROWS_PER_PAGE = 5;
@@ -50,16 +50,6 @@ const StyledTableCellHeader = styled(TableCell)(({ theme }) => ({
   fontWeight: 'bold',
   fontSize: '0.9rem',
   borderBottom: `2px solid ${theme.palette.grey[200]}`,
-}));
-
-const ActionButton = styled(IconButton)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  color: '#FFFFFF',
-  borderRadius: '8px',
-  padding: '6px',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
 }));
 
 interface ForumTableProps {
@@ -145,7 +135,7 @@ const ForumTable = ({
                           >
                             <EditIcon sx={{ fontSize: '1.1rem' }} />
                           </ActionButton>
-                          <ActionButton
+                          <DeleteButton
                             onClick={(e: MouseEvent<HTMLButtonElement>) => {
                               e.stopPropagation();
                               onDeleteForum(row.foro_id);
@@ -153,7 +143,7 @@ const ForumTable = ({
                             title="Eliminar"
                           >
                             <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                          </ActionButton>
+                          </DeleteButton>
                         </Box>
                       </TableCell>
                     );

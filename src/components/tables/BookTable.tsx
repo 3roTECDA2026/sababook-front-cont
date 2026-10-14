@@ -11,7 +11,6 @@ import {
   TableRow,
   TableCell,
   Pagination,
-  IconButton,
   styled,
   useTheme,
   CircularProgress,
@@ -24,6 +23,7 @@ import type { Book } from '@/types';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
+import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
 import { downloadCsv } from '@/utils/downloadCsv';
 
 // 1. Definición de las constantes
@@ -55,16 +55,6 @@ const StyledTableCellHeader = styled(TableCell)(({ theme }) => ({
   fontWeight: 'bold',
   fontSize: '0.9rem',
   borderBottom: `2px solid ${theme.palette.grey[200]}`,
-}));
-
-const ActionButton = styled(IconButton)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  color: '#FFFFFF',
-  borderRadius: '8px',
-  padding: '6px',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
 }));
 
 type BookRow = Book & { id?: number };
@@ -236,7 +226,7 @@ const BookTable = ({
                             </ActionButton>
 
                             {/* 💡 Llama a onDeleteBook del padre, pasando solo el ID */}
-                            <ActionButton
+                            <DeleteButton
                               onClick={(e: MouseEvent<HTMLButtonElement>) => {
                                 e.stopPropagation(); // Evita que se active el onClick de la fila
                                 handleDelete(row.libro_id || (row.id as number));
@@ -244,7 +234,7 @@ const BookTable = ({
                               title="Eliminar"
                             >
                               <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                            </ActionButton>
+                            </DeleteButton>
                           </Box>
                         </TableCell>
                       );

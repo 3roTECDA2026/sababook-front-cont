@@ -12,12 +12,10 @@ import {
   Paper,
   CircularProgress,
   Avatar,
-  IconButton,
   Modal,
   Pagination,
   useTheme,
   Snackbar,
-  styled,
   Alert,
   Button,
   FormControl,
@@ -29,6 +27,7 @@ import type { AlertColor } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
+import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
 import { API_BASE_URL } from '@/environments/api';
 import UserForm from '@/components/forms/UserForm';
 import type { UserFormData } from '@/components/forms/UserForm';
@@ -37,16 +36,6 @@ import type { User } from '@/types';
 import { downloadCsv } from '@/utils/downloadCsv';
 
 const ROWS_PER_PAGE = 5;
-
-const ActionButton = styled(IconButton)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  color: '#FFFFFF',
-  borderRadius: '8px',
-  padding: '6px',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-}));
 
 type RolKey = 'alumno' | 'docente' | 'administrador';
 
@@ -321,14 +310,13 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
                     <ActionButton onClick={() => handleEdit(user.usuario_id)} title="Editar" size="small">
                       <EditIcon sx={{ fontSize: '1.1rem' }} />
                     </ActionButton>
-                    <ActionButton
+                    <DeleteButton
                       onClick={() => handleDelete(user.usuario_id)}
                       title="Eliminar"
                       size="small"
-                      color="error"
                     >
                       <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                    </ActionButton>
+                    </DeleteButton>
                   </Box>
                 </TableCell>
               </TableRow>
