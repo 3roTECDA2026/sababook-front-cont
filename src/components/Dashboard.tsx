@@ -1,5 +1,5 @@
 // src/components/Dashboard.tsx
-import { useState, useEffect, SyntheticEvent } from 'react';
+import { useState, useEffect, SyntheticEvent, useCallback } from 'react';
 import {
   Box,
   Modal,
@@ -31,6 +31,8 @@ import BookTable from './tables/BookTable';
 import { CrearListaModal } from './CrearListaModal';
 import ForumTable from './tables/ForumTable';
 import GoalTable from './tables/GoalTable';
+import { usePagination } from '@/hooks/usePagination';
+import { getUsersPaginated } from '@/services/apiService';
 
 const DashboardContainer = Box;
 
@@ -44,10 +46,25 @@ type RolKey = 'alumno' | 'docente' | 'administrador';
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState<DashboardView>('users');
-  // --- ESTADOS DE USUARIOS y LIBROS (Ahora son específicos) ---
-  const [users, setUsers] = useState<User[]>([]);
-  const [userLoading, setUserLoading] = useState<boolean>(true);
-  const [userError, setUserError] = useState<string | null>(null);
+  const fetchUsersPage = useCallback(
+  (page: number, limit: number, signal?: AbortSignal) => getUsersPaginated(page, limit, signal),
+  []
+);
+
+const {
+  items: users,
+  page: userPage,
+  totalPages: userTotalPages,
+  loading: userLoading,
+  error: userError,
+  goToPage: goToUserPage,
+  reload: reloadUsers,
+} = usePagination<User>({
+  fetchPage: fetchUsersPage,
+  limit: 5,
+  mode: 'replace',
+  enabled: activeView === 'users',
+});
 
   const [books, setBooks] = useState<Book[]>([]);
   const [booksLoading, setBooksLoading] = useState<boolean>(true);
@@ -93,32 +110,6 @@ const Dashboard = () => {
     administrador: 3,
   };
 
-  // --- FUNCIÓN FETCH PARA USUARIOS (READ) ---
-  const fetchUsers = async (signal?: AbortSignal) => {
-    try {
-      setUserLoading(true);
-      setUserError(null);
-      const token = localStorage.getItem('token');
-
-      const res = await fetch(`${API_BASE_URL}/api/v1/users`, {
-        headers: { Authorization: `Bearer ${token}` },
-        signal,
-      });
-      if (!res.ok) {
-        if (res.status === 403)
-          throw new Error('Acceso denegado. No tienes permisos para ver esta página.');
-        throw new Error('Error al cargar los usuarios');
-      }
-      const data: User[] = await res.json();
-      setUsers(data);
-    } catch (err) {
-      if ((err as { name?: string })?.name === 'AbortError') return;
-      const message = err instanceof Error ? err.message : String(err);
-      setUserError(message);
-    } finally {
-      setUserLoading(false);
-    }
-  };
 
   // --- FUNCIÓN FETCH PARA LIBROS
   const fetchBooks = async (signal?: AbortSignal) => {
@@ -204,16 +195,13 @@ const Dashboard = () => {
     const controller = new AbortController();
     const { signal } = controller;
 
-    if (activeView === 'users') {
-      fetchUsers(signal);
-    } else if (activeView === 'books') {
+    if (activeView === 'books') {
       fetchBooks(signal);
     } else if (activeView === 'forums') {
       fetchForums(signal);
     } else if (activeView === 'goals') {
       fetchGoals();
     }
-    setUserError(null);
     setBooksError(null);
     setForumsError(null);
     setGoalsError(null);
@@ -263,7 +251,7 @@ const Dashboard = () => {
 
       if (!response.ok) throw new Error('Error al crear el usuario');
 
-      await fetchUsers();
+      reloadUsers();
       handleCloseCreateModal();
       setSnackbar({ open: true, message: 'Usuario creado correctamente', severity: 'success' });
     } catch (error) {
@@ -570,8 +558,16 @@ const Dashboard = () => {
     switch (activeView) {
       case 'users':
         return (
-          <UserTable users={users} loading={userLoading} error={userError} onUserUpdate={fetchUsers} />
-        );
+    <UserTable
+      users={users}
+      loading={userLoading && users.length === 0}
+      error={userError}
+      onUserUpdate={reloadUsers}
+      page={userPage}
+      totalPages={userTotalPages}
+      onPageChange={goToUserPage}
+    />
+  );
       case 'books':
         return (
           <BookTable

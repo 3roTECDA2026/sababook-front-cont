@@ -1,5 +1,5 @@
 // src/components/UserTable.tsx
-import { useState, ChangeEvent } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -13,8 +13,6 @@ import {
   CircularProgress,
   Avatar,
   Modal,
-  Pagination,
-  useTheme,
   Snackbar,
   Alert,
   Button,
@@ -33,9 +31,9 @@ import UserForm from '@/components/forms/UserForm';
 import type { UserFormData } from '@/components/forms/UserForm';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import type { User } from '@/types';
+import PaginationControls from '@/components/ui/PaginationControls';
 import { downloadCsv } from '@/utils/downloadCsv';
 
-const ROWS_PER_PAGE = 5;
 
 type RolKey = 'alumno' | 'docente' | 'administrador';
 
@@ -44,6 +42,9 @@ interface UserTableProps {
   loading?: boolean;
   error?: string | null;
   onUserUpdate: () => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 interface SnackbarState {
@@ -52,11 +53,9 @@ interface SnackbarState {
   severity: AlertColor;
 }
 
-export default function UserTable({ users, loading, error, onUserUpdate }: UserTableProps) {
-  const theme = useTheme();
+export default function UserTable({ users, loading, error, onUserUpdate, page, totalPages, onPageChange }: UserTableProps) {
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
-  const [page, setPage] = useState<number>(1);
   const [roleFilter, setRoleFilter] = useState('todos');
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
   const [userToDeleteId, setUserToDeleteId] = useState<number | null>(null);
@@ -77,9 +76,6 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
     setUserToEdit(null);
   };
 
-  const handleChangePage = (event: ChangeEvent<unknown>, newPage: number) => {
-    setPage(newPage);
-  };
 
   const filteredUsers =
     roleFilter === 'todos' ? users : users.filter((user) => user.rol === roleFilter);
@@ -226,9 +222,6 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
     );
   }
 
-  const pageCount = Math.ceil(filteredUsers.length / ROWS_PER_PAGE);
-  const startIndex = (page - 1) * ROWS_PER_PAGE;
-  const currentUsers = filteredUsers.slice(startIndex, startIndex + ROWS_PER_PAGE);
 
   // 5. Renderizamos la tabla con los datos de los usuarios.
   return (
@@ -325,26 +318,7 @@ export default function UserTable({ users, loading, error, onUserUpdate }: UserT
         </Table>
       </TableContainer>
 
-      {pageCount > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <Pagination
-            count={pageCount}
-            page={page}
-            onChange={handleChangePage}
-            shape="rounded"
-            color="primary" // Se mantiene por si sx falla, pero sx tiene prioridad
-            sx={{
-              '& .MuiPaginationItem-root.Mui-selected': {
-                backgroundColor: theme.palette.button?.main || '#f25600',
-                color: '#FFFFFF',
-                '&:hover': {
-                  backgroundColor: '#cc4800', // Un naranja un poco más oscuro para el hover
-                },
-              },
-            }}
-          />
-        </Box>
-      )}
+      <PaginationControls page={page} totalPages={totalPages} onChange={onPageChange} />
 
       <Modal open={openModal} onClose={handleCloseModal}>
         {/* Este Box centra el formulario en la pantalla */}

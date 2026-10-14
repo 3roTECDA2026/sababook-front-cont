@@ -1,6 +1,6 @@
 
-import { Box, Typography } from "@mui/material";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { Box, Typography, Button } from "@mui/material";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 
 import AppHeader from "@/components/layout/AppHeader";
 import BookCard from "@/components/ui/BookCard";
@@ -10,12 +10,13 @@ import SearchBar from "@/components/ui/SearchBar";
 import type { SearchBarHandle } from "@/components/ui/SearchBar";
 import SideMenu from "@/components/layout/SideMenu";
 
-import { buscarLibros } from "@/services/apiService";
 import { normalizarTexto } from "@/utils/normalize";
+import { buscarLibrosPaginado } from "@/services/apiService";
 import { API_BASE_URL } from "@/environments/api";
+import { usePagination } from "@/hooks/usePagination";
+import InfiniteScroll from "@/components/ui/InfiniteScroll";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useBookData } from "@/hooks/useBookData";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useReadingStatus } from "@/hooks/useReadingStatus";
 
@@ -57,6 +58,10 @@ interface RecomendacionAPI {
   lista_libro?: LibroRecomendadoAPI[];
 }
 
+// --------------------------------------------------
+// COMPONENTE HOME
+// --------------------------------------------------
+
 export default function Home() {
   // --------------------------------------------------
   // ESTADOS DE INTERFAZ
@@ -78,10 +83,55 @@ export default function Home() {
   const { user } = useAuth();
 
   // --------------------------------------------------
-  // DATOS Y HOOKS
+  // PAGINACIÓN Y CARGA DE LIBROS
   // --------------------------------------------------
 
-  const { books, setBooks } = useBookData();
+  const fetchBooks = useCallback(
+    (page: number, limit: number, signal?: AbortSignal) => {
+      const filtros: BookFilters = { ...currentFilters };
+
+      const q = normalizarTexto(currentQuery);
+
+      if (q) {
+        filtros.query = q;
+      }
+
+      return buscarLibrosPaginado(
+        filtros,
+        page,
+        limit,
+        signal
+      );
+    },
+    [currentFilters, currentQuery]
+  );
+
+  const resetKey = useMemo(
+    () =>
+      JSON.stringify({
+        q: normalizarTexto(currentQuery),
+        ...currentFilters,
+      }),
+    [currentQuery, currentFilters]
+  );
+
+  const {
+    items: books,
+    loading,
+    error,
+    hasMore,
+    loadMore,
+    reload,
+  } = usePagination<Book>({
+    fetchPage: fetchBooks,
+    limit: 6,
+    mode: "append",
+    resetKey,
+  });
+
+  // --------------------------------------------------
+  // FAVORITOS Y ESTADO DE LECTURA
+  // --------------------------------------------------
 
   const {
     toggleFavorite,
@@ -92,10 +142,6 @@ export default function Home() {
     getReadingStatus,
     setReadingStatus,
   } = useReadingStatus();
-
-  // --------------------------------------------------
-  // FAVORITOS
-  // --------------------------------------------------
 
   const handleFavoriteToggle = async (
     libro_id: number
@@ -116,32 +162,41 @@ export default function Home() {
 
     const idLibro = rawBook.libro_id ?? rawBook.id;
 
-    if (idLibro == null) return null;
+    if (idLibro == null) {
+      return null;
+    }
 
     return {
       libro_id: idLibro,
+
       titulo:
         rawBook.titulo ??
         rawBook.title ??
         "Sin título",
+
       autor:
         rawBook.autor ??
         rawBook.author ??
         "",
+
       genero:
         rawBook.genero ??
         rawBook.genre ??
         "Recomendado",
+
       portada_url:
         rawBook.portada_url ??
         rawBook.portadaUrl ??
         rawBook.portada ??
         "",
+
       calificacion_promedio:
         rawBook.calificacion_promedio ??
         rawBook.rating ??
         0,
+
       descripcion: rawBook.descripcion ?? "",
+
       explicacion:
         item.explicacion ??
         rawBook.explicacion ??
@@ -150,7 +205,7 @@ export default function Home() {
   };
 
   // --------------------------------------------------
-  // OBTENER ÚLTIMA RECOMENDACIÓN DESDE SUPABASE
+  // OBTENER ÚLTIMA RECOMENDACIÓN DESDE LA API
   // --------------------------------------------------
 
   const obtenerUltimaRecomendacion = useCallback(async () => {
@@ -186,8 +241,7 @@ export default function Home() {
             ? respuesta.listas
             : [];
 
-      // Seleccionar únicamente las recomendaciones
-      // que contienen libros.
+      // Seleccionar recomendaciones que contienen libros.
 
       const recomendaciones = listas.filter((lista) => {
         const libros = lista.libros ?? lista.lista_libro;
@@ -205,7 +259,7 @@ export default function Home() {
         return;
       }
 
-      // Obtener la fecha de cada recomendación.
+      // Obtener fecha de cada recomendación.
 
       const obtenerFecha = (
         lista: RecomendacionAPI
@@ -215,15 +269,16 @@ export default function Home() {
           lista.created_at ??
           lista.fecha_creacion;
 
-        if (!valor) return null;
+        if (!valor) {
+          return null;
+        }
 
         const fecha = new Date(valor).getTime();
 
         return Number.isFinite(fecha) ? fecha : null;
       };
 
-      // Ordenar por fecha y, en caso de empate,
-      // por ID de lista.
+      // Ordenar por fecha y por ID de lista.
 
       const recomendacionesOrdenadas = [
         ...recomendaciones,
@@ -254,8 +309,7 @@ export default function Home() {
         recomendacion.lista_libro ??
         [];
 
-      // Mostrar uno o dos libros de la misma lista.
-      // Cada libro conserva su explicación.
+      // Mostrar hasta dos libros de la misma lista.
 
       const libros = librosAPI
         .slice(0, 2)
@@ -271,8 +325,6 @@ export default function Home() {
         "Error al cargar la recomendación principal:",
         error
       );
-
-      // No cerramos la sesión por errores de red.
     }
   }, []);
 
@@ -288,67 +340,19 @@ export default function Home() {
   // BÚSQUEDA
   // --------------------------------------------------
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = (query: string) => {
     setCurrentQuery(query);
-
-    try {
-      const queryNormalizada = normalizarTexto(query);
-
-      const filtrosCombinados: BookFilters = {
-        ...currentFilters,
-      };
-
-      if (queryNormalizada) {
-        filtrosCombinados.query = queryNormalizada;
-      }
-
-      const resultados = await buscarLibros(
-        filtrosCombinados
-      );
-
-      setBooks(resultados);
-    } catch (error) {
-      console.error(
-        "Error al buscar libros:",
-        error
-      );
-
-      setBooks([]);
-    }
   };
 
   // --------------------------------------------------
   // FILTROS
   // --------------------------------------------------
 
-  const handleFilterChange = async (
+  const handleFilterChange = (
     _resultados: Book[],
     filtros: BookFilters
   ) => {
     setCurrentFilters(filtros);
-
-    try {
-      const filtrosCombinados: BookFilters = {
-        ...filtros,
-      };
-
-      if (currentQuery) {
-        filtrosCombinados.query =
-          normalizarTexto(currentQuery);
-      }
-
-      const resultadosActualizados =
-        await buscarLibros(filtrosCombinados);
-
-      setBooks(resultadosActualizados);
-    } catch (error) {
-      console.error(
-        "Error al filtrar libros:",
-        error
-      );
-
-      setBooks([]);
-    }
   };
 
   // --------------------------------------------------
@@ -492,30 +496,36 @@ export default function Home() {
         </Box>
       )}
 
-      {/* LISTADO DE LIBROS */}
+      {/* LISTADO DE LIBROS CON SCROLL INFINITO */}
 
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          gap: 4,
-        }}
+      <InfiniteScroll
+        hasMore={hasMore}
+        loading={loading}
+        error={!!error}
+        onLoadMore={loadMore}
+        endMessage={
+          books.length > 0 ? (
+            <Typography
+              color="text.secondary"
+              sx={{
+                textAlign: "center",
+                py: 3,
+              }}
+            >
+              Llegaste al final del catálogo
+            </Typography>
+          ) : undefined
+        }
       >
-        {books.length === 0 ? (
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{
-              textAlign: "center",
-              py: 4,
-            }}
-          >
-            El libro que usted está buscando no
-            se encuentra disponible
-          </Typography>
-        ) : (
-          books.map((book) => (
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: 4,
+          }}
+        >
+          {books.map((book) => (
             <BookCard
               key={book.libro_id}
               image={book.portada_url}
@@ -523,28 +533,56 @@ export default function Home() {
               gender={book.genero}
               title={book.titulo}
               rating={book.calificacion_promedio}
-              isFavorite={isBookFavorite(
-                book.libro_id
-              )}
+              isFavorite={isBookFavorite(book.libro_id)}
               libro_id={book.libro_id}
               onFavoriteToggle={() =>
-                handleFavoriteToggle(
-                  book.libro_id
-                )
+                handleFavoriteToggle(book.libro_id)
               }
-              readingStatus={getReadingStatus(
-                book.libro_id
-              )}
+              readingStatus={getReadingStatus(book.libro_id)}
               onReadingStatusChange={(status) =>
-                setReadingStatus(
-                  book.libro_id,
-                  status
-                )
+                setReadingStatus(book.libro_id, status)
               }
             />
-          ))
-        )}
-      </Box>
+          ))}
+        </Box>
+      </InfiniteScroll>
+
+      {/* SIN RESULTADOS */}
+
+      {!loading && !error && books.length === 0 && (
+        <Typography
+          variant="h6"
+          color="text.secondary"
+          sx={{
+            textAlign: "center",
+            py: 4,
+          }}
+        >
+          El libro que usted está buscando no se encuentra disponible
+        </Typography>
+      )}
+
+      {/* ERROR DE CARGA */}
+
+      {error && (
+        <Box
+          sx={{
+            textAlign: "center",
+            py: 3,
+          }}
+        >
+          <Typography color="error" mb={1}>
+            {error}
+          </Typography>
+
+          <Button
+            variant="outlined"
+            onClick={reload}
+          >
+            Reintentar
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 }
