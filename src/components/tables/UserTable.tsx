@@ -1,4 +1,4 @@
-// src/components/UserTable.tsx
+
 import { useState } from 'react';
 import {
   Box,
@@ -21,11 +21,18 @@ import {
   MenuItem,
   Select,
 } from '@mui/material';
+
 import type { AlertColor } from '@mui/material';
+
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
-import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
+
+import {
+  ActionButton,
+  DeleteButton,
+} from '@/components/ui/ActionButton';
+
 import { API_BASE_URL } from '@/environments/api';
 import UserForm from '@/components/forms/UserForm';
 import type { UserFormData } from '@/components/forms/UserForm';
@@ -34,6 +41,9 @@ import type { User } from '@/types';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { downloadCsv } from '@/utils/downloadCsv';
 
+// --------------------------------------------------
+// TIPOS
+// --------------------------------------------------
 
 type RolKey = 'alumno' | 'docente' | 'administrador';
 
@@ -53,20 +63,54 @@ interface SnackbarState {
   severity: AlertColor;
 }
 
-export default function UserTable({ users, loading, error, onUserUpdate, page, totalPages, onPageChange }: UserTableProps) {
+// --------------------------------------------------
+// COMPONENTE USER TABLE
+// --------------------------------------------------
+
+export default function UserTable({
+  users,
+  loading,
+  error,
+  onUserUpdate,
+  page,
+  totalPages,
+  onPageChange,
+}: UserTableProps) {
+
+  // --------------------------------------------------
+  // ESTADOS
+  // --------------------------------------------------
+
   const [openModal, setOpenModal] = useState<boolean>(false);
-  const [userToEdit, setUserToEdit] = useState<User | null>(null);
-  const [roleFilter, setRoleFilter] = useState('todos');
-  const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
-  const [userToDeleteId, setUserToDeleteId] = useState<number | null>(null);
-  const [snackbar, setSnackbar] = useState<SnackbarState>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+
+  const [userToEdit, setUserToEdit] =
+    useState<User | null>(null);
+
+  const [roleFilter, setRoleFilter] =
+    useState<string>('todos');
+
+  const [confirmModalOpen, setConfirmModalOpen] =
+    useState<boolean>(false);
+
+  const [userToDeleteId, setUserToDeleteId] =
+    useState<number | null>(null);
+
+  const [snackbar, setSnackbar] =
+    useState<SnackbarState>({
+      open: false,
+      message: '',
+      severity: 'success',
+    });
+
+  // --------------------------------------------------
+  // EDITAR USUARIO
+  // --------------------------------------------------
 
   const handleEdit = (userId: number) => {
-    const user = users.find((u) => u.usuario_id === userId);
+    const user = users.find(
+      (u) => u.usuario_id === userId
+    );
+
     setUserToEdit(user ?? null);
     setOpenModal(true);
   };
@@ -76,9 +120,25 @@ export default function UserTable({ users, loading, error, onUserUpdate, page, t
     setUserToEdit(null);
   };
 
+  // --------------------------------------------------
+  // FILTRAR USUARIOS POR ROL
+  // --------------------------------------------------
 
-  const filteredUsers =
-    roleFilter === 'todos' ? users : users.filter((user) => user.rol === roleFilter);
+  const filteredUsers: User[] =
+    roleFilter === 'todos'
+      ? users
+      : users.filter(
+          (user) => user.rol === roleFilter
+        );
+
+  const handleRoleFilterChange = (value: string) => {
+    setRoleFilter(value);
+    onPageChange(1);
+  };
+
+  // --------------------------------------------------
+  // DESCARGAR CSV
+  // --------------------------------------------------
 
   const handleDownload = () => {
     downloadCsv(
@@ -106,66 +166,111 @@ export default function UserTable({ users, loading, error, onUserUpdate, page, t
     );
   };
 
-  const handleSnackbarClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+  // --------------------------------------------------
+  // NOTIFICACIONES
+  // --------------------------------------------------
+
+  const handleSnackbarClose = (
+    _event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
     if (reason === 'clickaway') {
       return;
     }
-    setSnackbar({ ...snackbar, open: false });
+
+    setSnackbar((prev) => ({
+      ...prev,
+      open: false,
+    }));
   };
 
-  // Mapeo para convertir el nombre del rol a su ID, según la base de datos.
-  // ¡Asegúrate de que estos IDs coincidan con los de tu tabla `rol` en el backend!
+  // --------------------------------------------------
+  // MAPEO DE ROLES
+  // --------------------------------------------------
+
+  // Verificar que estos IDs coincidan con el backend.
+
   const rolMapping: Record<RolKey, number> = {
     alumno: 1,
     docente: 2,
     administrador: 3,
   };
 
-  const handleSaveUser = async (formData: UserFormData) => {
-    console.log('Guardando datos del usuario:', formData);
+  // --------------------------------------------------
+  // GUARDAR CAMBIOS DE USUARIO
+  // --------------------------------------------------
+
+  const handleSaveUser = async (
+    formData: UserFormData
+  ) => {
     if (!userToEdit) return;
 
-    // 1. Preparamos los datos para el backend.
-    const dataToSend: UserFormData = { ...formData };
+    const dataToSend: UserFormData = {
+      ...formData,
+    };
 
-    // 2. Convertimos el rol a rol_id y renombramos la contraseña.
-    dataToSend.rol_id = dataToSend.rol ? rolMapping[dataToSend.rol as RolKey] : undefined;
+    dataToSend.rol_id = dataToSend.rol
+      ? rolMapping[dataToSend.rol as RolKey]
+      : undefined;
+
     dataToSend.contrasena = dataToSend.password;
 
-    // 3. Eliminamos los campos que el backend no espera.
     delete dataToSend.rol;
     delete dataToSend.password;
+
     if (!dataToSend.contrasena) {
       delete dataToSend.contrasena;
     }
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/${userToEdit.usuario_id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(dataToSend),
-      });
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/users/${userToEdit.usuario_id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(dataToSend),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Error al actualizar el usuario');
+        throw new Error(
+          'Error al actualizar el usuario'
+        );
       }
 
-      // Actualizamos el estado local para que el cambio se vea al instante
       handleCloseModal();
-      onUserUpdate(); // Llamamos a la función del padre para refrescar los datos
-      setSnackbar({ open: true, message: 'Usuario actualizado correctamente', severity: 'success' });
+      onUserUpdate();
+
+      setSnackbar({
+        open: true,
+        message: 'Usuario actualizado correctamente',
+        severity: 'success',
+      });
+
     } catch (error) {
-      console.error('Error al guardar:', error);
-      setSnackbar({ open: true, message: 'Error al guardar el usuario', severity: 'error' });
+      console.error(
+        'Error al guardar:',
+        error
+      );
+
+      setSnackbar({
+        open: true,
+        message: 'Error al guardar el usuario',
+        severity: 'error',
+      });
     }
   };
 
-  const handleDelete = async (userId: number) => {
-    // Abre el modal de confirmación y guarda el ID del usuario a eliminar
+  // --------------------------------------------------
+  // ELIMINAR USUARIO
+  // --------------------------------------------------
+
+  const handleDelete = (userId: number) => {
     setUserToDeleteId(userId);
     setConfirmModalOpen(true);
   };
@@ -176,56 +281,93 @@ export default function UserTable({ users, loading, error, onUserUpdate, page, t
   };
 
   const handleConfirmDelete = async () => {
-    if (!userToDeleteId) return;
+    if (userToDeleteId === null) return;
 
     try {
       const token = localStorage.getItem('token');
-      // 2. Llamar a la API con el método DELETE
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/${userToDeleteId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/users/${userToDeleteId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Error al eliminar el usuario');
+        throw new Error(
+          'Error al eliminar el usuario'
+        );
       }
 
-      // 3. Actualizar el estado para reflejar la eliminación en la UI
-      setSnackbar({ open: true, message: 'Usuario eliminado correctamente', severity: 'success' });
-      onUserUpdate(); // Llamamos a la función del padre para refrescar los datos
+      onUserUpdate();
+
+      setSnackbar({
+        open: true,
+        message: 'Usuario eliminado correctamente',
+        severity: 'success',
+      });
+
     } catch (error) {
-      console.error('Error al eliminar:', error);
-      setSnackbar({ open: true, message: 'Error al eliminar el usuario', severity: 'error' });
+      console.error(
+        'Error al eliminar:',
+        error
+      );
+
+      setSnackbar({
+        open: true,
+        message: 'Error al eliminar el usuario',
+        severity: 'error',
+      });
+
     } finally {
-      // Cierra el modal independientemente del resultado
       handleCloseConfirmModal();
     }
   };
 
-  // Mostramos un spinner mientras se cargan los datos.
+  // --------------------------------------------------
+  // ESTADO DE CARGA
+  // --------------------------------------------------
+
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        mt={4}
+      >
         <CircularProgress />
       </Box>
     );
   }
 
-  // Mostramos un mensaje si hubo un error.
+  // --------------------------------------------------
+  // ESTADO DE ERROR
+  // --------------------------------------------------
+
   if (error) {
     return (
-      <Typography color="error" align="center" mt={4}>
+      <Typography
+        color="error"
+        align="center"
+        mt={4}
+      >
         Error: {error}
       </Typography>
     );
   }
 
+  // --------------------------------------------------
+  // RENDERIZADO
+  // --------------------------------------------------
 
-  // 5. Renderizamos la tabla con los datos de los usuarios.
   return (
     <>
+      {/* FILTROS Y DESCARGA CSV */}
+
       <Box
         sx={{
           display: 'flex',
@@ -233,36 +375,69 @@ export default function UserTable({ users, loading, error, onUserUpdate, page, t
           alignItems: 'center',
           gap: 2,
           mt: 3,
+          flexWrap: 'wrap',
         }}
       >
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel id="users-role-filter-label">Filtrar por rol</InputLabel>
+        <FormControl
+          size="small"
+          sx={{ minWidth: 180 }}
+        >
+          <InputLabel id="users-role-filter-label">
+            Filtrar por rol
+          </InputLabel>
+
           <Select
             labelId="users-role-filter-label"
             value={roleFilter}
             label="Filtrar por rol"
-            onChange={(event) => {
-              setRoleFilter(event.target.value);
-              setPage(1);
-            }}
+            onChange={(event) =>
+              handleRoleFilterChange(
+                event.target.value
+              )
+            }
           >
-            <MenuItem value="todos">Todos los roles</MenuItem>
-            <MenuItem value="alumno">Alumno</MenuItem>
-            <MenuItem value="docente">Docente</MenuItem>
-            <MenuItem value="administrador">Administrador</MenuItem>
+            <MenuItem value="todos">
+              Todos los roles
+            </MenuItem>
+
+            <MenuItem value="alumno">
+              Alumno
+            </MenuItem>
+
+            <MenuItem value="docente">
+              Docente
+            </MenuItem>
+
+            <MenuItem value="administrador">
+              Administrador
+            </MenuItem>
           </Select>
         </FormControl>
+
         <Button
           variant="contained"
           startIcon={<DownloadIcon />}
           onClick={handleDownload}
           disabled={filteredUsers.length === 0}
-          sx={{ backgroundColor: 'button.main', textTransform: 'none' }}
+          sx={{
+            backgroundColor: 'button.main',
+            textTransform: 'none',
+          }}
         >
           Descargar CSV
         </Button>
       </Box>
-      <TableContainer component={Paper} sx={{ width: '100%', maxWidth: 1200, mt: 3 }}>
+
+      {/* TABLA DE USUARIOS */}
+
+      <TableContainer
+        component={Paper}
+        sx={{
+          width: '100%',
+          maxWidth: 1200,
+          mt: 3,
+        }}
+      >
         <Table aria-label="tabla de usuarios">
           <TableHead>
             <TableRow>
@@ -270,76 +445,161 @@ export default function UserTable({ users, loading, error, onUserUpdate, page, t
               <TableCell>Nombre</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Rol</TableCell>
-              <TableCell>Fecha de Registro</TableCell>
-              <TableCell>Nivel Educativo</TableCell>
-              <TableCell align="center">Editar</TableCell>
+              <TableCell>
+                Fecha de Registro
+              </TableCell>
+              <TableCell>
+                Nivel Educativo
+              </TableCell>
+              <TableCell align="center">
+                Editar
+              </TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {currentUsers.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell
+                  colSpan={7}
+                  align="center"
+                >
                   No hay usuarios para el rol seleccionado.
                 </TableCell>
               </TableRow>
-            ) : currentUsers.map((user) => (
-              <TableRow key={user.usuario_id}>
-                <TableCell>
-                  <Avatar alt={user.nombre} src={user.avatar_url ?? undefined}>
-                    {user.nombre ? user.nombre[0].toUpperCase() : '?'}
-                  </Avatar>
-                </TableCell>
-                <TableCell>{user.nombre}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.rol}</TableCell>
-                <TableCell>
-                  {user.fecha_registro
-                    ? new Date(user.fecha_registro).toLocaleDateString('es-ES')
-                    : '-'}
-                </TableCell>
-                <TableCell>{user.nivel_educativo || '-'}</TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                    <ActionButton onClick={() => handleEdit(user.usuario_id)} title="Editar" size="small">
-                      <EditIcon sx={{ fontSize: '1.1rem' }} />
-                    </ActionButton>
-                    <DeleteButton
-                      onClick={() => handleDelete(user.usuario_id)}
-                      title="Eliminar"
-                      size="small"
+            ) : (
+              filteredUsers.map((user: User) => (
+                <TableRow key={user.usuario_id}>
+                  <TableCell>
+                    <Avatar
+                      alt={user.nombre}
+                      src={
+                        user.avatar_url ??
+                        undefined
+                      }
                     >
-                      <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                    </DeleteButton>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
+                      {user.nombre
+                        ? user.nombre[0].toUpperCase()
+                        : '?'}
+                    </Avatar>
+                  </TableCell>
+
+                  <TableCell>
+                    {user.nombre}
+                  </TableCell>
+
+                  <TableCell>
+                    {user.email}
+                  </TableCell>
+
+                  <TableCell>
+                    {user.rol}
+                  </TableCell>
+
+                  <TableCell>
+                    {user.fecha_registro
+                      ? new Date(
+                          user.fecha_registro
+                        ).toLocaleDateString('es-ES')
+                      : '-'}
+                  </TableCell>
+
+                  <TableCell>
+                    {user.nivel_educativo || '-'}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        gap: 1,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <ActionButton
+                        onClick={() =>
+                          handleEdit(user.usuario_id)
+                        }
+                        title="Editar"
+                        size="small"
+                      >
+                        <EditIcon
+                          sx={{
+                            fontSize: '1.1rem',
+                          }}
+                        />
+                      </ActionButton>
+
+                      <DeleteButton
+                        onClick={() =>
+                          handleDelete(user.usuario_id)
+                        }
+                        title="Eliminar"
+                        size="small"
+                      >
+                        <DeleteIcon
+                          sx={{
+                            fontSize: '1.1rem',
+                          }}
+                        />
+                      </DeleteButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
-      <PaginationControls page={page} totalPages={totalPages} onChange={onPageChange} />
+      {/* PAGINACIÓN REUTILIZABLE */}
 
-      <Modal open={openModal} onClose={handleCloseModal}>
-        {/* Este Box centra el formulario en la pantalla */}
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        onChange={onPageChange}
+      />
+
+      {/* MODAL EDITAR USUARIO */}
+
+      <Modal
+        open={openModal}
+        onClose={handleCloseModal}
+      >
         <Box
           sx={{
             position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            outline: 'none', // Evita el borde de foco en el contenedor
+            outline: 'none',
           }}
         >
-          <UserForm userToEdit={userToEdit} onSave={handleSaveUser} onCancel={handleCloseModal} />
+          <UserForm
+            userToEdit={userToEdit}
+            onSave={handleSaveUser}
+            onCancel={handleCloseModal}
+          />
         </Box>
       </Modal>
 
-      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleSnackbarClose}>
-        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+      {/* NOTIFICACIONES */}
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* CONFIRMAR ELIMINACIÓN */}
 
       <ConfirmationModal
         open={confirmModalOpen}
