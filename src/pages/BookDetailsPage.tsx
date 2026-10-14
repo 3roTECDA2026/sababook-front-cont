@@ -1,6 +1,8 @@
 import { API_BASE_URL } from "@/environments/api";
 import ReadingProgress from "../components/ReadingProgress";
 // src/pages/BookDetailsPage.tsx
+import { API_BASE_URL } from '@/environments/api';
+import ReadingProgress from '@/components/ReadingProgress';
 import { useState } from 'react';
 import { Box, Divider, useTheme } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
@@ -8,7 +10,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import SideMenu from '@/components/layout/SideMenu';
 import AppHeader from '@/components/layout/AppHeader';
 import NavButton from '@/components/ui/NavButton';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';  
 import { useBookDetails } from '@/hooks/useBookDetails';
 import { useBookOpinion } from '@/hooks/useBookOpinion';
 import BookDetailsHeader from '@/components/ui/BookDetailsHeader';
@@ -16,6 +18,7 @@ import BookCommentBox from '@/components/BookCommentBox';
 import BookOpinionList from '@/components/ui/BookOpinionList';
 import BookDescription from '@/components/ui/BookDescription';
 import TriviaPlaySection from '@/components/ui/TriviaPlaySection';
+import ReadingProgress from '@/components/ReadingProgress';
 
 const ORANGE_COLOR = '#FF6633';
 

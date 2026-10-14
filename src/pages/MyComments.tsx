@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  IconButton,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
 
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
@@ -75,28 +75,19 @@ const CommentItem = ({ id, title, author, image, onView, onEdit, onDelete }: Com
     {/* Botones de Acción */}
     <Box display="flex" gap={1}>
       {/* 1. BOTÓN VER */}
-      <IconButton
-        onClick={() => onView(id)}
-        sx={{ bgcolor: '#f25600', color: '#ffffff', '&:hover': { bgcolor: 'orange.700' } }}
-      >
+      <ActionButton onClick={() => onView(id)} title="Ver">
         <VisibilityIcon fontSize="small" />
-      </IconButton>
+      </ActionButton>
 
       {/* 2. BOTÓN EDITAR */}
-      <IconButton
-        onClick={() => onEdit(id)}
-        sx={{ bgcolor: '#f25600', color: '#ffffff', '&:hover': { bgcolor: 'orange.700' } }}
-      >
+      <ActionButton onClick={() => onEdit(id)} title="Editar">
         <EditIcon fontSize="small" />
-      </IconButton>
+      </ActionButton>
 
       {/* 3. BOTÓN ELIMINAR */}
-      <IconButton
-        onClick={() => onDelete(id, title)}
-        sx={{ bgcolor: '#f25600', color: '#ffffff', '&:hover': { bgcolor: 'orange.700' } }}
-      >
+      <DeleteButton onClick={() => onDelete(id, title)} title="Eliminar">
         <DeleteIcon fontSize="small" />
-      </IconButton>
+      </DeleteButton>
     </Box>
   </Box>
 );
@@ -236,14 +227,14 @@ export default function MyComments() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} sx={{ color: '#4b2c15' }}>
+          <Button onClick={handleCloseDialog}>
             Cancelar
           </Button>
           <Button
             onClick={handleConfirmDelete}
             autoFocus
             variant="contained"
-            sx={{ bgcolor: '#f25600', '&:hover': { bgcolor: '#cc4800' } }}
+            color="error"
           >
             Eliminar
           </Button>
