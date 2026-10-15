@@ -45,8 +45,6 @@ import { downloadCsv } from '@/utils/downloadCsv';
 // TIPOS
 // --------------------------------------------------
 
-type RolKey = 'alumno' | 'docente' | 'administrador';
-
 interface UserTableProps {
   users: User[];
   loading?: boolean;
@@ -188,14 +186,6 @@ export default function UserTable({
   // MAPEO DE ROLES
   // --------------------------------------------------
 
-  // Verificar que estos IDs coincidan con el backend.
-
-  const rolMapping: Record<RolKey, number> = {
-    alumno: 1,
-    docente: 2,
-    administrador: 3,
-  };
-
   // --------------------------------------------------
   // GUARDAR CAMBIOS DE USUARIO
   // --------------------------------------------------
@@ -209,13 +199,12 @@ export default function UserTable({
       ...formData,
     };
 
-    dataToSend.rol_id = dataToSend.rol
-      ? rolMapping[dataToSend.rol as RolKey]
-      : undefined;
+    if (dataToSend.rol) {
+      dataToSend.rol = String(dataToSend.rol).toUpperCase();
+    }
 
     dataToSend.contrasena = dataToSend.password;
 
-    delete dataToSend.rol;
     delete dataToSend.password;
 
     if (!dataToSend.contrasena) {
@@ -400,15 +389,15 @@ export default function UserTable({
               Todos los roles
             </MenuItem>
 
-            <MenuItem value="alumno">
+            <MenuItem value="ALUMNO">
               Alumno
             </MenuItem>
 
-            <MenuItem value="docente">
+            <MenuItem value="DOCENTE">
               Docente
             </MenuItem>
 
-            <MenuItem value="administrador">
+            <MenuItem value="ADMINISTRADOR">
               Administrador
             </MenuItem>
           </Select>

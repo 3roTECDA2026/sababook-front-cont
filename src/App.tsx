@@ -143,7 +143,7 @@ function App() {
       <Route
         path="/dashboard/forum-comments/:foroId"
         element={
-          <RoleGuard allowedRoles={['ADMIN']}>
+          <RoleGuard allowedRoles={['ADMINISTRADOR']}>
             <ForumCommentsAdmin />
           </RoleGuard>
         }
@@ -153,7 +153,7 @@ function App() {
       <Route
         path="/trivia"
         element={
-          <RoleGuard allowedRoles={['TEACHER', 'ADMIN']}>
+          <RoleGuard allowedRoles={['DOCENTE', 'ADMINISTRADOR']}>
             <TriviaPage />
           </RoleGuard>
         }
@@ -163,7 +163,7 @@ function App() {
       <Route
         path="/dashboard"
         element={
-          <RoleGuard allowedRoles={['ADMIN']}>
+          <RoleGuard allowedRoles={['ADMINISTRADOR']}>
             <DashboardPage />
           </RoleGuard>
         }
@@ -173,7 +173,7 @@ function App() {
       <Route
         path="/dashboard/book-comments/:bookId"
         element={
-          <RoleGuard allowedRoles={['ADMIN']}>
+          <RoleGuard allowedRoles={['ADMINISTRADOR']}>
             <BookCommentsAdmin />
           </RoleGuard>
         }
@@ -201,7 +201,7 @@ function App() {
       <Route
         path="/cursos/libros"
         element={
-          <RoleGuard allowedRoles={['TEACHER', 'ADMIN']}>
+          <RoleGuard allowedRoles={['DOCENTE', 'ADMINISTRADOR']}>
             <CourseBooksPage />
           </RoleGuard>
         }

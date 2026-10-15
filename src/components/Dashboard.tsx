@@ -42,8 +42,6 @@ interface SnackbarState {
   severity: AlertColor;
 }
 
-type RolKey = 'alumno' | 'docente' | 'administrador';
-
 const Dashboard = () => {
   const [activeView, setActiveView] = useState<DashboardView>('users');
   const fetchUsersPage = useCallback(
@@ -102,14 +100,6 @@ const {
   const [forumToEdit, setForumToEdit] = useState<Forum | null>(null);
   const [openDeleteForumConfirm, setOpenDeleteForumConfirm] = useState<boolean>(false);
   const [forumToDeleteId, setForumToDeleteId] = useState<number | null>(null);
-
-  // Mapeo de roles para la creación de usuarios
-  const rolMapping: Record<RolKey, number> = {
-    alumno: 1,
-    docente: 2,
-    administrador: 3,
-  };
-
 
   // --- FUNCIÓN FETCH PARA LIBROS
   const fetchBooks = async (signal?: AbortSignal) => {
@@ -233,9 +223,10 @@ const {
   const handleSaveNewUser = async (formData: UserFormData) => {
     // Lógica para crear un nuevo usuario (POST)
     const dataToSend: UserFormData = { ...formData };
-    dataToSend.rol_id = dataToSend.rol ? rolMapping[dataToSend.rol as RolKey] : undefined;
+    if (dataToSend.rol) {
+      dataToSend.rol = String(dataToSend.rol).toUpperCase();
+    }
     dataToSend.contrasena = dataToSend.password;
-    delete dataToSend.rol;
     delete dataToSend.password;
 
     try {

@@ -2,10 +2,11 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import type { TipoRol } from '@/types';
 
 interface RoleGuardProps {
   children: ReactNode;
-  allowedRoles: Array<'ADMIN' | 'TEACHER' | 'STUDENT'>;
+  allowedRoles: TipoRol[];
   redirectTo?: string;
 }
 

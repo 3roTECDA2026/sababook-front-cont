@@ -47,7 +47,7 @@ import {
 
 export default function CafesLiterarios() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isTeacher, isAdmin } = useAuth();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [cafes, setCafes] = useState<CafeLiterario[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -186,13 +186,7 @@ export default function CafesLiterarios() {
   };
 
   // Es docente o admin?
-  const rolStr = String(user?.rol || '').toUpperCase().trim();
-  const esDocenteOAdmin =
-    rolStr === 'DOCENTE' ||
-    rolStr === 'ADMINISTRADOR' ||
-    rolStr === 'ADMIN' ||
-    user?.rol_id === 2 ||
-    user?.rol_id === 3;
+  const esDocenteOAdmin = isTeacher || isAdmin;
 
   return (
     <Box py={2} px={1} sx={{ width: '100%', maxWidth: 1000, margin: '0 auto' }}>

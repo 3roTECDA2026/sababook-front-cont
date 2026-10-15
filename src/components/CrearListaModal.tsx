@@ -150,17 +150,10 @@ export const CrearListaModal: React.FC<CrearListaModalProps> = ({
           : {}),
       };
 
-      let response = await fetch(
+      const response = await fetch(
         `${API_BASE_URL}/api/v1/libros`,
         { headers }
       );
-
-      if (response.status === 404) {
-        response = await fetch(
-          `${API_BASE_URL}/api/v1/books`,
-          { headers }
-        );
-      }
 
       if (!response.ok) {
         throw new Error(

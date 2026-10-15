@@ -5,7 +5,6 @@ export interface User {
   nombre: string;
   email: string;
   rol?: TipoRol | string | null;
-  rol_id?: number;
   fecha_registro?: string;
   perfil_completo?: boolean;
   avatar_url?: string | null;
