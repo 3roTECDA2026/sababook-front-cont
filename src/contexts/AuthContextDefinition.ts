@@ -11,6 +11,10 @@ export interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
+  isAdmin: boolean;
+  isTeacher: boolean;
+  isStudent: boolean;
+  hasRole: (role: 'ADMIN' | 'TEACHER' | 'STUDENT') => boolean;
   login: (email: string, password: string) => Promise<AuthResult>;
   logout: () => void;
   updateUser: (updatedData: Partial<User>) => Promise<AuthResult>;

@@ -97,7 +97,7 @@ const mensajeDeError = (error: unknown) =>
   error instanceof Error ? error.message : 'Ocurrió un error inesperado.';
 
 export default function CourseBooksPage() {
-  const esAdmin = localStorage.getItem('rol') === '3';
+  const { isAdmin: esAdmin } = useAuth();
 
   const [menuAbierto, setMenuAbierto] = useState<boolean>(false);
 

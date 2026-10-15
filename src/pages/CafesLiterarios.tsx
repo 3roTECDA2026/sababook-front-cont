@@ -185,12 +185,14 @@ export default function CafesLiterarios() {
     }
   };
 
-  // Es docente o admin? (rol_id 2 o 3)
+  // Es docente o admin?
+  const rolStr = String(user?.rol || '').toUpperCase().trim();
   const esDocenteOAdmin =
+    rolStr === 'DOCENTE' ||
+    rolStr === 'ADMINISTRADOR' ||
+    rolStr === 'ADMIN' ||
     user?.rol_id === 2 ||
-    user?.rol_id === 3 ||
-    user?.rol === 'docente' ||
-    user?.rol === 'administrador';
+    user?.rol_id === 3;
 
   return (
     <Box py={2} px={1} sx={{ width: '100%', maxWidth: 1000, margin: '0 auto' }}>

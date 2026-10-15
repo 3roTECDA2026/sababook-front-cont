@@ -191,10 +191,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const roleName = String(user?.rol || '').toUpperCase().trim();
+  const isAdmin = roleName === 'ADMINISTRADOR' || roleName === 'ADMIN' || user?.rol_id === 3;
+  const isTeacher = roleName === 'DOCENTE' || roleName === 'TEACHER' || user?.rol_id === 2;
+  const isStudent = roleName === 'ALUMNO' || roleName === 'STUDENT' || user?.rol_id === 1;
+
+  const hasRole = (role: 'ADMIN' | 'TEACHER' | 'STUDENT'): boolean => {
+    if (role === 'ADMIN') return isAdmin;
+    if (role === 'TEACHER') return isTeacher;
+    if (role === 'STUDENT') return isStudent;
+    return false;
+  };
+
   const value: AuthContextType = {
     user,
     token,
     loading,
+    isAdmin,
+    isTeacher,
+    isStudent,
+    hasRole,
     login,
     logout,
     updateUser,

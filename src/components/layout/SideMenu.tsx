@@ -28,6 +28,7 @@ import RadioIcon from '@mui/icons-material/Radio';
 import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MenuItem {
   text: string;
@@ -44,12 +45,7 @@ interface SideMenuProps {
 export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuProps) {
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
   const navigate = useNavigate();
-  const roleName = localStorage.getItem('roleName')?.trim().toLocaleLowerCase();
-  const isAdmin =
-    localStorage.getItem('rol') === '3' ||
-    roleName === 'administrador' ||
-    roleName === 'admin';
-  const userRolId = localStorage.getItem('rol');
+  const { isAdmin, isTeacher, logout } = useAuth();
 
   let menuItems: MenuItem[];
 
@@ -65,7 +61,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     ];
-  } else if (userRolId == '2') {
+  } else if (isTeacher) {
     // Menú para docentes
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
