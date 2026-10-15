@@ -422,13 +422,7 @@ const {
       : `${API_BASE_URL}/api/v1/forums`;
     const method = isEditing ? 'PUT' : 'POST';
 
-    // Asegúrate de que los datos enviados incluyan creador_id si es POST, o solo los campos editados si es PUT
-    const dataToSend = isEditing
-      ? forumData
-      : {
-          ...forumData,
-          creador_id: parseInt(localStorage.getItem('userId') ?? ''), // Obtener el ID del creador solo en creación
-        };
+    const dataToSend = forumData;
 
     try {
       const response = await fetch(endpoint, {
