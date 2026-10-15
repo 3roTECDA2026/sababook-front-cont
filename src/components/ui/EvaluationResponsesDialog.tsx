@@ -17,6 +17,7 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { formatDateTime } from '@/utils/formatDate';
 import { useEvaluationAttempts } from '@/hooks/useEvaluationAttempts';
 import type { TriviaAttempt, PlayAnswer, PlayQuestion } from '@/types';

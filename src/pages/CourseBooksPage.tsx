@@ -34,6 +34,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import { useAuth } from '@/hooks/useAuth';
 import { getCatalogoLibros } from '@/services/apiService';
 import {
   getCursos,
