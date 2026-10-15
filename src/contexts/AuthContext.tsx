@@ -106,44 +106,51 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       // Guardar datos en localStorage
       localStorage.setItem("token", data.token);
-      localStorage.setItem("userId", data.userId);
-      localStorage.setItem("rol", data.rol);
-      localStorage.removeItem("roleName");
+      localStorage.setItem("userId", String(data.userId));
+      if (data.rol) {
+        localStorage.setItem("rol", String(data.rol));
+        localStorage.setItem("roleName", String(data.rol));
+      }
       setToken(data.token);
 
-      // Obtener el perfil completo del usuario
-      const profileResponse = await fetch(
-        `${API_BASE_URL}/api/v1/users/${data.userId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${data.token}`,
+      let fullUser = data.user;
+
+      if (!fullUser) {
+        // Fallback para endpoints legacy sin usuario completo
+        const profileResponse = await fetch(
+          `${API_BASE_URL}/api/v1/users/${data.userId}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${data.token}`,
+            },
           },
-        },
-      );
+        );
 
-      const profileData = await parseJsonResponse(profileResponse);
+        const profileData = await parseJsonResponse(profileResponse);
 
-      if (!profileResponse.ok) {
-        const profileError =
-          profileData?.error || "No se pudo obtener el perfil del usuario";
-        throw new Error(profileError);
+        if (!profileResponse.ok) {
+          const profileError =
+            profileData?.error || "No se pudo obtener el perfil del usuario";
+          throw new Error(profileError);
+        }
+        fullUser = profileData;
       }
 
-      if (profileData?.nombre) {
-        localStorage.setItem("username", profileData.nombre);
+      if (fullUser?.nombre) {
+        localStorage.setItem("username", fullUser.nombre);
       }
-      if (profileData?.rol) {
-        localStorage.setItem("roleName", profileData.rol);
+      if (fullUser?.rol) {
+        localStorage.setItem("roleName", fullUser.rol);
       }
 
-      const numericUserId = Number(profileData?.usuario_id || data.userId);
+      const numericUserId = Number(fullUser?.usuario_id || data.userId);
 
       setUser({
-        ...profileData,
+        ...fullUser,
         usuario_id: numericUserId,
         userId: String(numericUserId),
-        rol: data.rol,
+        rol: fullUser?.rol || data.rol,
       });
 
       return { success: true };

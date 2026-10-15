@@ -1,7 +1,7 @@
 // src/hooks/useTriviaPlay.ts
 import { useCallback, useEffect, useState } from 'react';
 import type { AlertColor } from '@mui/material';
-import moment from 'moment';
+import { isDeadlineExpired } from '@/utils/formatDate';
 import { API_BASE_URL } from '@/environments/api';
 import { useAuth } from '@/hooks/useAuth';
 import type { Evaluacion, PlayAnswer, PlayCheckResponse, PlayQuestion, TriviaModo } from '@/types';
@@ -44,7 +44,7 @@ export const useTriviaPlay = (bookId: number) => {
         setTriviaQuestions(questions);
         const active = evaluations.find((evaluation) => {
           if (!evaluation.deadline) return true;
-          return moment(`${evaluation.deadline}T23:59:59`).isSameOrAfter(moment());
+          return !isDeadlineExpired(evaluation.deadline);
         });
         setActiveEvaluation(active ?? null);
       })

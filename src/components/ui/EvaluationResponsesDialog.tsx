@@ -17,14 +17,10 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import moment from 'moment';
-import 'moment/locale/es';
+import { formatDateTime } from '@/utils/formatDate';
 import { useEvaluationAttempts } from '@/hooks/useEvaluationAttempts';
 import type { TriviaAttempt, PlayAnswer, PlayQuestion } from '@/types';
 import styles from '@/styles/trivia.module.css';
-
-moment.locale('es');
 
 interface EvaluationResponsesDialogProps {
   open: boolean;
@@ -116,7 +112,7 @@ const EvaluationResponsesDialog = ({ open, onClose, evaluationId }: EvaluationRe
                 sx={{ mr: 1 }}
               />
               <Typography component="span" variant="caption" color="text.secondary">
-                {moment(selected.submittedAt).format('DD/MM/YYYY HH:mm')}
+                {formatDateTime(selected.submittedAt)}
               </Typography>
             </Box>
 
@@ -171,7 +167,7 @@ const EvaluationResponsesDialog = ({ open, onClose, evaluationId }: EvaluationRe
                     {attempt.studentName}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {moment(attempt.submittedAt).format('DD/MM/YYYY HH:mm')}
+                    {formatDateTime(attempt.submittedAt)}
                   </Typography>
                 </Box>
                 <Chip

@@ -20,13 +20,10 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import moment from 'moment';
-import 'moment/locale/es';
+import { formatDate } from '@/utils/formatDate';
 import { useAuth } from '@/hooks/useAuth';
 import { useTriviaPlay } from '@/hooks/useTriviaPlay';
 import styles from '@/styles/trivia.module.css';
-
-moment.locale('es');
 
 const BLANK_MARKER = '{blank}';
 
@@ -255,7 +252,7 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
           <Tooltip
             title={
               activeEvaluation.deadline
-                ? `Fecha límite: ${moment(activeEvaluation.deadline).format('DD/MM/YYYY')}`
+                ? `Fecha límite: ${formatDate(activeEvaluation.deadline)}`
                 : 'Evaluación del libro'
             }
           >

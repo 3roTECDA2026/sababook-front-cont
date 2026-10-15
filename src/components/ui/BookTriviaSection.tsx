@@ -3,15 +3,12 @@ import { useState } from 'react';
 import { Typography, Button } from '@mui/material';
 import QuizIcon from '@mui/icons-material/Quiz';
 import EventNoteIcon from '@mui/icons-material/EventNote';
-import moment from 'moment';
-import 'moment/locale/es';
 import { useBookTrivia } from '@/hooks/useBookTrivia';
 import type { Book, TriviaModo } from '@/types';
 import TriviaQuestionCard from '@/components/ui/TriviaQuestionCard';
 import TriviaQuestionForm from '@/components/forms/TriviaQuestionForm';
+import { formatDate, isDeadlineExpired } from '@/utils/formatDate';
 import styles from '@/styles/trivia.module.css';
-
-moment.locale('es');
 
 interface BookTriviaSectionProps {
   book: Book;
@@ -34,10 +31,7 @@ const BookTriviaSection = ({
   );
 
   const isEvaluation = mode === 'evaluacion';
-  const evaluationEnded =
-    isEvaluation && deadline
-      ? moment(`${deadline}T23:59:59`).isBefore(moment())
-      : false;
+  const evaluationEnded = isEvaluation && isDeadlineExpired(deadline);
 
   return (
     <div>
@@ -46,7 +40,7 @@ const BookTriviaSection = ({
           <EventNoteIcon className={styles.evalBannerIcon} />
           <Typography variant="body2">
             <b>Modo evaluación</b> — límite:{' '}
-            {deadline ? moment(deadline).format('DD/MM/YYYY') : 'sin fecha'}.
+            {formatDate(deadline)}.
             {evaluationEnded && ' La fecha límite ya pasó: la evaluación finalizó.'}
           </Typography>
         </div>
