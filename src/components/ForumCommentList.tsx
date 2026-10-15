@@ -37,11 +37,13 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
     setSendError(null);
     setSuccessMsg('');
     try {
-      const payload = { foro_id: foroId, contenido, usuario_id: usuarioId };
+      const token = localStorage.getItem('token');
+      const payload = { foro_id: foroId, contenido };
       const res = await fetch(`${API_BASE_URL}/api/v1/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
       });
@@ -108,10 +110,14 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
                   onClick={async () => {
                     if (window.confirm('¿Seguro que quieres eliminar este comentario?')) {
                       try {
+                        const token = localStorage.getItem('token');
                         const res = await fetch(
                           `${API_BASE_URL}/api/v1/comments/${comment.comentario_id}`,
                           {
                             method: 'DELETE',
+                            headers: {
+                              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                            },
                           }
                         );
                         if (!res.ok) throw new Error('Error al eliminar el comentario');
