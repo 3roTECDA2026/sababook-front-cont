@@ -125,9 +125,10 @@ export default function UserProfileForm({
           fullWidth
           sx={{
             borderColor: '#f25600',
-            color: '#f25600',
+            color: '#fff',
             '&:hover': {
               borderColor: '#f25600', // Mantener el color del borde en hover
+              color: '#f25600', // Texto naranja para que se lea sobre el fondo claro
               backgroundColor: 'rgba(242, 86, 0, 0.04)', // Efecto de hover ligero
             },
           }}
