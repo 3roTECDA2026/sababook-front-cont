@@ -3,12 +3,9 @@ import { Box, Typography, Chip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DeleteButton } from '@/components/ui/ActionButton';
 import EventNoteIcon from '@mui/icons-material/EventNote';
-import moment from 'moment';
-import 'moment/locale/es';
+import { formatDate } from '@/utils/formatDate';
 import type { TriviaQuestion, TriviaFormato } from '@/types';
 import styles from '@/styles/trivia.module.css';
-
-moment.locale('es');
 
 const FORMAT_LABELS: Record<TriviaFormato, string> = {
   multiple: 'Opción múltiple',
@@ -63,7 +60,7 @@ const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardPro
             icon={<EventNoteIcon />}
             label={
               question.deadline
-                ? `Evaluación · límite ${moment(question.deadline).format('DD/MM/YYYY')}`
+                ? `Evaluación · límite ${formatDate(question.deadline)}`
                 : 'Evaluación'
             }
             size="small"

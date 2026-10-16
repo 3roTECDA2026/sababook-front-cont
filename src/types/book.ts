@@ -9,6 +9,8 @@ export interface Book {
   calificacion_promedio: number;
   activo?: boolean;
   estado_lectura?: 'general' | 'quiero-leer' | 'leyendo' | 'leido';
+  pagina_actual?: number;
+  paginas_totales?: number;
 }
 
 export interface BookFilters {

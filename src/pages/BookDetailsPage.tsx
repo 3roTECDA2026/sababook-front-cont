@@ -69,13 +69,7 @@ const BookDetailsPage = () => {
       console.error(err);
     }
   };
-  // Mapeo seguro para obtener la URL de portada independiente de la convención de nombres (camelCase / snake_case)
-  const bookWithAlias = book as typeof book & { coverImage?: string; portadaUrl?: string };
-  const coverImageSrc =
-    bookWithAlias.coverImage?.trim() ||
-    bookWithAlias.portadaUrl?.trim() ||
-    book.portada_url?.trim() ||
-    undefined;
+  const coverImageSrc = book.portada_url?.trim() || undefined;
 
   return (
     <Box
@@ -106,8 +100,9 @@ const BookDetailsPage = () => {
 
         {/* Componente de Progreso de Lectura con la prop correcta: onUpdateProgress */}
         <ReadingProgress
-        currentPage={currentProgress !== null ? currentProgress : ((book as any).pagina_actual ?? 0)}
-        totalPages={(book as any).paginas_totales > 0 ? (book as any).paginas_totales : 100}        onUpdateProgress={handleUpdateProgress}
+          currentPage={currentProgress !== null ? currentProgress : (book.pagina_actual ?? 0)}
+          totalPages={(book.paginas_totales && book.paginas_totales > 0) ? book.paginas_totales : 100}
+          onUpdateProgress={handleUpdateProgress}
         />
 
         {showCommentBox && user && (

@@ -1,7 +1,7 @@
 // src/hooks/useTriviaPlay.ts
 import { useCallback, useEffect, useState } from 'react';
 import type { AlertColor } from '@mui/material';
-import moment from 'moment';
+import { isDeadlineExpired } from '@/utils/formatDate';
 import { API_BASE_URL } from '@/environments/api';
 import { useAuth } from '@/hooks/useAuth';
 import type { Evaluacion, PlayAnswer, PlayCheckResponse, PlayQuestion, TriviaModo } from '@/types';
@@ -14,7 +14,7 @@ export type TriviaPlayPhase = 'entry' | 'play' | 'result';
  * las envía para su corrección.
  */
 export const useTriviaPlay = (bookId: number) => {
-  const { token, user } = useAuth();
+  const { token, user, isStudent, isAdmin } = useAuth();
 
   const [notice, setNotice] = useState<{ message: string; severity: AlertColor } | null>(null);
   const [triviaQuestions, setTriviaQuestions] = useState<PlayQuestion[]>([]);
@@ -44,7 +44,7 @@ export const useTriviaPlay = (bookId: number) => {
         setTriviaQuestions(questions);
         const active = evaluations.find((evaluation) => {
           if (!evaluation.deadline) return true;
-          return moment(`${evaluation.deadline}T23:59:59`).isSameOrAfter(moment());
+          return !isDeadlineExpired(evaluation.deadline);
         });
         setActiveEvaluation(active ?? null);
       })
@@ -82,8 +82,7 @@ export const useTriviaPlay = (bookId: number) => {
   }, [activeEvaluation, token]);
 
   const hasContent = triviaQuestions.length > 0 || !!activeEvaluation;
-  const userRole = Number(user?.rol ?? user?.rol_id);
-  const canPlay = userRole === 1 || userRole === 3;
+  const canPlay = isStudent || isAdmin;
   const current = playQuestions[currentIndex];
 
   const startPlay = async (mode: TriviaModo) => {

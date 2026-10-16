@@ -98,7 +98,7 @@ const ForumDetailsPage = () => {
           {user ? (
             <ForumAddComment
               forumId={id!}
-              userId={user.userId ?? (user as any).usuario_id}
+              userId={user.usuario_id}
               userName={user.nombre}
               userAvatar={user.avatar_url ?? null}
               onCommentAdded={handleCommentAdded}

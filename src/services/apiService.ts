@@ -133,7 +133,7 @@ export async function crearCafeLiterario(data: {
   libro_id: string | number;
   fecha_evento: string;
   lugar: string;
-  docente_id: number;
+  docente_id?: number;
 }): Promise<{ cafe_id: number; foro_id: number }> {
   return await apiRequest('/cafes', {
     method: 'POST',
@@ -146,12 +146,12 @@ export async function crearCafeLiterario(data: {
  */
 export async function toggleAsistenciaCafe(
   cafeId: number,
-  usuarioId: number,
+  _usuarioId?: number,
   estado = 'confirmado'
 ): Promise<{ mensaje: string; estado: string | null }> {
   return await apiRequest(`/cafes/${cafeId}/asistencia`, {
     method: 'POST',
-    body: JSON.stringify({ usuario_id: usuarioId, estado }),
+    body: JSON.stringify({ estado }),
   });
 }
 
@@ -160,12 +160,12 @@ export async function toggleAsistenciaCafe(
  */
 export async function votarCafeLiterario(
   cafeId: number,
-  usuarioId: number,
+  _usuarioId: number | undefined,
   voto: boolean
 ): Promise<{ mensaje: string; voto: { voto_id: number; cafe_id: number; usuario_id: number; voto: boolean } }> {
   return await apiRequest(`/cafes/${cafeId}/voto`, {
     method: 'POST',
-    body: JSON.stringify({ usuario_id: usuarioId, voto }),
+    body: JSON.stringify({ voto }),
   });
 }
 

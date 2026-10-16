@@ -3,7 +3,7 @@ import { useState, useEffect, ReactNode, useCallback } from 'react';
 import { API_BASE_URL } from '@/environments/api';
 import { AuthContext, AuthContextType, AuthResult } from './AuthContextDefinition';
 import { useNavigate } from 'react-router-dom';
-import type { User } from '@/types';
+import type { User, TipoRol } from '@/types';
 import { parseJsonResponse } from '@/utils/api';
 
 interface AuthProviderProps {
@@ -20,7 +20,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("rol");
-    localStorage.removeItem("roleName");
     localStorage.removeItem("username");
     setUser(null);
     setToken(null);
@@ -52,15 +51,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           if (response.ok) {
             const userData = await parseJsonResponse(response);
             if (userData) {
-              if (userData.rol) {
-                localStorage.setItem("roleName", userData.rol);
-              }
               const numericUserId = Number(userData.usuario_id || storedUserId);
               setUser({
                 ...userData,
                 usuario_id: numericUserId,
                 userId: String(numericUserId),
-                rol: localStorage.getItem("rol"),
+                rol: userData.rol,
               });
             }
           } else {
@@ -100,50 +96,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error(errorMsg);
       }
 
-      if (!data?.token || !data?.userId) {
+      if (!data?.token || !data?.userId || !data?.user) {
         throw new Error("Respuesta de autenticación incompleta.");
       }
 
       // Guardar datos en localStorage
       localStorage.setItem("token", data.token);
-      localStorage.setItem("userId", data.userId);
-      localStorage.setItem("rol", data.rol);
-      localStorage.removeItem("roleName");
+      localStorage.setItem("userId", String(data.userId));
+      if (data.rol) {
+        localStorage.setItem("rol", String(data.rol));
+      }
       setToken(data.token);
 
-      // Obtener el perfil completo del usuario
-      const profileResponse = await fetch(
-        `${API_BASE_URL}/api/v1/users/${data.userId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${data.token}`,
-          },
-        },
-      );
+      const fullUser = data.user;
 
-      const profileData = await parseJsonResponse(profileResponse);
-
-      if (!profileResponse.ok) {
-        const profileError =
-          profileData?.error || "No se pudo obtener el perfil del usuario";
-        throw new Error(profileError);
+      if (fullUser.nombre) {
+        localStorage.setItem("username", fullUser.nombre);
       }
 
-      if (profileData?.nombre) {
-        localStorage.setItem("username", profileData.nombre);
-      }
-      if (profileData?.rol) {
-        localStorage.setItem("roleName", profileData.rol);
-      }
-
-      const numericUserId = Number(profileData?.usuario_id || data.userId);
+      const numericUserId = Number(fullUser.usuario_id || data.userId);
 
       setUser({
-        ...profileData,
+        ...fullUser,
         usuario_id: numericUserId,
         userId: String(numericUserId),
-        rol: data.rol,
+        rol: fullUser.rol || data.rol,
       });
 
       return { success: true };
@@ -191,10 +168,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const roleName = String(user?.rol || '').toUpperCase().trim();
+  const isAdmin = roleName === 'ADMINISTRADOR';
+  const isTeacher = roleName === 'DOCENTE';
+  const isStudent = roleName === 'ALUMNO';
+
+  const hasRole = (role: TipoRol): boolean => {
+    if (role === 'ADMINISTRADOR') return isAdmin;
+    if (role === 'DOCENTE') return isTeacher;
+    if (role === 'ALUMNO') return isStudent;
+    return false;
+  };
+
   const value: AuthContextType = {
     user,
     token,
     loading,
+    isAdmin,
+    isTeacher,
+    isStudent,
+    hasRole,
     login,
     logout,
     updateUser,

@@ -1,6 +1,6 @@
 // src/contexts/AuthContextDefinition.ts
 import { createContext } from 'react';
-import type { User } from '@/types';
+import type { User, TipoRol } from '@/types';
 
 export interface AuthResult {
   success: boolean;
@@ -11,6 +11,10 @@ export interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
+  isAdmin: boolean;
+  isTeacher: boolean;
+  isStudent: boolean;
+  hasRole: (role: TipoRol) => boolean;
   login: (email: string, password: string) => Promise<AuthResult>;
   logout: () => void;
   updateUser: (updatedData: Partial<User>) => Promise<AuthResult>;

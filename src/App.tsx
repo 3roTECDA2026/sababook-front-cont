@@ -26,6 +26,7 @@ import { FeedMuro } from './components/FeedMuro';
 
 // Importación de Ruta Protegida
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { RoleGuard } from './components/RoleGuard';
 
 function App() {
   return (
@@ -138,15 +139,23 @@ function App() {
         }
       />
 
-      <Route path="/dashboard/forum-comments/:foroId" element={<ForumCommentsAdmin />} />
+      {/* Ruta de administración de comentarios de foros (Protegida) */}
+      <Route
+        path="/dashboard/forum-comments/:foroId"
+        element={
+          <RoleGuard allowedRoles={['ADMINISTRADOR']}>
+            <ForumCommentsAdmin />
+          </RoleGuard>
+        }
+      />
 
-      {/* Ruta para generar trivia (Docentes) */}
+      {/* Ruta para generar trivia (Docentes y Administradores) */}
       <Route
         path="/trivia"
         element={
-          <ProtectedRoute>
+          <RoleGuard allowedRoles={['DOCENTE', 'ADMINISTRADOR']}>
             <TriviaPage />
-          </ProtectedRoute>
+          </RoleGuard>
         }
       />
 
@@ -154,9 +163,9 @@ function App() {
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute>
+          <RoleGuard allowedRoles={['ADMINISTRADOR']}>
             <DashboardPage />
-          </ProtectedRoute>
+          </RoleGuard>
         }
       />
 
@@ -164,9 +173,9 @@ function App() {
       <Route
         path="/dashboard/book-comments/:bookId"
         element={
-          <ProtectedRoute>
+          <RoleGuard allowedRoles={['ADMINISTRADOR']}>
             <BookCommentsAdmin />
-          </ProtectedRoute>
+          </RoleGuard>
         }
       />
 
@@ -192,9 +201,9 @@ function App() {
       <Route
         path="/cursos/libros"
         element={
-          <ProtectedRoute>
+          <RoleGuard allowedRoles={['DOCENTE', 'ADMINISTRADOR']}>
             <CourseBooksPage />
-          </ProtectedRoute>
+          </RoleGuard>
         }
       />
 

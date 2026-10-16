@@ -34,6 +34,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import { useAuth } from '@/hooks/useAuth';
 import { getCatalogoLibros } from '@/services/apiService';
 import {
   getCursos,
@@ -97,7 +98,7 @@ const mensajeDeError = (error: unknown) =>
   error instanceof Error ? error.message : 'Ocurrió un error inesperado.';
 
 export default function CourseBooksPage() {
-  const esAdmin = localStorage.getItem('rol') === '3';
+  const { isAdmin: esAdmin } = useAuth();
 
   const [menuAbierto, setMenuAbierto] = useState<boolean>(false);
 
