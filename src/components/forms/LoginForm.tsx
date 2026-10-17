@@ -1,7 +1,8 @@
-// src/components/LoginForm.tsx
+// src/components/forms/LoginForm.tsx
 
 import React, { useState, FormEvent } from 'react';
-import { Box, Button, TextField, Typography, styled, useTheme } from '@mui/material';
+import { Alert, Box, Button, TextField, Typography, styled, useTheme } from '@mui/material';
+import type { TipoErrorLogin } from '@/contexts/AuthContextDefinition';
 
 // Estilos del contenedor del formulario (simplemente para dar un padding)
 const FormContainer = styled(Box)({
@@ -32,9 +33,10 @@ export interface LoginCredentials {
 interface LoginFormProps {
   onLoginSubmit: (credentials: LoginCredentials) => void;
   error?: string | null;
+  errorType?: TipoErrorLogin | null;
 }
 
-const LoginForm = ({ onLoginSubmit, error }: LoginFormProps) => {
+const LoginForm = ({ onLoginSubmit, error, errorType }: LoginFormProps) => {
   const theme = useTheme();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -98,9 +100,21 @@ const LoginForm = ({ onLoginSubmit, error }: LoginFormProps) => {
           />
         </Box>
 
-        {/* Mensaje de Error */}
-        {error && (
-          <Typography color="error" align="center" sx={{ mb: 2 }}>
+        {/* Error de conexión: cartel azul informativo */}
+        {error && errorType === 'conexion' && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Credenciales incorrectas: mensaje neutro, en tono suave */}
+        {error && errorType !== 'conexion' && (
+          <Typography
+            variant="body2"
+            align="center"
+            aria-live="polite"
+            sx={{ mb: 2, color: 'text.secondary' }}
+          >
             {error}
           </Typography>
         )}

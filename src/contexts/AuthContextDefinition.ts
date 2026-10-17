@@ -2,9 +2,13 @@
 import { createContext } from 'react';
 import type { User, TipoRol } from '@/types';
 
+// Tipo de error del login: credenciales incorrectas o problema de conexión con el servidor
+export type TipoErrorLogin = 'credenciales' | 'conexion';
+
 export interface AuthResult {
   success: boolean;
   error?: string;
+  errorType?: TipoErrorLogin;
 }
 
 export interface AuthContextType {

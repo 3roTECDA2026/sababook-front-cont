@@ -10,6 +10,7 @@ import LoginForm from '@/components/forms/LoginForm';
 import type { LoginCredentials } from '@/components/forms/LoginForm';
 import Register from '@/components/auth/Register';
 import { useAuth } from '@/hooks/useAuth';
+import type { TipoErrorLogin } from '@/contexts/AuthContextDefinition';
 
 const StyledPageContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -27,6 +28,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<TipoErrorLogin | null>(null);
   const [view, setView] = useState<ViewState>('presentation');
   const logoUrl = logoImage;
 
@@ -40,7 +42,9 @@ const LoginPage = () => {
   };
 
   const handleLoginSubmit = async ({ email, password }: LoginCredentials) => {
-    setError(null); // Limpia errores previos
+    // Limpia errores previos
+    setError(null);
+    setErrorType(null);
 
     try {
       const result = await login(email, password);
@@ -49,10 +53,12 @@ const LoginPage = () => {
         // Navegar a Home
         navigate('/home', { state: { fromLogin: true } });
       } else {
-        setError(result.error ?? 'Error al iniciar sesión');
+        setError(result.error ?? 'No pudimos conectar con el servidor. Inténtalo en un momento.');
+        setErrorType(result.errorType ?? 'conexion');
       }
     } catch {
-      setError('Error inesperado al iniciar sesión');
+      setError('No pudimos conectar con el servidor. Inténtalo en un momento.');
+      setErrorType('conexion');
     }
   };
 
@@ -86,7 +92,7 @@ const LoginPage = () => {
       {view === 'presentation' ? (
         <Login imageUrl={logoUrl} onRegisterClick={handleRegistroClick} onLoginClick={handleLoginClick} />
       ) : view === 'login' ? (
-        <LoginForm onLoginSubmit={handleLoginSubmit} error={error} />
+        <LoginForm onLoginSubmit={handleLoginSubmit} error={error} errorType={errorType} />
       ) : view === 'register' ? (
         <Register onRegisterSubmit={handleRegisterSubmit} onBackToLogin={handleBackToLogin} />
       ) : null}
