@@ -1,4 +1,4 @@
-// src/components/Dashboard.tsx
+
 import { useState, useEffect, SyntheticEvent, useCallback } from 'react';
 import {
   Box,
@@ -28,7 +28,6 @@ import { API_BASE_URL } from '@/environments/api';
 import type { Book, Forum, User, ReadingGoal } from '@/types';
 import UserTable from './tables/UserTable';
 import BookTable from './tables/BookTable';
-import { CrearListaModal } from './CrearListaModal';
 import ForumTable from './tables/ForumTable';
 import GoalTable from './tables/GoalTable';
 import { usePagination } from '@/hooks/usePagination';
@@ -44,68 +43,73 @@ interface SnackbarState {
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState<DashboardView>('users');
-  const fetchUsersPage = useCallback(
-  (page: number, limit: number, signal?: AbortSignal) => getUsersPaginated(page, limit, signal),
-  []
-);
 
-const {
-  items: users,
-  page: userPage,
-  totalPages: userTotalPages,
-  loading: userLoading,
-  error: userError,
-  goToPage: goToUserPage,
-  reload: reloadUsers,
-} = usePagination<User>({
-  fetchPage: fetchUsersPage,
-  limit: 5,
-  mode: 'replace',
-  enabled: activeView === 'users',
-});
+  const fetchUsersPage = useCallback(
+    (page: number, limit: number, signal?: AbortSignal) =>
+      getUsersPaginated(page, limit, signal),
+    []
+  );
+
+  const {
+    items: users,
+    page: userPage,
+    totalPages: userTotalPages,
+    loading: userLoading,
+    error: userError,
+    goToPage: goToUserPage,
+    reload: reloadUsers,
+  } = usePagination<User>({
+    fetchPage: fetchUsersPage,
+    limit: 5,
+    mode: 'replace',
+    enabled: activeView === 'users',
+  });
 
   const [books, setBooks] = useState<Book[]>([]);
   const [booksLoading, setBooksLoading] = useState<boolean>(true);
   const [booksError, setBooksError] = useState<string | null>(null);
 
-  // --- ESTADOS DE MODALES Y EDICIÓN ---
-  const [openForumModal, setOpenForumModal] = useState<boolean>(false);
-  const [openCreateModal, setOpenCreateModal] = useState<boolean>(false); // Modal para USUARIOS
-  const [openCreateBookModal, setOpenCreateBookModal] = useState<boolean>(false);
-  const [openRecommendModal, setOpenRecommendModal] = useState<boolean>(false); // Modal para LIBROS
+  // Estados de modales
+  const [openForumModal, setOpenForumModal] = useState(false);
+  const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [openCreateBookModal, setOpenCreateBookModal] = useState(false);
 
   const [goals, setGoals] = useState<ReadingGoal[]>([]);
-  const [goalsLoading, setGoalsLoading] = useState<boolean>(true);
+  const [goalsLoading, setGoalsLoading] = useState(true);
   const [goalsError, setGoalsError] = useState<string | null>(null);
-  const [openGoalModal, setOpenGoalModal] = useState<boolean>(false);
+  const [openGoalModal, setOpenGoalModal] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<ReadingGoal | null>(null);
-  const [openDeleteGoalConfirm, setOpenDeleteGoalConfirm] = useState<boolean>(false);
+  const [openDeleteGoalConfirm, setOpenDeleteGoalConfirm] = useState(false);
   const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
-  //  ESTADO CLAVE: Rastrear el libro que se está editando (null si es creación)
+
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
+
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: '',
     severity: 'success',
   });
-  const [isApiLoading, setIsApiLoading] = useState<boolean>(false); // Para manejar carga en operaciones CRUD
-  const [openDeleteConfirm, setOpenDeleteConfirm] = useState<boolean>(false);
+
+  const [isApiLoading, setIsApiLoading] = useState(false);
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
   const [bookToDeleteId, setBookToDeleteId] = useState<number | null>(null);
-  // ---  ESTADOS DE FOROS
+
+  // Estados de foros
   const [forums, setForums] = useState<Forum[]>([]);
-  const [forumsLoading, setForumsLoading] = useState<boolean>(true);
+  const [forumsLoading, setForumsLoading] = useState(true);
   const [forumsError, setForumsError] = useState<string | null>(null);
   const [selectedForumId, setSelectedForumId] = useState<number | null>(null);
-  const [openForumDetail, setOpenForumDetail] = useState<boolean>(false);
+  const [openForumDetail, setOpenForumDetail] = useState(false);
   const [forumToEdit, setForumToEdit] = useState<Forum | null>(null);
-  const [openDeleteForumConfirm, setOpenDeleteForumConfirm] = useState<boolean>(false);
+  const [openDeleteForumConfirm, setOpenDeleteForumConfirm] = useState(false);
   const [forumToDeleteId, setForumToDeleteId] = useState<number | null>(null);
 
-  // --- FUNCIÓN FETCH PARA LIBROS
+  // Cargar libros
   const fetchBooks = async (signal?: AbortSignal) => {
     try {
       setBooksLoading(true);
       setBooksError(null);
+
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No autenticado.');
 
@@ -113,26 +117,28 @@ const {
         headers: { Authorization: `Bearer ${token}` },
         signal,
       });
+
       if (!res.ok) {
         if (res.status === 403) throw new Error('Acceso denegado.');
         throw new Error('Error al cargar los libros');
       }
+
       const data: Book[] = await res.json();
       setBooks(data);
     } catch (err) {
       if ((err as { name?: string })?.name === 'AbortError') return;
-      const message = err instanceof Error ? err.message : String(err);
-      setBooksError(message);
+      setBooksError(err instanceof Error ? err.message : String(err));
     } finally {
       setBooksLoading(false);
     }
   };
 
-  // --- FUNCIÓN FETCH PARA FOROS
+  // Cargar foros
   const fetchForums = async (signal?: AbortSignal) => {
     try {
       setForumsLoading(true);
       setForumsError(null);
+
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE_URL}/api/v1/forums`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -148,18 +154,18 @@ const {
       setForums(data);
     } catch (err) {
       if ((err as { name?: string })?.name === 'AbortError') return;
-      const message = err instanceof Error ? err.message : String(err);
-      setForumsError(message);
+      setForumsError(err instanceof Error ? err.message : String(err));
     } finally {
       setForumsLoading(false);
     }
   };
 
-  // --- FETCH METAS ---
+  // Cargar metas
   const fetchGoals = async () => {
     try {
       setGoalsLoading(true);
       setGoalsError(null);
+
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE_URL}/api/v1/metas-lectura`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -173,25 +179,23 @@ const {
       const data: ReadingGoal[] = await res.json();
       setGoals(data);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setGoalsError(msg);
+      setGoalsError(err instanceof Error ? err.message : String(err));
     } finally {
       setGoalsLoading(false);
     }
   };
 
-  // --- useEffect para Cargar Datos ---
   useEffect(() => {
     const controller = new AbortController();
-    const { signal } = controller;
 
     if (activeView === 'books') {
-      fetchBooks(signal);
+      void fetchBooks(controller.signal);
     } else if (activeView === 'forums') {
-      fetchForums(signal);
+      void fetchForums(controller.signal);
     } else if (activeView === 'goals') {
-      fetchGoals();
+      void fetchGoals();
     }
+
     setBooksError(null);
     setForumsError(null);
     setGoalsError(null);
@@ -199,7 +203,6 @@ const {
     return () => controller.abort();
   }, [activeView]);
 
-  // --- UI HANDLERS ---
   const handleNavigate = (viewName: DashboardView) => {
     setActiveView(viewName);
   };
@@ -213,24 +216,25 @@ const {
     setBookToEdit(null);
   };
 
-  //  HANDLER DE EDICIÓN: Abre el modal en modo edición
   const handleEditBookClick = (book: Book) => {
     setBookToEdit(book);
     setOpenCreateBookModal(true);
   };
 
-  // --- API HANDLERS (USUARIOS) ---
+  // Crear usuario
   const handleSaveNewUser = async (formData: UserFormData) => {
-    // Lógica para crear un nuevo usuario (POST)
     const dataToSend: UserFormData = { ...formData };
+
     if (dataToSend.rol) {
       dataToSend.rol = String(dataToSend.rol).toUpperCase();
     }
+
     dataToSend.contrasena = dataToSend.password;
     delete dataToSend.password;
 
     try {
       const token = localStorage.getItem('token');
+
       const response = await fetch(`${API_BASE_URL}/api/v1/users`, {
         method: 'POST',
         headers: {
@@ -244,16 +248,27 @@ const {
 
       reloadUsers();
       handleCloseCreateModal();
-      setSnackbar({ open: true, message: 'Usuario creado correctamente', severity: 'success' });
+
+      setSnackbar({
+        open: true,
+        message: 'Usuario creado correctamente',
+        severity: 'success',
+      });
     } catch (error) {
       console.error('Error al crear usuario:', error);
-      setSnackbar({ open: true, message: 'Error al crear el usuario', severity: 'error' });
+
+      setSnackbar({
+        open: true,
+        message: 'Error al crear el usuario',
+        severity: 'error',
+      });
     }
   };
 
-  // --- API HANDLERS (LIBROS) ---
-  //  HANDLER UNIFICADO: Maneja Creación (POST) y Edición (PUT)
-  const handleSaveBook = async (bookData: { libro_id?: number; [key: string]: unknown }) => {
+  // Crear o editar libro
+  const handleSaveBook = async (
+    bookData: { libro_id?: number; [key: string]: unknown }
+  ) => {
     setIsApiLoading(true);
     const token = localStorage.getItem('token');
 
@@ -261,11 +276,10 @@ const {
     const endpoint = isEditing
       ? `${API_BASE_URL}/api/v1/books/${bookData.libro_id}`
       : `${API_BASE_URL}/api/v1/books`;
-    const method = isEditing ? 'PUT' : 'POST';
 
     try {
       const response = await fetch(endpoint, {
-        method: method,
+        method: isEditing ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -275,31 +289,43 @@ const {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Fallo la operación (HTTP ${response.status})`);
+        throw new Error(
+          errorData.message || `Falló la operación (HTTP ${response.status})`
+        );
       }
 
       await fetchBooks();
       handleCloseCreateBookModal();
-      const successMsg = isEditing
-        ? 'Libro actualizado correctamente.'
-        : 'Libro creado correctamente.';
-      setSnackbar({ open: true, message: `✅ ${successMsg}`, severity: 'success' });
+
+      setSnackbar({
+        open: true,
+        message: isEditing
+          ? 'Libro actualizado correctamente.'
+          : 'Libro creado correctamente.',
+        severity: 'success',
+      });
+
       return Promise.resolve();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error(`Error al ${isEditing ? 'editar' : 'crear'} libro:`, error);
-      setSnackbar({ open: true, message: `❌ Error: ${message}`, severity: 'error' });
-      // Rechazar la promesa para que el formulario sepa que falló el guardado
+      console.error('Error al guardar libro:', error);
+
+      setSnackbar({
+        open: true,
+        message: `Error: ${message}`,
+        severity: 'error',
+      });
+
       return Promise.reject(error);
     } finally {
       setIsApiLoading(false);
     }
   };
 
-  // --- HANDLER PARA ABRIR EL MODAL DE CONFIRMACIÓN ---
+  // Eliminar libro
   const handleOpenDeleteConfirm = (bookId: number) => {
-    setBookToDeleteId(bookId); // Guarda el ID del libro
-    setOpenDeleteConfirm(true); // Abre el modal
+    setBookToDeleteId(bookId);
+    setOpenDeleteConfirm(true);
   };
 
   const handleCloseDeleteConfirm = () => {
@@ -323,31 +349,40 @@ const {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Fallo la eliminación (HTTP ${response.status})`);
+        throw new Error(
+          errorData.message || `Falló la eliminación (HTTP ${response.status})`
+        );
       }
 
-      await fetchBooks(); // Refrescar la lista de libros
-      setSnackbar({ open: true, message: `✅ Libro eliminado correctamente.`, severity: 'success' });
+      await fetchBooks();
+
+      setSnackbar({
+        open: true,
+        message: 'Libro eliminado correctamente.',
+        severity: 'success',
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error('Error al eliminar libro:', error);
-      setSnackbar({ open: true, message: `❌ Error al eliminar: ${message}`, severity: 'error' });
+
+      setSnackbar({
+        open: true,
+        message: `Error al eliminar: ${message}`,
+        severity: 'error',
+      });
     } finally {
       setIsApiLoading(false);
-      setBookToDeleteId(null); // Limpia el ID al finalizar
+      setBookToDeleteId(null);
     }
   };
 
-  //foros
-
-  //  HANDLER DE EDICIÓN: Abre el modal en modo edición y guarda los datos
+  // Editar foro
   const handleEditForumClick = (forum: Forum) => {
-    setForumToEdit(forum); // Guarda el objeto completo del foro
-    setOpenForumModal(true); // Abre el modal de creación/edición
+    setForumToEdit(forum);
+    setOpenForumModal(true);
     setBookToDeleteId(null);
   };
 
-  // --- HANDLERS (METAS DE LECTURA) ---
+  // Eliminar meta
   const handleOpenDeleteGoalConfirm = (goalId: number) => {
     setGoalToDeleteId(goalId);
     setOpenDeleteGoalConfirm(true);
@@ -364,35 +399,37 @@ const {
 
     setIsApiLoading(true);
     const token = localStorage.getItem('token');
-    const endpoint = `${API_BASE_URL}/api/v1/metas-lectura/${goalToDeleteId}`;
 
     try {
-      const response = await fetch(endpoint, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/metas-lectura/${goalToDeleteId}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Fallo al eliminar la meta (HTTP ${response.status})`);
+        throw new Error(
+          errorData.message || `Falló la eliminación (HTTP ${response.status})`
+        );
       }
 
       await fetchGoals();
-      setSnackbar({ open: true, message: `✅ Meta de lectura eliminada correctamente.`, severity: 'success' });
+
+      setSnackbar({
+        open: true,
+        message: 'Meta de lectura eliminada correctamente.',
+        severity: 'success',
+      });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setGoalsError(msg);
+      setGoalsError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsApiLoading(false);
       setGoalToDeleteId(null);
     }
   };
-
-  // --- HANDLERS (FOROS) ---
-  /*/const handleEditForumClick = (forum) => {
-    setForumToEdit(forum);
-    setOpenForumModal(true);
-  };/*/
 
   const handleCloseForumModal = () => {
     setOpenForumModal(false);
@@ -411,8 +448,10 @@ const {
     }
   };
 
-  //  MODIFICAR: Unificar la lógica de GUARDADO (POST y PUT)
-  const handleSaveForum = async (forumData: { foro_id?: number; [key: string]: unknown }) => {
+  // Crear o editar foro
+  const handleSaveForum = async (
+    forumData: { foro_id?: number; [key: string]: unknown }
+  ) => {
     setIsApiLoading(true);
     const token = localStorage.getItem('token');
 
@@ -420,40 +459,52 @@ const {
     const endpoint = isEditing
       ? `${API_BASE_URL}/api/v1/forums/${forumData.foro_id}`
       : `${API_BASE_URL}/api/v1/forums`;
-    const method = isEditing ? 'PUT' : 'POST';
-
-    const dataToSend = forumData;
 
     try {
       const response = await fetch(endpoint, {
-        method: method,
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(dataToSend),
+        method: isEditing ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(forumData),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Fallo la operación (HTTP ${response.status})`);
+        throw new Error(
+          errorData.message || `Falló la operación (HTTP ${response.status})`
+        );
       }
 
       await fetchForums();
       handleCloseForumModal();
-      const successMsg = isEditing
-        ? 'Foro actualizado correctamente.'
-        : 'Foro creado correctamente.';
-      setSnackbar({ open: true, message: `✅ ${successMsg}`, severity: 'success' });
+
+      setSnackbar({
+        open: true,
+        message: isEditing
+          ? 'Foro actualizado correctamente.'
+          : 'Foro creado correctamente.',
+        severity: 'success',
+      });
+
       return Promise.resolve();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error(`Error al ${isEditing ? 'editar' : 'crear'} foro:`, error);
-      setSnackbar({ open: true, message: `❌ Error: ${message}`, severity: 'error' });
+
+      setSnackbar({
+        open: true,
+        message: `Error: ${message}`,
+        severity: 'error',
+      });
+
       return Promise.reject(error);
     } finally {
       setIsApiLoading(false);
     }
   };
 
-  // 1. Handler para abrir el modal de eliminación de foros
+  // Eliminar foro
   const handleOpenDeleteForumConfirm = (forumId: number) => {
     setForumToDeleteId(forumId);
     setOpenDeleteForumConfirm(true);
@@ -466,34 +517,41 @@ const {
 
   const handleConfirmDeleteForum = async () => {
     setOpenDeleteForumConfirm(false);
-
     if (!forumToDeleteId) return;
 
     setIsApiLoading(true);
     const token = localStorage.getItem('token');
-    const endpoint = `${API_BASE_URL}/api/v1/forums/${forumToDeleteId}`;
 
     try {
-      const response = await fetch(endpoint, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/forums/${forumToDeleteId}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || `Fallo la eliminación del foro (HTTP ${response.status})`
+          errorData.message ||
+            `Falló la eliminación del foro (HTTP ${response.status})`
         );
       }
 
       await fetchForums();
-      setSnackbar({ open: true, message: `✅ Foro eliminado correctamente.`, severity: 'success' });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error('Error al eliminar foro:', error);
+
       setSnackbar({
         open: true,
-        message: `❌ Error al eliminar foro: ${message}`,
+        message: 'Foro eliminado correctamente.',
+        severity: 'success',
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      setSnackbar({
+        open: true,
+        message: `Error al eliminar foro: ${message}`,
         severity: 'error',
       });
     } finally {
@@ -502,15 +560,27 @@ const {
     }
   };
 
-  const handleSnackbarClose = (event?: SyntheticEvent | Event, reason?: string) => {
+  const handleSnackbarClose = (
+    _event?: SyntheticEvent | Event,
+    reason?: string
+  ) => {
     if (reason === 'clickaway') return;
-    setSnackbar({ ...snackbar, open: false });
+
+    setSnackbar((prev) => ({
+      ...prev,
+      open: false,
+    }));
   };
 
-  const handleSaveGoal = async (goalData: { meta_id?: number; id?: number; [key: string]: unknown }) => {
+  // Actualizar meta
+  const handleSaveGoal = async (
+    goalData: { meta_id?: number; id?: number; [key: string]: unknown }
+  ) => {
     setIsApiLoading(true);
     const token = localStorage.getItem('token');
-    const endpoint = `${API_BASE_URL}/api/v1/metas-lectura/${goalData.meta_id || goalData.id}`;
+    const endpoint = `${API_BASE_URL}/api/v1/metas-lectura/${
+      goalData.meta_id || goalData.id
+    }`;
 
     try {
       const response = await fetch(endpoint, {
@@ -524,35 +594,43 @@ const {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Fallo al actualizar la meta (HTTP ${response.status})`);
+        throw new Error(
+          errorData.message || `Falló la actualización (HTTP ${response.status})`
+        );
       }
 
       await fetchGoals();
       setOpenGoalModal(false);
       setGoalToEdit(null);
-      setSnackbar({ open: true, message: '✅ Meta de lectura actualizada correctamente.', severity: 'success' });
+
+      setSnackbar({
+        open: true,
+        message: 'Meta de lectura actualizada correctamente.',
+        severity: 'success',
+      });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setGoalsError(msg);
+      setGoalsError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsApiLoading(false);
     }
   };
 
+  // Vistas del Dashboard
   const renderActiveView = () => {
     switch (activeView) {
       case 'users':
         return (
-    <UserTable
-      users={users}
-      loading={userLoading && users.length === 0}
-      error={userError}
-      onUserUpdate={reloadUsers}
-      page={userPage}
-      totalPages={userTotalPages}
-      onPageChange={goToUserPage}
-    />
-  );
+          <UserTable
+            users={users}
+            loading={userLoading && users.length === 0}
+            error={userError}
+            onUserUpdate={reloadUsers}
+            page={userPage}
+            totalPages={userTotalPages}
+            onPageChange={goToUserPage}
+          />
+        );
+
       case 'books':
         return (
           <BookTable
@@ -564,6 +642,7 @@ const {
             onDeleteBook={handleOpenDeleteConfirm}
           />
         );
+
       case 'forums':
         return (
           <ForumTable
@@ -579,6 +658,7 @@ const {
             }}
           />
         );
+
       case 'goals':
         return (
           <GoalTable
@@ -592,8 +672,10 @@ const {
             }}
           />
         );
+
       case 'moderation':
         return <ModerationAdmin />;
+
       default:
         return null;
     }
@@ -611,17 +693,18 @@ const {
         alignItems: 'center',
       }}
     >
-      {/* 1. Componente que agrupa la navegación y acciones */}
+      {/* Encabezado del Dashboard, sin recomendación vieja */}
       <HeaderDashboard
         activeView={activeView}
         onNavigate={handleNavigate}
         onAddClick={handleAddClick}
-        onRecommendClick={() => setOpenRecommendModal(true)}
         isLoading={isApiLoading}
       />
 
-      {/* 2. Renderizado Condicional de la Tabla */}
-      <Box sx={{ width: '100%', maxWidth: '1200px', flexGrow: 1, mt: 2 }}>{renderActiveView()}</Box>
+      {/* Tabla activa */}
+      <Box sx={{ width: '100%', maxWidth: '1200px', flexGrow: 1, mt: 2 }}>
+        {renderActiveView()}
+      </Box>
 
       {/* Modal Usuario */}
       <Modal open={openCreateModal} onClose={handleCloseCreateModal}>
@@ -634,23 +717,12 @@ const {
             outline: 'none',
           }}
         >
-          <UserForm onSave={handleSaveNewUser} onCancel={handleCloseCreateModal} />
+          <UserForm
+            onSave={handleSaveNewUser}
+            onCancel={handleCloseCreateModal}
+          />
         </Box>
       </Modal>
-
-      {/* Modal de recomendaciones */}
-      <CrearListaModal
-        open={openRecommendModal}
-        onClose={() => setOpenRecommendModal(false)}
-        onListaCreada={() => {
-          setOpenRecommendModal(false);
-          setSnackbar({
-            open: true,
-            message: 'Libro recomendado correctamente',
-            severity: 'success',
-          });
-        }}
-      />
 
       {/* Modal Libro */}
       <Modal open={openCreateBookModal} onClose={handleCloseCreateBookModal}>
@@ -674,14 +746,14 @@ const {
           <BookForm
             bookToEdit={bookToEdit}
             title={bookToEdit ? 'Editar Libro' : 'Crear Nuevo Libro'}
-            onSave={handleSaveBook} // Handler unificado (POST/PUT)
+            onSave={handleSaveBook}
             onCancel={handleCloseCreateBookModal}
           />
         </Box>
       </Modal>
 
       {/* Modal Foro */}
-      <Modal open={openForumModal} onClose={() => setOpenForumModal(false)}>
+      <Modal open={openForumModal} onClose={handleCloseForumModal}>
         <Box
           sx={{
             position: 'absolute',
@@ -692,10 +764,10 @@ const {
           }}
         >
           <ForumForm
-            forumToEdit={forumToEdit} // Pasa el objeto del foro
-            title={forumToEdit ? 'Editar Foro' : 'Crear Nuevo Foro'} // Título dinámico
-            onSave={handleSaveForum} // Handler unificado (POST/PUT)
-            onCancel={handleCloseForumModal} // Nuevo handler de cierre
+            forumToEdit={forumToEdit}
+            title={forumToEdit ? 'Editar Foro' : 'Crear Nuevo Foro'}
+            onSave={handleSaveForum}
+            onCancel={handleCloseForumModal}
           />
         </Box>
       </Modal>
@@ -721,6 +793,7 @@ const {
         </Box>
       </Modal>
 
+      {/* Detalle del foro */}
       <Modal
         open={openForumDetail}
         onClose={() => setOpenForumDetail(false)}
@@ -743,79 +816,150 @@ const {
           }}
         >
           {selectedForumId && (
-            <ForumDetail foroId={selectedForumId} onClose={() => setOpenForumDetail(false)} />
+            <ForumDetail
+              foroId={selectedForumId}
+              onClose={() => setOpenForumDetail(false)}
+            />
           )}
         </Box>
       </Modal>
 
+      {/* Confirmación eliminar libro */}
       <Dialog
         open={openDeleteConfirm}
         onClose={handleCloseDeleteConfirm}
         aria-labelledby="confirmar-eliminacion-titulo"
         aria-describedby="confirmar-eliminacion-descripcion"
       >
-        <DialogTitle id="confirmar-eliminacion-titulo">{'Confirmar Eliminación'}</DialogTitle>
+        <DialogTitle id="confirmar-eliminacion-titulo">
+          Confirmar Eliminación
+        </DialogTitle>
+
         <DialogContent>
           <DialogContentText id="confirmar-eliminacion-descripcion">
-            Estás a punto de eliminar el libro con ID: **{bookToDeleteId}**. ¿Estás seguro de que
-            quieres eliminar este libro? Esta acción no se puede deshacer.
+            Estás a punto de eliminar el libro con ID: {bookToDeleteId}.
+            ¿Estás seguro de que querés eliminar este libro?
+            Esta acción no se puede deshacer.
           </DialogContentText>
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={handleCloseDeleteConfirm} color="primary" disabled={isApiLoading}>
+          <Button
+            onClick={handleCloseDeleteConfirm}
+            color="primary"
+            disabled={isApiLoading}
+          >
             Cancelar
           </Button>
-          <Button onClick={handleConfirmDeleteBook} color="error" variant="contained" disabled={isApiLoading}>
-            {isApiLoading ? <CircularProgress size={24} color="inherit" /> : 'Sí, Eliminar'}
+
+          <Button
+            onClick={handleConfirmDeleteBook}
+            color="error"
+            variant="contained"
+            disabled={isApiLoading}
+          >
+            {isApiLoading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              'Sí, Eliminar'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
 
+      {/* Confirmación eliminar foro */}
       <Dialog
         open={openDeleteForumConfirm}
         onClose={handleCloseDeleteForumConfirm}
         aria-labelledby="confirmar-eliminacion-foro-titulo"
       >
         <DialogTitle id="confirmar-eliminacion-foro-titulo">
-          {'Confirmar Eliminación del Foro'}
+          Confirmar Eliminación del Foro
         </DialogTitle>
+
         <DialogContent>
           <DialogContentText>
-            Estás a punto de eliminar el foro con ID: **{forumToDeleteId}**. ¿Estás seguro de que
-            quieres eliminarlo? Esta acción no se puede deshacer.
+            Estás a punto de eliminar el foro con ID: {forumToDeleteId}.
+            ¿Estás seguro de que querés eliminarlo?
+            Esta acción no se puede deshacer.
           </DialogContentText>
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={handleCloseDeleteForumConfirm} color="primary" disabled={isApiLoading}>
+          <Button
+            onClick={handleCloseDeleteForumConfirm}
+            color="primary"
+            disabled={isApiLoading}
+          >
             Cancelar
           </Button>
-          <Button onClick={handleConfirmDeleteForum} color="error" variant="contained" disabled={isApiLoading}>
-            {isApiLoading ? <CircularProgress size={24} color="inherit" /> : 'Sí, Eliminar Foro'}
+
+          <Button
+            onClick={handleConfirmDeleteForum}
+            color="error"
+            variant="contained"
+            disabled={isApiLoading}
+          >
+            {isApiLoading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              'Sí, Eliminar Foro'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Diálogo Eliminar Meta */}
-      <Dialog open={openDeleteGoalConfirm} onClose={handleCloseDeleteGoalConfirm}>
-        <DialogTitle>Confirmar Eliminación de la Meta</DialogTitle>
+      {/* Confirmación eliminar meta */}
+      <Dialog
+        open={openDeleteGoalConfirm}
+        onClose={handleCloseDeleteGoalConfirm}
+      >
+        <DialogTitle>
+          Confirmar Eliminación de la Meta
+        </DialogTitle>
+
         <DialogContent>
           <DialogContentText>
-            Estás a punto de eliminar la meta de lectura con ID: **{goalToDeleteId}**. ¿Estás seguro de que deseas eliminarla?
+            Estás a punto de eliminar la meta de lectura con ID:
+            {' '}{goalToDeleteId}. ¿Estás seguro de que querés eliminarla?
           </DialogContentText>
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={handleCloseDeleteGoalConfirm} color="primary" disabled={isApiLoading}>
+          <Button
+            onClick={handleCloseDeleteGoalConfirm}
+            color="primary"
+            disabled={isApiLoading}
+          >
             Cancelar
           </Button>
-          <Button onClick={handleConfirmDeleteGoal} color="error" variant="contained" disabled={isApiLoading}>
-            {isApiLoading ? <CircularProgress size={24} color="inherit" /> : 'Sí, Eliminar Meta'}
+
+          <Button
+            onClick={handleConfirmDeleteGoal}
+            color="error"
+            variant="contained"
+            disabled={isApiLoading}
+          >
+            {isApiLoading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              'Sí, Eliminar Meta'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar para notificaciones */}
-      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleSnackbarClose}>
-        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+      {/* Notificaciones */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

@@ -1,10 +1,9 @@
-// src/pages/LoginRegister.tsx
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { styled } from '@mui/system';
-import Login from '@/components/ui/Login';
+
 import logoImage from '@/assets/logo.png';
 import LoginForm from '@/components/forms/LoginForm';
 import type { LoginCredentials } from '@/components/forms/LoginForm';
@@ -21,33 +20,41 @@ const StyledPageContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
 }));
 
-type ViewState = 'presentation' | 'login' | 'register';
+type ViewState = 'login' | 'register';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<ViewState>('presentation');
-  const logoUrl = logoImage;
+
+  // Mostrar directamente el formulario de login
+  const [view, setView] = useState<ViewState>('login');
 
   const handleRegistroClick = () => {
+    setError(null);
     setView('register');
-    console.log('Cambiando a vista de Registro');
-  };
-  const handleLoginClick = () => {
-    setView('login');
-    console.log('Cambiando a vista de formulario de Login');
   };
 
-  const handleLoginSubmit = async ({ email, password }: LoginCredentials) => {
-    setError(null); // Limpia errores previos
+  const handleBackToLogin = () => {
+    setError(null);
+    setView('login');
+  };
+
+  const handleLoginSubmit = async ({
+    email,
+    password,
+  }: LoginCredentials) => {
+    setError(null);
 
     try {
       const result = await login(email, password);
 
       if (result.success) {
-        // Navegar a Home
-        navigate('/home', { state: { fromLogin: true } });
+        navigate('/home', {
+          replace: true,
+          state: { fromLogin: true },
+        });
       } else {
         setError(result.error ?? 'Error al iniciar sesión');
       }
@@ -65,16 +72,11 @@ const LoginPage = () => {
     console.log('Datos de registro enviados:', formData);
   };
 
-  const handleBackToLogin = () => {
-    setView('presentation');
-    console.log('Volviendo a la vista de presentación');
-  };
-
   return (
     <StyledPageContainer>
       <img
-        src={logoUrl}
-        alt="La gran OCASIÓN Logo"
+        src={logoImage}
+        alt="Logo de Sababook"
         style={{
           maxWidth: '100%',
           height: 'auto',
@@ -83,13 +85,39 @@ const LoginPage = () => {
           width: '350px',
         }}
       />
-      {view === 'presentation' ? (
-        <Login imageUrl={logoUrl} onRegisterClick={handleRegistroClick} onLoginClick={handleLoginClick} />
-      ) : view === 'login' ? (
-        <LoginForm onLoginSubmit={handleLoginSubmit} error={error} />
-      ) : view === 'register' ? (
-        <Register onRegisterSubmit={handleRegisterSubmit} onBackToLogin={handleBackToLogin} />
-      ) : null}
+
+      {view === 'login' && (
+        <>
+          <LoginForm
+            onLoginSubmit={handleLoginSubmit}
+            error={error}
+          />
+
+          <Box sx={{ mt: 3 }}>
+            <button
+              type="button"
+              onClick={handleRegistroClick}
+              style={{
+                padding: '10px 20px',
+                cursor: 'pointer',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: '#1976d2',
+                color: '#FFFFFF',
+              }}
+            >
+              ¿No tenés cuenta? Registrate
+            </button>
+          </Box>
+        </>
+      )}
+
+      {view === 'register' && (
+        <Register
+          onRegisterSubmit={handleRegisterSubmit}
+          onBackToLogin={handleBackToLogin}
+        />
+      )}
     </StyledPageContainer>
   );
 };
