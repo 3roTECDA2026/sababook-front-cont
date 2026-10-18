@@ -27,6 +27,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import RadioIcon from '@mui/icons-material/Radio';
 import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import InsightsIcon from '@mui/icons-material/Insights';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -58,6 +59,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio', icon: <RadioIcon />, path: '/radio' },
       { text: 'Libros por curso', icon: <MenuBookIcon />, path: '/cursos/libros' },
+      { text: 'Panel docente', icon: <InsightsIcon />, path: '/panel-docente' },
       { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     ];
@@ -71,6 +73,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
       { text: 'Libros por curso', icon: <MenuBookIcon />, path: '/cursos/libros' },
+      { text: 'Panel docente', icon: <InsightsIcon />, path: '/panel-docente' },
       { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
     ];
   } else {

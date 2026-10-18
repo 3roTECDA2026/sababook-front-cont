@@ -19,6 +19,7 @@ import BookCommentsAdmin from './pages/BookCommentsAdmin';
 import ForumCommentsAdmin from './pages/ForumCommentsAdmin';
 import CafesLiterarios from './pages/CafesLiterarios';
 import CourseBooksPage from './pages/CourseBooksPage';
+import TeacherPanelPage from './pages/TeacherPanelPage';
 
 // Importaciones de Nuevos Módulos (Radio Sábato y Feed Muro)
 import { RadioPlayer } from './components/RadioPlayer';
@@ -203,6 +204,16 @@ function App() {
         element={
           <RoleGuard allowedRoles={['DOCENTE', 'ADMINISTRADOR']}>
             <CourseBooksPage />
+          </RoleGuard>
+        }
+      />
+
+      {/* Panel de control con métricas de lectura de los cursos (Docente y Administrador) */}
+      <Route
+        path="/panel-docente"
+        element={
+          <RoleGuard allowedRoles={['DOCENTE', 'ADMINISTRADOR']}>
+            <TeacherPanelPage />
           </RoleGuard>
         }
       />
