@@ -115,7 +115,7 @@ export default function TeacherPanelPage() {
         >
           {OPCIONES_DIAS.map((opcion) => (
             <MenuItem key={opcion} value={opcion}>
-              {opcion} días en "Leyendo"
+              {`${opcion} días en "Leyendo"`}
             </MenuItem>
           ))}
         </TextField>
