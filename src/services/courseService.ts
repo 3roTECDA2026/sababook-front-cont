@@ -1,6 +1,6 @@
 // src/services/courseService.ts
 import { API_BASE_URL } from '@/environments/api';
-import type { CourseSummary, CourseBook } from '@/types';
+import type { CourseSummary, CourseBook, TeacherPanel } from '@/types';
 
 // Hace la petición con el token y devuelve el mensaje de error real del back si falla
 async function solicitud<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -67,4 +67,13 @@ export async function quitarLibroDeCurso(cursoId: number, libroId: number) {
   return await solicitud(`/courses/${cursoId}/books/${libroId}`, {
     method: 'DELETE',
   });
+}
+
+/**
+ * Métricas de lectura de los cursos del docente (o de uno solo, con cursoId)
+ */
+export async function getPanelDocente(cursoId: number | null, dias: number): Promise<TeacherPanel> {
+  const params = new URLSearchParams({ dias: String(dias) });
+  if (cursoId !== null) params.set('curso_id', String(cursoId));
+  return await solicitud<TeacherPanel>(`/teacher-panel?${params}`);
 }
