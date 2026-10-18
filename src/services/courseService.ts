@@ -70,14 +70,15 @@ export async function quitarLibroDeCurso(cursoId: number, libroId: number) {
 }
 
 /**
- * Historial de asignaciones de libros, con filtros opcionales por año lectivo y curso
+ * Historial de asignaciones de libros, con filtros opcionales por año lectivo, curso y libro
  */
 export async function getHistorialAsignaciones(
-  filtros: { anio_lectivo?: number; curso_id?: number } = {}
+  filtros: { anio_lectivo?: number; curso_id?: number; libro_id?: number } = {}
 ): Promise<AssignmentHistoryEntry[]> {
   const params = new URLSearchParams();
   if (filtros.anio_lectivo) params.append('anio_lectivo', String(filtros.anio_lectivo));
   if (filtros.curso_id) params.append('curso_id', String(filtros.curso_id));
+  if (filtros.libro_id) params.append('libro_id', String(filtros.libro_id));
 
   const query = params.toString();
   return await solicitud<AssignmentHistoryEntry[]>(`/courses/history${query ? `?${query}` : ''}`);
