@@ -1,4 +1,5 @@
-import { Paper, Typography, useTheme } from '@mui/material';
+import { Typography, useTheme } from '@mui/material';
+import StyledCard from './StyledCard';
 
 interface StatCardProps {
   title: string;
@@ -9,11 +10,8 @@ export default function StatCard({ title, value }: StatCardProps) {
   const theme = useTheme();
 
   return (
-    <Paper
+    <StyledCard
       sx={{
-        borderRadius: '16px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        p: 2,
         textAlign: 'center',
         height: '100%',
       }}
@@ -28,6 +26,6 @@ export default function StatCard({ title, value }: StatCardProps) {
       <Typography variant="body2" color="text.secondary">
         {title}
       </Typography>
-    </Paper>
+    </StyledCard>
   );
 }
