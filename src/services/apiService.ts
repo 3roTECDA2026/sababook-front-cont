@@ -1,14 +1,31 @@
+
 // src/services/apiService.ts
+
 import { API_BASE_URL } from '@/environments/api';
-import type { Book, Medal, BookFilters, CafeLiterario, ReadingGoal, Paginated, User } from '@/types';
+
+import type {
+  Book,
+  Medal,
+  BookFilters,
+  CafeLiterario,
+  ReadingGoal,
+  Paginated,
+  User,
+} from '@/types';
 
 /**
- * Función genérica para hacer peticiones HTTP
- * @param endpoint - Endpoint relativo a la API
- * @param options - Opciones de fetch (method, headers, body, etc.)
- * @returns Respuesta JSON o error
+ * Función genérica para realizar peticiones HTTP.
+ *
+ * - Construye la URL de la API.
+ * - Permite enviar headers, body, method y signal.
+ * - Verifica el estado HTTP.
+ * - Ignora en consola las cancelaciones esperadas (AbortError).
+ * - Propaga los errores para que el componente pueda manejarlos.
  */
-async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function apiRequest<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
   const url = `${API_BASE_URL}/api/v1${endpoint}`;
 
   const defaultOptions: RequestInit = {
@@ -17,36 +34,64 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
     },
   };
 
-  const config: RequestInit = { ...defaultOptions, ...options };
+  // Combinar los headers predeterminados con los recibidos.
+  const config: RequestInit = {
+    ...defaultOptions,
+    ...options,
+    headers: {
+      ...defaultOptions.headers,
+      ...options.headers,
+    },
+  };
 
   try {
     const response = await fetch(url, config);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(
+        `HTTP error! status: ${response.status}`
+      );
     }
 
-    return await response.json();
+    return (await response.json()) as T;
   } catch (error) {
-    console.error(`Error en la petición a ${endpoint}:`, error);
+    // Una solicitud cancelada mediante AbortController
+    // no representa necesariamente un fallo del servidor.
+    // La propagamos sin registrar un error en consola.
+    if (
+      error instanceof Error &&
+      error.name === 'AbortError'
+    ) {
+      throw error;
+    }
+
+    // Registrar los errores reales.
+    console.error(
+      `Error en la petición a ${endpoint}:`,
+      error
+    );
+
     throw error;
   }
 }
 
-// ========== FUNCIONES PARA LIBROS Y FILTROS ==========
+// =====================================================
+// FUNCIONES PARA LIBROS Y FILTROS
+// =====================================================
 
 /**
- * Obtener catálogo completo de libros
+ * Obtener catálogo completo de libros.
  */
 export async function getCatalogoLibros(): Promise<Book[]> {
   return await apiRequest<Book[]>('/libros');
 }
 
 /**
- * Buscar libros con filtros
+ * Buscar libros con filtros.
  */
-export async function buscarLibros(filtros: BookFilters = {}): Promise<Book[]> {
-  // Construir query string con los filtros
+export async function buscarLibros(
+  filtros: BookFilters = {}
+): Promise<Book[]> {
   const params = new URLSearchParams();
 
   Object.entries(filtros).forEach(([key, value]) => {
@@ -56,11 +101,20 @@ export async function buscarLibros(filtros: BookFilters = {}): Promise<Book[]> {
   });
 
   const queryString = params.toString();
-  const endpoint = queryString ? `/libros/buscar?${queryString}` : '/libros/buscar';
+
+  const endpoint = queryString
+    ? `/libros/buscar?${queryString}`
+    : '/libros/buscar';
 
   return await apiRequest<Book[]>(endpoint);
 }
 
+/**
+ * Buscar libros con paginación.
+ *
+ * Permite cancelar solicitudes anteriores
+ * mediante AbortController.
+ */
 export async function buscarLibrosPaginado(
   filtros: BookFilters = {},
   page = 1,
@@ -70,62 +124,102 @@ export async function buscarLibrosPaginado(
   const params = new URLSearchParams();
 
   Object.entries(filtros).forEach(([key, value]) => {
-    if (value && value.trim()) params.append(key, value.trim());
+    if (value && value.trim()) {
+      params.append(key, value.trim());
+    }
   });
+
   params.set('page', String(page));
   params.set('limit', String(limit));
 
-  return await apiRequest<Paginated<Book>>(`/libros/buscar?${params.toString()}`, { signal });
+  return await apiRequest<Paginated<Book>>(
+    `/libros/buscar?${params.toString()}`,
+    { signal }
+  );
 }
 
+/**
+ * Obtener usuarios paginados.
+ *
+ * Incluye JWT cuando está disponible.
+ */
 export async function getUsersPaginated(
   page = 1,
   limit = 5,
   signal?: AbortSignal
 ): Promise<Paginated<User>> {
-  return await apiRequest<Paginated<User>>(`/users?page=${page}&limit=${limit}`, {
-    headers: getAuthHeaders(),
-    signal,
-  });
+  return await apiRequest<Paginated<User>>(
+    `/users?page=${page}&limit=${limit}`,
+    {
+      headers: getAuthHeaders(),
+      signal,
+    }
+  );
 }
 
 /**
- * Obtener detalle de un libro específico
+ * Obtener detalle de un libro específico.
  */
-export async function getLibroById(libroId: number): Promise<Book> {
-  return await apiRequest<Book>(`/libros/${libroId}`);
+export async function getLibroById(
+  libroId: number
+): Promise<Book> {
+  return await apiRequest<Book>(
+    `/libros/${libroId}`
+  );
 }
 
 /**
- * Obtener medallas de un usuario
+ * Obtener medallas de un usuario.
  */
-export async function getUserMedals(userId: number | string, signal?: AbortSignal): Promise<Medal[]> {
-  return await apiRequest<Medal[]>(`/medal/${userId}`, { signal });
+export async function getUserMedals(
+  userId: number | string,
+  signal?: AbortSignal
+): Promise<Medal[]> {
+  return await apiRequest<Medal[]>(
+    `/medal/${userId}`,
+    { signal }
+  );
 }
 
-// ========== FUNCIONES PARA CAFÉS LITERARIOS ==========
+// =====================================================
+// FUNCIONES PARA CAFÉS LITERARIOS
+// =====================================================
 
 /**
- * Obtener todos los Cafés Literarios (opcionalmente con estado personal del usuario)
+ * Obtener todos los cafés literarios.
  */
 export async function getCafesLiterarios(
   usuarioId: number | null = null,
   signal?: AbortSignal
 ): Promise<CafeLiterario[]> {
-  const query = usuarioId ? `?usuario_id=${usuarioId}` : '';
-  return await apiRequest<CafeLiterario[]>(`/cafes${query}`, { signal });
+  const query = usuarioId
+    ? `?usuario_id=${usuarioId}`
+    : '';
+
+  return await apiRequest<CafeLiterario[]>(
+    `/cafes${query}`,
+    { signal }
+  );
 }
 
 /**
- * Obtener detalle de un Café Literario por ID
+ * Obtener detalle de un café literario.
  */
-export async function getCafeById(cafeId: number, usuarioId: number | null = null): Promise<CafeLiterario> {
-  const query = usuarioId ? `?usuario_id=${usuarioId}` : '';
-  return await apiRequest<CafeLiterario>(`/cafes/${cafeId}${query}`);
+export async function getCafeById(
+  cafeId: number,
+  usuarioId: number | null = null
+): Promise<CafeLiterario> {
+  const query = usuarioId
+    ? `?usuario_id=${usuarioId}`
+    : '';
+
+  return await apiRequest<CafeLiterario>(
+    `/cafes/${cafeId}${query}`
+  );
 }
 
 /**
- * Crear un nuevo Café Literario (Docente / Admin)
+ * Crear un café literario.
  */
 export async function crearCafeLiterario(data: {
   titulo: string;
@@ -134,7 +228,10 @@ export async function crearCafeLiterario(data: {
   fecha_evento: string;
   lugar: string;
   docente_id?: number;
-}): Promise<{ cafe_id: number; foro_id: number }> {
+}): Promise<{
+  cafe_id: number;
+  foro_id: number;
+}> {
   return await apiRequest('/cafes', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -142,52 +239,84 @@ export async function crearCafeLiterario(data: {
 }
 
 /**
- * Confirmar o alternar asistencia a un Café Literario
+ * Confirmar o alternar asistencia.
  */
 export async function toggleAsistenciaCafe(
   cafeId: number,
   _usuarioId?: number,
   estado = 'confirmado'
-): Promise<{ mensaje: string; estado: string | null }> {
-  return await apiRequest(`/cafes/${cafeId}/asistencia`, {
-    method: 'POST',
-    body: JSON.stringify({ estado }),
-  });
+): Promise<{
+  mensaje: string;
+  estado: string | null;
+}> {
+  return await apiRequest(
+    `/cafes/${cafeId}/asistencia`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ estado }),
+    }
+  );
 }
 
 /**
- * Registrar voto post-lectura (¿Te gustó el libro?)
+ * Registrar voto post-lectura.
  */
 export async function votarCafeLiterario(
   cafeId: number,
   _usuarioId: number | undefined,
   voto: boolean
-): Promise<{ mensaje: string; voto: { voto_id: number; cafe_id: number; usuario_id: number; voto: boolean } }> {
-  return await apiRequest(`/cafes/${cafeId}/voto`, {
-    method: 'POST',
-    body: JSON.stringify({ voto }),
-  });
+): Promise<{
+  mensaje: string;
+  voto: {
+    voto_id: number;
+    cafe_id: number;
+    usuario_id: number;
+    voto: boolean;
+  };
+}> {
+  return await apiRequest(
+    `/cafes/${cafeId}/voto`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ voto }),
+    }
+  );
 }
 
 /**
- * Obtener el catálogo completo de insignias de un usuario (obtenidas + no obtenidas)
+ * Obtener catálogo completo de medallas.
  */
-export async function getCatalogoMedals(userId: number | string, signal?: AbortSignal): Promise<Medal[]> {
-  return await apiRequest<Medal[]>(`/medal/catalog/${userId}`, { signal });
+export async function getCatalogoMedals(
+  userId: number | string,
+  signal?: AbortSignal
+): Promise<Medal[]> {
+  return await apiRequest<Medal[]>(
+    `/medal/catalog/${userId}`,
+    { signal }
+  );
 }
 
+// =====================================================
+// AUTENTICACIÓN JWT
+// =====================================================
+
 /**
- * Helper para obtener headers autenticados con JWT
+ * Obtener los headers de autenticación.
  */
-function getAuthHeaders() {
+function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('token');
+
   return {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(token
+      ? { Authorization: `Bearer ${token}` }
+      : {}),
   };
 }
 
-// ========== FUNCIONES PARA METAS DE LECTURA ==========
+// =====================================================
+// FUNCIONES PARA METAS DE LECTURA
+// =====================================================
 
 interface CreateGoalData {
   usuario_id: number | string;
@@ -198,74 +327,108 @@ interface CreateGoalData {
 }
 
 /**
- * Obtener las metas del usuario autenticado
+ * Obtener la meta activa del usuario.
  */
-export async function getActiveReadingGoal(userId: number | string): Promise<ReadingGoal | null> {
-  if (!userId) return null;
-  return await apiRequest<ReadingGoal>(`/metas-lectura/usuario/${userId}`, {
-    headers: getAuthHeaders(),
-  });
+export async function getActiveReadingGoal(
+  userId: number | string
+): Promise<ReadingGoal | null> {
+  if (!userId) {
+    return null;
+  }
+
+  return await apiRequest<ReadingGoal>(
+    `/metas-lectura/usuario/${userId}`,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
 }
 
 /**
- * Crear una nueva meta de lectura
+ * Crear una nueva meta de lectura.
  */
-export async function createReadingGoal(goalData: CreateGoalData): Promise<ReadingGoal> {
+export async function createReadingGoal(
+  goalData: CreateGoalData
+): Promise<ReadingGoal> {
   const payload = {
     usuario_id: Number(goalData.usuario_id),
-    periodo_nombre: goalData.periodo_nombre || 'Meta Personal',
+    periodo_nombre:
+      goalData.periodo_nombre || 'Meta Personal',
     cantidad_libros: Number(goalData.target_books),
     fecha_inicio: goalData.start_date,
     fecha_fin: goalData.end_date,
   };
 
-  return await apiRequest<ReadingGoal>('/metas-lectura', {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
+  return await apiRequest<ReadingGoal>(
+    '/metas-lectura',
+    {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    }
+  );
 }
 
 /**
- * Registrar un libro como leído en la meta activa
+ * Registrar un libro como leído.
  */
-export async function logBookProgress(bookId: number | string): Promise<ReadingGoal> {
-  return await apiRequest<ReadingGoal>('/metas-lectura/log-book', {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ bookId }),
-  });
+export async function logBookProgress(
+  bookId: number | string
+): Promise<ReadingGoal> {
+  return await apiRequest<ReadingGoal>(
+    '/metas-lectura/log-book',
+    {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        bookId,
+      }),
+    }
+  );
 }
 
 /**
- * Obtener todas las metas del sistema (Panel Admin/Docente)
+ * Obtener todas las metas del sistema.
  */
-export async function getAllReadingGoals(): Promise<ReadingGoal[]> {
-  return await apiRequest<ReadingGoal[]>('/metas-lectura', {
-    headers: getAuthHeaders(),
-  });
+export async function getAllReadingGoals(): Promise<
+  ReadingGoal[]
+> {
+  return await apiRequest<ReadingGoal[]>(
+    '/metas-lectura',
+    {
+      headers: getAuthHeaders(),
+    }
+  );
 }
 
 /**
- * Actualizar una meta por su ID
+ * Actualizar una meta de lectura.
  */
 export async function updateReadingGoal(
   metaId: number | string,
   goalData: Partial<ReadingGoal>
 ): Promise<ReadingGoal> {
-  return await apiRequest<ReadingGoal>(`/metas-lectura/${metaId}`, {
-    method: 'PUT',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(goalData),
-  });
+  return await apiRequest<ReadingGoal>(
+    `/metas-lectura/${metaId}`,
+    {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(goalData),
+    }
+  );
 }
 
 /**
- * Eliminar una meta por su ID
+ * Eliminar una meta de lectura.
  */
-export async function deleteReadingGoal(metaId: number | string): Promise<{ success: boolean }> {
-  return await apiRequest<{ success: boolean }>(`/metas-lectura/${metaId}`, {
-    method: 'DELETE',
-    headers: getAuthHeaders(),
-  });
+export async function deleteReadingGoal(
+  metaId: number | string
+): Promise<{ success: boolean }> {
+  return await apiRequest<{ success: boolean }>(
+    `/metas-lectura/${metaId}`,
+    {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }
+  );
 }
