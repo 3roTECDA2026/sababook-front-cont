@@ -32,6 +32,7 @@ import ForumTable from './tables/ForumTable';
 import GoalTable from './tables/GoalTable';
 import { usePagination } from '@/hooks/usePagination';
 import { getUsersPaginated } from '@/services/apiService';
+import { getHistorialAsignaciones } from '@/services/courseService';
 
 const DashboardContainer = Box;
 
@@ -322,10 +323,28 @@ const Dashboard = () => {
     }
   };
 
-  // Eliminar libro
-  const handleOpenDeleteConfirm = (bookId: number) => {
-    setBookToDeleteId(bookId);
-    setOpenDeleteConfirm(true);
+  // --- HANDLER PARA ABRIR EL MODAL DE CONFIRMACIÓN ---
+  // Antes de pedir confirmación, revisa si el libro fue asignado a algún curso:
+  // en ese caso no se puede eliminar y se avisa directamente
+  const handleOpenDeleteConfirm = async (bookId: number) => {
+    try {
+      const historial = await getHistorialAsignaciones({ libro_id: bookId });
+      if (historial.length > 0) {
+        setSnackbar({
+          open: true,
+          message:
+            'Este libro no se puede eliminar porque fue asignado a cursos y forma parte del historial.',
+          severity: 'warning',
+        });
+        return;
+      }
+    } catch {
+      // Si no se pudo consultar el historial, se sigue con la confirmación:
+      // el back igual valida y responde 409 si corresponde
+    }
+
+    setBookToDeleteId(bookId); // Guarda el ID del libro
+    setOpenDeleteConfirm(true); // Abre el modal
   };
 
   const handleCloseDeleteConfirm = () => {
@@ -349,8 +368,9 @@ const Dashboard = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        // El back de libros responde { mensaje }; otros endpoints usan { message }
         throw new Error(
-          errorData.message || `Falló la eliminación (HTTP ${response.status})`
+          errorData.mensaje || errorData.message || `Fallo la eliminación (HTTP ${response.status})`
         );
       }
 

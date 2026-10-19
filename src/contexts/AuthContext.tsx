@@ -6,6 +6,10 @@ import { useNavigate } from 'react-router-dom';
 import type { User, TipoRol } from '@/types';
 import { parseJsonResponse } from '@/utils/api';
 
+// Mensajes del login: los define el front para no depender del texto que manda el back
+const MENSAJE_CREDENCIALES = 'El correo o la contraseña no coinciden.';
+const MENSAJE_CONEXION = 'No pudimos conectar con el servidor. Inténtalo en un momento.';
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -79,21 +83,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     email: string,
     password: string,
   ): Promise<AuthResult> => {
+    let response: Response;
+
+    // Si el fetch falla, el servidor no respondió (caído o sin conexión)
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+      response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, contrasena: password }),
       });
+    } catch (error) {
+      console.error("No se pudo conectar con el servidor:", error);
+      return { success: false, errorType: 'conexion', error: MENSAJE_CONEXION };
+    }
 
+    // 400 o 401: el correo o la contraseña no son correctos
+    if (response.status === 400 || response.status === 401) {
+      return { success: false, errorType: 'credenciales', error: MENSAJE_CREDENCIALES };
+    }
+
+    try {
       const data = await parseJsonResponse(response);
 
+      // Cualquier otro error (por ejemplo un 500) se informa como problema del servidor
       if (!response.ok) {
-        const errorMsg =
-          data?.error ||
-          data?.message ||
-          `Error en el servidor (${response.status})`;
-        throw new Error(errorMsg);
+        throw new Error(`Error en el servidor (${response.status})`);
       }
 
       if (!data?.token || !data?.userId || !data?.user) {
@@ -125,11 +139,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       return { success: true };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      const errorMessage = message.includes("Failed to fetch")
-        ? "No se pudo conectar con el servidor backend."
-        : message;
-      return { success: false, error: errorMessage };
+      console.error("Error al iniciar sesión:", error);
+      return { success: false, errorType: 'conexion', error: MENSAJE_CONEXION };
     }
   };
 
