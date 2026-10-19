@@ -1,6 +1,6 @@
 // src/services/courseService.ts
 import { API_BASE_URL } from '@/environments/api';
-import type { CourseSummary, CourseBook } from '@/types';
+import type { CourseSummary, CourseBook, AssignmentHistoryEntry } from '@/types';
 
 // Hace la petición con el token y devuelve el mensaje de error real del back si falla
 async function solicitud<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -67,4 +67,19 @@ export async function quitarLibroDeCurso(cursoId: number, libroId: number) {
   return await solicitud(`/courses/${cursoId}/books/${libroId}`, {
     method: 'DELETE',
   });
+}
+
+/**
+ * Historial de asignaciones de libros, con filtros opcionales por año lectivo, curso y libro
+ */
+export async function getHistorialAsignaciones(
+  filtros: { anio_lectivo?: number; curso_id?: number; libro_id?: number } = {}
+): Promise<AssignmentHistoryEntry[]> {
+  const params = new URLSearchParams();
+  if (filtros.anio_lectivo) params.append('anio_lectivo', String(filtros.anio_lectivo));
+  if (filtros.curso_id) params.append('curso_id', String(filtros.curso_id));
+  if (filtros.libro_id) params.append('libro_id', String(filtros.libro_id));
+
+  const query = params.toString();
+  return await solicitud<AssignmentHistoryEntry[]>(`/courses/history${query ? `?${query}` : ''}`);
 }

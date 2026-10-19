@@ -15,12 +15,14 @@ import {
   MenuItem,
   Paper,
   Snackbar,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
   TextField,
   Typography,
   styled,
@@ -34,8 +36,9 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
-import { useAuth } from '@/hooks/useAuth';
+import AssignmentHistoryTable from '@/components/tables/AssignmentHistoryTable';
 import { getCatalogoLibros } from '@/services/apiService';
+import { useAuth } from '@/hooks/useAuth';
 import {
   getCursos,
   getLibrosDelCurso,
@@ -77,6 +80,8 @@ const estiloBotonPrincipal = {
   '&:hover': { backgroundColor: '#cc4800' },
 };
 
+type Pestana = 'libros' | 'historial';
+
 interface SnackbarState {
   open: boolean;
   message: string;
@@ -98,9 +103,11 @@ const mensajeDeError = (error: unknown) =>
   error instanceof Error ? error.message : 'Ocurrió un error inesperado.';
 
 export default function CourseBooksPage() {
-  const { isAdmin: esAdmin } = useAuth();
+  // El rol sale del contexto de autenticación, no del localStorage
+  const { isAdmin: esAdmin, loading: cargandoUsuario } = useAuth();
 
   const [menuAbierto, setMenuAbierto] = useState<boolean>(false);
+  const [pestana, setPestana] = useState<Pestana>('libros');
 
   // Cursos y libros
   const [cursos, setCursos] = useState<CourseSummary[]>([]);
@@ -131,8 +138,11 @@ export default function CourseBooksPage() {
     setSnackbar({ open: true, message, severity });
   };
 
-  // Carga inicial de cursos: el docente solo ve los suyos
+  // Carga inicial de cursos: el docente solo ve los suyos.
+  // Espera a que el contexto termine de cargar el usuario para conocer su rol.
   useEffect(() => {
+    if (cargandoUsuario) return;
+
     const cargarCursos = async () => {
       setCargandoCursos(true);
       try {
@@ -146,7 +156,7 @@ export default function CourseBooksPage() {
       }
     };
     cargarCursos();
-  }, [esAdmin]);
+  }, [esAdmin, cargandoUsuario]);
 
   const cargarLibros = async (id: number) => {
     setCargandoLibros(true);
@@ -268,102 +278,125 @@ export default function CourseBooksPage() {
         </Typography>
       ) : (
         <>
-          <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mt={2} mb={3}>
-            <TextField
-              select
-              id="curso"
-              name="curso"
-              label="Curso"
-              value={cursoId ?? ''}
-              onChange={(e) => setCursoId(Number(e.target.value))}
-              sx={{ minWidth: 260, flexGrow: 1 }}
-            >
-              {cursos.map((curso) => (
-                <MenuItem key={curso.curso_id} value={curso.curso_id}>
-                  {etiquetaCurso(curso)}
-                </MenuItem>
-              ))}
-            </TextField>
+          <Tabs
+            value={pestana}
+            onChange={(_, valor: Pestana) => setPestana(valor)}
+            sx={{
+              mt: 2,
+              mb: 3,
+              '& .MuiTabs-indicator': { backgroundColor: '#f25600' },
+              '& .MuiTab-root.Mui-selected': { color: '#f25600' },
+            }}
+          >
+            <Tab value="libros" label="Libros del curso" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+            <Tab value="historial" label="Historial" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+          </Tabs>
 
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={abrirDialogoAsignar}
-              sx={estiloBotonPrincipal}
-            >
-              Asignar libro
-            </Button>
-          </Box>
+          {pestana === 'historial' ? (
+            <AssignmentHistoryTable
+              cursos={cursos}
+              onError={(mensaje) => mostrarMensaje(mensaje, 'error')}
+            />
+          ) : (
+            <>
+              <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
+                <TextField
+                  select
+                  id="curso"
+                  name="curso"
+                  label="Curso"
+                  value={cursoId ?? ''}
+                  onChange={(e) => setCursoId(Number(e.target.value))}
+                  sx={{ minWidth: 260, flexGrow: 1 }}
+                >
+                  {cursos.map((curso) => (
+                    <MenuItem key={curso.curso_id} value={curso.curso_id}>
+                      {etiquetaCurso(curso)}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
-          <StyledTableContainer>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <StyledTableCellHeader>Libro</StyledTableCellHeader>
-                    <StyledTableCellHeader>Autor</StyledTableCellHeader>
-                    <StyledTableCellHeader align="center">Puntaje</StyledTableCellHeader>
-                    <StyledTableCellHeader align="center">Acciones</StyledTableCellHeader>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {cargandoLibros ? (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                        <CircularProgress size={30} sx={{ color: '#f25600' }} />
-                      </TableCell>
-                    </TableRow>
-                  ) : libros.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                        <Typography color="text.secondary">
-                          Este curso todavía no tiene libros asignados.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    libros.map((libro) => (
-                      <TableRow key={libro.libro_id} hover>
-                        <TableCell>
-                          <Box display="flex" alignItems="center" gap={1.5}>
-                            <Avatar
-                              variant="rounded"
-                              src={libro.portada_url ?? undefined}
-                              alt={libro.titulo}
-                              sx={{ width: 40, height: 56 }}
-                            >
-                              <MenuBookIcon />
-                            </Avatar>
-                            <Typography variant="body2" fontWeight="bold">
-                              {libro.titulo}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>{libro.autor}</TableCell>
-                        <TableCell align="center">{libro.puntaje}</TableCell>
-                        <TableCell align="center">
-                          <Box display="flex" gap={1} justifyContent="center">
-                            <ActionButton
-                              title="Editar puntaje"
-                              onClick={() => abrirDialogoEditar(libro)}
-                            >
-                              <EditIcon sx={{ fontSize: '1.1rem' }} />
-                            </ActionButton>
-                            <ActionButton
-                              title="Quitar del curso"
-                              onClick={() => setLibroAQuitar(libro)}
-                            >
-                              <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                            </ActionButton>
-                          </Box>
-                        </TableCell>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={abrirDialogoAsignar}
+                  sx={estiloBotonPrincipal}
+                >
+                  Asignar libro
+                </Button>
+              </Box>
+
+              <StyledTableContainer>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <StyledTableCellHeader>Libro</StyledTableCellHeader>
+                        <StyledTableCellHeader>Autor</StyledTableCellHeader>
+                        <StyledTableCellHeader align="center">Puntaje</StyledTableCellHeader>
+                        <StyledTableCellHeader align="center">Acciones</StyledTableCellHeader>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </StyledTableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {cargandoLibros ? (
+                        <TableRow>
+                          <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                            <CircularProgress size={30} sx={{ color: '#f25600' }} />
+                          </TableCell>
+                        </TableRow>
+                      ) : libros.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                            <Typography color="text.secondary">
+                              Este curso todavía no tiene libros asignados.
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        libros.map((libro) => (
+                          <TableRow key={libro.libro_id} hover>
+                            <TableCell>
+                              <Box display="flex" alignItems="center" gap={1.5}>
+                                <Avatar
+                                  variant="rounded"
+                                  src={libro.portada_url ?? undefined}
+                                  alt={libro.titulo}
+                                  sx={{ width: 40, height: 56 }}
+                                >
+                                  <MenuBookIcon />
+                                </Avatar>
+                                <Typography variant="body2" fontWeight="bold">
+                                  {libro.titulo}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell>{libro.autor}</TableCell>
+                            <TableCell align="center">{libro.puntaje}</TableCell>
+                            <TableCell align="center">
+                              <Box display="flex" gap={1} justifyContent="center">
+                                <ActionButton
+                                  title="Editar puntaje"
+                                  onClick={() => abrirDialogoEditar(libro)}
+                                >
+                                  <EditIcon sx={{ fontSize: '1.1rem' }} />
+                                </ActionButton>
+                                <ActionButton
+                                  title="Quitar del curso"
+                                  onClick={() => setLibroAQuitar(libro)}
+                                >
+                                  <DeleteIcon sx={{ fontSize: '1.1rem' }} />
+                                </ActionButton>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </StyledTableContainer>
+            </>
+          )}
         </>
       )}
 
