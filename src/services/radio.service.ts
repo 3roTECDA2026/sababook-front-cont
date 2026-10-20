@@ -1,18 +1,13 @@
+import { API_BASE_URL } from '@/environments/api';
 
-const rawBaseURL = import.meta.env.VITE_API_URL?.trim();
-
-const baseURL = rawBaseURL
-  ? `${rawBaseURL.replace(/\/+$/, '').replace(/\/api\/v1$/, '')}/api/v1`
-  : '';
+const baseURL = `${API_BASE_URL.trim()
+  .replace(/\/+$/, '')
+  .replace(/\/api\/v1$/, '')}/api/v1`;
 
 async function request<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
-  if (!baseURL) {
-    throw new Error('No está configurada VITE_API_URL.');
-  }
-
   const token = localStorage.getItem('token');
 
   const response = await fetch(`${baseURL}${path}`, {
@@ -32,7 +27,7 @@ async function request<T>(
 
   if (!contentType?.includes('application/json')) {
     throw new Error(
-      'La respuesta del servidor no es un JSON válido. Revisá VITE_API_URL.'
+      'La respuesta del servidor no es un JSON válido. Revisá la configuración de API_BASE_URL.'
     );
   }
 

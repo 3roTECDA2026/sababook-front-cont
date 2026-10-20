@@ -31,7 +31,7 @@ import SideMenu from "@/components/layout/SideMenu";
 
 import { normalizarTexto } from "@/utils/normalize";
 import { buscarLibrosPaginado } from "@/services/apiService";
-import { API_BASE_URL } from "@/environments/api";
+import { recomendacionService } from "@/services/recomendacionService";
 import { usePagination } from "@/hooks/usePagination";
 import InfiniteScroll from "@/components/ui/InfiniteScroll";
 
@@ -301,27 +301,8 @@ export default function Home() {
   const cargarRecomendaciones = useCallback(
     async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/v1/recomendaciones`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `No se pudieron cargar las recomendaciones (${response.status}).`
-          );
-        }
-
-        const data: unknown =
-          await response.json();
-
-        if (!Array.isArray(data)) {
-          throw new Error(
-            "Formato de recomendaciones inesperado."
-          );
-        }
-
         const registros =
-          data as RecomendacionNuevaAPI[];
+          await recomendacionService.obtenerTodas<RecomendacionNuevaAPI>();
 
         setRecomendaciones(registros);
 
@@ -406,54 +387,17 @@ export default function Home() {
         );
       }
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/recomendaciones/${libroId}`,
-        {
-          method: metodo,
-
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type":
-              "application/json",
-          },
-
-          ...(metodo === "POST"
-            ? {
-                body: JSON.stringify({
-                  explicacion,
-                }),
-              }
-            : {}),
-        }
-      );
-
-      if (!response.ok) {
-        const payload: unknown =
-          await response
-            .json()
-            .catch(() => null);
-
-        let mensaje =
-          `Error al guardar la recomendación (${response.status}).`;
-
-        if (
-          payload &&
-          typeof payload === "object"
-        ) {
-          if (
-            "error" in payload &&
-            typeof payload.error === "string"
-          ) {
-            mensaje = payload.error;
-          } else if (
-            "message" in payload &&
-            typeof payload.message === "string"
-          ) {
-            mensaje = payload.message;
-          }
-        }
-
-        throw new Error(mensaje);
+      if (metodo === "POST") {
+        await recomendacionService.crear(
+          libroId,
+          explicacion,
+          token
+        );
+      } else {
+        await recomendacionService.eliminar(
+          libroId,
+          token
+        );
       }
 
       await cargarRecomendaciones();

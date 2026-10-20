@@ -1,7 +1,6 @@
 
-// src/pages/BookDetailsPage.tsx
-
 import { API_BASE_URL } from '@/environments/api';
+import { recomendacionService } from '@/services/recomendacionService';
 import ReadingProgress from '@/components/ReadingProgress';
 import { useEffect, useState } from 'react';
 import {
@@ -108,20 +107,10 @@ const BookDetailsPage = () => {
       setLoadingRecomendaciones(true);
 
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/v1/recomendaciones`,
-          { signal: controller.signal }
-        );
-
-        if (!response.ok) {
-          throw new Error('No se pudieron cargar las recomendaciones.');
-        }
-
-        const data: unknown = await response.json();
-
-        if (!Array.isArray(data)) {
-          throw new Error('Formato de recomendaciones inválido.');
-        }
+        const data =
+          await recomendacionService.obtenerTodas<Recomendacion>(
+            controller.signal
+          );
 
         const recomendacionesLibro = data.filter(
           (recomendacion): recomendacion is Recomendacion => {
@@ -138,7 +127,9 @@ const BookDetailsPage = () => {
           }
         );
 
-        setRecomendaciones(recomendacionesLibro);
+        if (!controller.signal.aborted) {
+          setRecomendaciones(recomendacionesLibro);
+        }
       } catch (error) {
         if (controller.signal.aborted) return;
 
@@ -192,25 +183,7 @@ const BookDetailsPage = () => {
     setRemovingRecommendation(true);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/recomendaciones/${id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-
-        throw new Error(
-          data?.mensaje ||
-          data?.error ||
-          'No se pudo quitar la recomendación.'
-        );
-      }
+      await recomendacionService.eliminar(Number(id), token);
 
       // El administrador puede eliminar todas las
       // recomendaciones del libro.
