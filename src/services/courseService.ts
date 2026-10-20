@@ -30,15 +30,15 @@ async function solicitud<T>(endpoint: string, options: RequestInit = {}): Promis
  * Cursos visibles para el usuario: todos para el administrador,
  * solo los propios para el docente (soloPropios = true)
  */
-export async function getCursos(soloPropios = false): Promise<CourseSummary[]> {
-  return await solicitud<CourseSummary[]>(soloPropios ? '/courses?mine=true' : '/courses');
+export async function getCursos(soloPropios = false, signal?: AbortSignal): Promise<CourseSummary[]> {
+  return await solicitud<CourseSummary[]>(soloPropios ? '/courses?mine=true' : '/courses', { signal });
 }
 
 /**
  * Libros asignados a un curso
  */
-export async function getLibrosDelCurso(cursoId: number): Promise<CourseBook[]> {
-  return await solicitud<CourseBook[]>(`/courses/${cursoId}/books`);
+export async function getLibrosDelCurso(cursoId: number, signal?: AbortSignal): Promise<CourseBook[]> {
+  return await solicitud<CourseBook[]>(`/courses/${cursoId}/books`, { signal });
 }
 
 /**

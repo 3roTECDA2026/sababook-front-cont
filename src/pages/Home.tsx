@@ -348,10 +348,7 @@ export default function Home() {
   // FILTROS
   // --------------------------------------------------
 
-  const handleFilterChange = (
-    _resultados: Book[],
-    filtros: BookFilters
-  ) => {
+  const handleFilterChange = (filtros: BookFilters) => {
     setCurrentFilters(filtros);
   };
 
@@ -491,6 +488,8 @@ export default function Home() {
           >
             {currentQuery
               ? "Resultados de búsqueda"
+              : currentFilters.curso_id || currentFilters.anio
+              ? "Libros por año y curso"
               : "Libros filtrados"}
           </Typography>
         </Box>
