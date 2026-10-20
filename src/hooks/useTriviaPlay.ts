@@ -43,6 +43,7 @@ export const useTriviaPlay = (bookId: number) => {
         if (!mounted) return;
         setTriviaQuestions(questions);
         const active = evaluations.find((evaluation) => {
+          if (isStudent && evaluation.habilitada === false) return false;
           if (!evaluation.deadline) return true;
           return !isDeadlineExpired(evaluation.deadline);
         });

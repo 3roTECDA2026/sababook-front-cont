@@ -59,5 +59,27 @@ export const useEvaluations = () => {
     }
   };
 
-  return { evaluations, loading, error, fetchEvaluations, createEvaluation };
+  const enableEvaluation = useCallback(async (evaluationId: number): Promise<Evaluacion | null> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/${evaluationId}/habilitar`, {
+        method: 'PATCH',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!res.ok) throw new Error('No se pudo habilitar la evaluación.');
+      const evaluacion: Evaluacion = await res.json();
+      setEvaluations((prev) =>
+        prev.map((ev) => (ev.evaluationId === evaluationId ? { ...ev, habilitada: true, ...evaluacion } : ev)),
+      );
+      return evaluacion;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message, err);
+      setError(message);
+      return null;
+    }
+  }, [token]);
+
+  return { evaluations, loading, error, fetchEvaluations, createEvaluation, enableEvaluation };
 };
