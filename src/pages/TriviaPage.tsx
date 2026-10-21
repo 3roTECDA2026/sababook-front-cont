@@ -1,5 +1,5 @@
 // src/pages/TriviaPage.tsx
-import { useState, SyntheticEvent } from 'react';
+import { useEffect, useState, SyntheticEvent } from 'react';
 import {
   Alert,
   AlertColor,
@@ -42,7 +42,13 @@ const TriviaPage = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [selection, setSelection] = useState<TriviaSelection | null>(null);
   const { books, loading } = useBookData();
-  const { loading: evaluationsLoading, fetchEvaluations, createEvaluation, enableEvaluation } = useEvaluations();
+  const {
+    loading: evaluationsLoading,
+    fetchEvaluations,
+    createEvaluation,
+    setEvaluationHabilitada,
+    error: evaluationsError,
+  } = useEvaluations();
 
   const [evaluationDialogOpen, setEvaluationDialogOpen] = useState(false);
   const [evaluationBook, setEvaluationBook] = useState<Book | null>(null);
@@ -132,6 +138,21 @@ const TriviaPage = () => {
     setGeneratingId(null);
   };
 
+  const evaluacionHabilitada = selection?.habilitada === true;
+
+  const toggleEvaluationHabilitada = async (evaluationId: number) => {
+    const result = await setEvaluationHabilitada(evaluationId, !evaluacionHabilitada);
+    if (result) {
+      setSelection((prev) => (prev ? { ...prev, habilitada: result.habilitada } : prev));
+    }
+  };
+
+  // Los errores del hook de evaluaciones se muestran como aviso global
+  useEffect(() => {
+    if (!evaluationsError) return;
+    setSnackbar({ open: true, message: evaluationsError, severity: 'error' });
+  }, [evaluationsError]);
+
   return (
     <div className={styles.page}>
       <AppHeader
@@ -164,7 +185,11 @@ const TriviaPage = () => {
               {books.map((book) => (
                 <li key={book.libro_id} className={styles.bookRow}>
                   <div className={styles.bookCard}>
-                    <button type="button" className={styles.bookItem} onClick={() => selectBook(book)}>
+                    <button
+                      type="button"
+                      className={styles.bookItem}
+                      onClick={() => setGeneratingId(book.libro_id)}
+                    >
                       <img className={styles.bookCover} src={book.portada_url} alt="" />
                       <span className={styles.bookInfo}>
                         <span className={styles.bookTitle}>{book.titulo}</span>
@@ -181,7 +206,6 @@ const TriviaPage = () => {
                           variant="contained"
                           size="small"
                           className={styles.buttonOrange}
-                          sx={{ color: '#fff' }}
                           onClick={(e) => {
                             e.stopPropagation();
                             setGeneratingId(book.libro_id);
@@ -195,7 +219,6 @@ const TriviaPage = () => {
                             variant="contained"
                             size="small"
                             className={styles.buttonOrange}
-                            sx={{ color: '#fff' }}
                             startIcon={<QuizIcon />}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -208,7 +231,6 @@ const TriviaPage = () => {
                             variant="contained"
                             size="small"
                             className={styles.buttonOrange}
-                            sx={{ color: '#fff' }}
                             startIcon={<EventNoteIcon />}
                             disabled={evaluationsLoading}
                             onClick={(e) => {
@@ -260,27 +282,25 @@ const TriviaPage = () => {
               Cambiar libro
             </Typography>
           </div>
-          {selection.mode === 'evaluacion' && selection.evaluationId && selection.habilitada === false && (
-            <div className={styles.evalBanner} style={{ marginBottom: '1rem' }}>
-              <Typography variant="body2">
-                La evaluación está creada pero <b>no habilitada</b> para los alumnos.
-              </Typography>
-              <Button
-                variant="contained"
-                size="small"
-                className={styles.buttonOrange}
-                sx={{ color: '#fff', ml: 2 }}
-                onClick={async () => {
-                  if (!selection.evaluationId) return;
-                  const result = await enableEvaluation(selection.evaluationId);
-                  if (result) {
-                    setSelection((prev) => (prev ? { ...prev, habilitada: true } : prev));
-                  }
-                }}
-              >
-                Habilitar evaluación
-              </Button>
-            </div>
+          {selection.mode === 'evaluacion' && selection.evaluationId && (
+            <Alert
+              severity={evaluacionHabilitada ? 'success' : 'warning'}
+              sx={{ mb: 2, alignItems: 'center' }}
+              action={
+                <Button
+                  variant="contained"
+                  size="small"
+                  className={styles.buttonOrange}
+                  onClick={() => toggleEvaluationHabilitada(selection.evaluationId as number)}
+                >
+                  {evaluacionHabilitada ? 'Deshabilitar' : 'Habilitar evaluación'}
+                </Button>
+              }
+            >
+              {evaluacionHabilitada
+                ? 'La evaluación está habilitada: los alumnos ya pueden responderla.'
+                : 'La evaluación está creada pero no habilitada para los alumnos.'}
+            </Alert>
           )}
 
           <BookTriviaSection

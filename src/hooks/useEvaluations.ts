@@ -59,27 +59,43 @@ export const useEvaluations = () => {
     }
   };
 
-  const enableEvaluation = useCallback(async (evaluationId: number): Promise<Evaluacion | null> => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/${evaluationId}/habilitar`, {
-        method: 'PATCH',
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      if (!res.ok) throw new Error('No se pudo habilitar la evaluación.');
-      const evaluacion: Evaluacion = await res.json();
-      setEvaluations((prev) =>
-        prev.map((ev) => (ev.evaluationId === evaluationId ? { ...ev, habilitada: true, ...evaluacion } : ev)),
-      );
-      return evaluacion;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(message, err);
-      setError(message);
-      return null;
-    }
-  }, [token]);
+  // Habilitar o deshabilitar una evaluación para los alumnos
+  const setEvaluationHabilitada = useCallback(
+    async (evaluationId: number, habilitada: boolean): Promise<Evaluacion | null> => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/${evaluationId}/habilitar`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ habilitada }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          throw new Error(body?.error || 'No se pudo actualizar la evaluación.');
+        }
+        const evaluacion: Evaluacion = await res.json();
+        setEvaluations((prev) =>
+          prev.map((ev) => (ev.evaluationId === evaluationId ? { ...ev, ...evaluacion } : ev)),
+        );
+        return evaluacion;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(message, err);
+        setError(message);
+        return null;
+      }
+    },
+    [token],
+  );
 
-  return { evaluations, loading, error, fetchEvaluations, createEvaluation, enableEvaluation };
+  return {
+    evaluations,
+    loading,
+    error,
+    fetchEvaluations,
+    createEvaluation,
+    setEvaluationHabilitada,
+  };
 };
