@@ -1,6 +1,8 @@
 // src/services/apiService.ts
 import { API_BASE_URL } from '@/environments/api';
 import type { Book, Medal, BookFilters, CafeLiterario, ReadingGoal, Paginated, User } from '@/types';
+import { getCursos, getLibrosDelCurso } from '@/services/courseService';
+import { normalizarTexto } from '@/utils/normalize';
 
 /**
  * Función genérica para hacer peticiones HTTP
@@ -38,27 +40,115 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 /**
  * Obtener catálogo completo de libros
  */
-export async function getCatalogoLibros(): Promise<Book[]> {
-  return await apiRequest<Book[]>('/libros');
+export async function getCatalogoLibros(signal?: AbortSignal): Promise<Book[]> {
+  return await apiRequest<Book[]>('/libros', { signal });
 }
 
 /**
- * Buscar libros con filtros
+ * Aplica los filtros de texto sobre una lista ya obtenida de libros.
  */
-export async function buscarLibros(filtros: BookFilters = {}): Promise<Book[]> {
-  // Construir query string con los filtros
-  const params = new URLSearchParams();
+function aplicarFiltrosTexto(libros: Book[], filtros: BookFilters): Book[] {
+  let resultado = libros;
 
-  Object.entries(filtros).forEach(([key, value]) => {
-    if (value && value.trim()) {
-      params.append(key, value.trim());
+  if (filtros.query) {
+    const q = normalizarTexto(filtros.query);
+    resultado = resultado.filter(
+      (b) => normalizarTexto(b.titulo).includes(q) || normalizarTexto(b.autor).includes(q)
+    );
+  }
+
+  if (filtros.titulo) {
+    const q = normalizarTexto(filtros.titulo);
+    resultado = resultado.filter((b) => normalizarTexto(b.titulo).includes(q));
+  }
+
+  if (filtros.autor) {
+    const q = normalizarTexto(filtros.autor);
+    resultado = resultado.filter((b) => normalizarTexto(b.autor).includes(q));
+  }
+
+  if (filtros.genero) {
+    resultado = resultado.filter((b) => b.genero === filtros.genero);
+  }
+
+  if (filtros.nivel_educativo) {
+    resultado = resultado.filter((b) => b.nivel_educativo === filtros.nivel_educativo);
+  }
+
+  return resultado;
+}
+
+/**
+ * Obtiene y combina los libros asignados a los cursos correspondientes
+ * al año escolar o al curso específico seleccionado.
+ * Los errores se propagan para que la UI pueda mostrar el mensaje y reintentar.
+ */
+async function obtenerLibrosFiltradosPorCursoOAnio(
+  filtros: BookFilters,
+  signal?: AbortSignal
+): Promise<Book[]> {
+  let cursosIds: number[];
+
+  if (filtros.curso_id) {
+    cursosIds = [Number(filtros.curso_id)];
+  } else {
+    const cursos = await getCursos(false, signal);
+    // Solo se considera el año lectivo vigente (el más reciente) para no
+    // mezclar libros asignados en años anteriores.
+    const anioLectivoVigente = cursos.reduce(
+      (max, c) => (c.anio_lectivo > max ? c.anio_lectivo : max),
+      Number.NEGATIVE_INFINITY
+    );
+    cursosIds = cursos
+      .filter((c) => c.anio === Number(filtros.anio) && c.anio_lectivo === anioLectivoVigente)
+      .map((c) => c.curso_id);
+  }
+
+  if (cursosIds.length === 0) {
+    return [];
+  }
+
+  const listasLibros = await Promise.all(
+    cursosIds.map((id) => getLibrosDelCurso(id, signal).catch(() => []))
+  );
+
+  const libroIdSet = new Set<number>();
+  const librosAsignados: {
+    libro_id: number;
+    titulo: string;
+    autor: string;
+    portada_url: string | null;
+    puntaje: number;
+  }[] = [];
+
+  for (const lista of listasLibros) {
+    for (const b of lista) {
+      if (!libroIdSet.has(b.libro_id)) {
+        libroIdSet.add(b.libro_id);
+        librosAsignados.push(b);
+      }
     }
+  }
+
+  const catalogo = await getCatalogoLibros(signal);
+  const catalogoMap = new Map<number, Book>(catalogo.map((b) => [b.libro_id, b]));
+
+  const hidratados: Book[] = librosAsignados.map((cb) => {
+    const completo = catalogoMap.get(cb.libro_id);
+    if (completo) return completo;
+    return {
+      libro_id: cb.libro_id,
+      titulo: cb.titulo,
+      autor: cb.autor,
+      genero: '',
+      nivel_educativo: '',
+      descripcion: '',
+      portada_url: cb.portada_url ?? '',
+      calificacion_promedio: cb.puntaje ?? 0,
+    };
   });
 
-  const queryString = params.toString();
-  const endpoint = queryString ? `/libros/buscar?${queryString}` : '/libros/buscar';
-
-  return await apiRequest<Book[]>(endpoint);
+  return aplicarFiltrosTexto(hidratados, filtros);
 }
 
 export async function buscarLibrosPaginado(
@@ -67,10 +157,27 @@ export async function buscarLibrosPaginado(
   limit = 10,
   signal?: AbortSignal
 ): Promise<Paginated<Book>> {
+  if (filtros.curso_id || filtros.anio) {
+    const libros = await obtenerLibrosFiltradosPorCursoOAnio(filtros, signal);
+    const total = libros.length;
+    const start = (page - 1) * limit;
+    const data = libros.slice(start, start + limit);
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+      hasMore: start + data.length < total,
+    };
+  }
+
   const params = new URLSearchParams();
 
   Object.entries(filtros).forEach(([key, value]) => {
-    if (value && value.trim()) params.append(key, value.trim());
+    if (value !== undefined && value !== null && String(value).trim()) {
+      params.append(key, String(value).trim());
+    }
   });
   params.set('page', String(page));
   params.set('limit', String(limit));
