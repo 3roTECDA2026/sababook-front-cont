@@ -4,7 +4,8 @@ import { Typography, Button } from '@mui/material';
 import QuizIcon from '@mui/icons-material/Quiz';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import { useBookTrivia } from '@/hooks/useBookTrivia';
-import type { Book, TriviaModo } from '@/types';
+import { useAuth } from '@/hooks/useAuth';
+import type { Book, TriviaModo, TriviaQuestion } from '@/types';
 import TriviaQuestionCard from '@/components/ui/TriviaQuestionCard';
 import TriviaQuestionForm from '@/components/forms/TriviaQuestionForm';
 import { formatDate, isDeadlineExpired } from '@/utils/formatDate';
@@ -24,7 +25,9 @@ const BookTriviaSection = ({
   evaluationId = null,
 }: BookTriviaSectionProps) => {
   const [modalOpen, setModalOpen] = useState(false);
-  const { questions, loading, error, addQuestion, deleteQuestion } = useBookTrivia(
+  const [editingQuestion, setEditingQuestion] = useState<TriviaQuestion | null>(null);
+  const { user, isAdmin } = useAuth();
+  const { questions, loading, error, addQuestion, updateQuestion, deleteQuestion } = useBookTrivia(
     book.libro_id,
     mode,
     evaluationId,
@@ -32,6 +35,16 @@ const BookTriviaSection = ({
 
   const isEvaluation = mode === 'evaluacion';
   const evaluationEnded = isEvaluation && isDeadlineExpired(deadline);
+
+  const canEdit = (question: TriviaQuestion) =>
+    isAdmin || (user != null && question.docenteId === user.usuario_id);
+
+  const handleEdit = (question: TriviaQuestion) => setEditingQuestion(question);
+
+  const handleCloseForm = () => {
+    setModalOpen(false);
+    setEditingQuestion(null);
+  };
 
   return (
     <div>
@@ -87,6 +100,9 @@ const BookTriviaSection = ({
               key={question.id}
               question={question}
               index={index}
+              onEdit={
+                !evaluationEnded && canEdit(question) ? handleEdit : undefined
+              }
               onDelete={evaluationEnded ? undefined : deleteQuestion}
             />
           ))}
@@ -94,9 +110,12 @@ const BookTriviaSection = ({
       )}
 
       <TriviaQuestionForm
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        key={editingQuestion ? `edit-${editingQuestion.id}` : 'create'}
+        open={modalOpen || editingQuestion !== null}
+        onClose={handleCloseForm}
         onAdd={addQuestion}
+        onUpdate={updateQuestion}
+        initialQuestion={editingQuestion}
         mode={mode}
         deadline={deadline}
       />

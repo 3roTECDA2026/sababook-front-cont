@@ -15,6 +15,7 @@ import {
   IconButton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
 import type { TriviaQuestion, TriviaModo, TriviaFormato, TriviaPar } from '@/types';
 import styles from '@/styles/trivia.module.css';
@@ -35,6 +36,8 @@ interface TriviaQuestionFormProps {
   open: boolean;
   onClose: () => void;
   onAdd: (question: TriviaQuestionInput) => void;
+  onUpdate?: (id: number, question: TriviaQuestionInput) => Promise<boolean>;
+  initialQuestion?: TriviaQuestion | null;
   mode?: TriviaModo;
   deadline?: string | null;
 }
@@ -43,18 +46,31 @@ const TriviaQuestionForm = ({
   open,
   onClose,
   onAdd,
+  onUpdate,
+  initialQuestion = null,
   mode = 'trivia',
   deadline = null,
 }: TriviaQuestionFormProps) => {
   const isEvaluation = mode === 'evaluacion';
+  const isEditing = initialQuestion != null;
 
-  const [format, setFormat] = useState<TriviaFormato>('multiple');
-  const [question, setQuestion] = useState('');
-  const [options, setOptions] = useState<string[]>(Array.from({ length: MULTIPLE_COUNT }, () => ''));
-  const [correct, setCorrect] = useState(-1);
-  const [pairs, setPairs] = useState<TriviaPar[]>([{ left: '', right: '' }]);
-  const [text, setText] = useState('');
-  const [answers, setAnswers] = useState<string[]>(['']);
+  const [format, setFormat] = useState<TriviaFormato>(initialQuestion?.format ?? 'multiple');
+  const [question, setQuestion] = useState(initialQuestion?.question ?? '');
+  const [options, setOptions] = useState<string[]>(() => {
+    if (initialQuestion?.format === 'truefalse') return [...TRUE_FALSE_OPTIONS];
+    if (initialQuestion?.format === 'multiple' && initialQuestion.options?.length) {
+      return [...initialQuestion.options];
+    }
+    return Array.from({ length: MULTIPLE_COUNT }, () => '');
+  });
+  const [correct, setCorrect] = useState(initialQuestion?.correctAnswer ?? -1);
+  const [pairs, setPairs] = useState<TriviaPar[]>(
+    initialQuestion?.pairs?.length ? [...initialQuestion.pairs] : [{ left: '', right: '' }],
+  );
+  const [text, setText] = useState(initialQuestion?.text ?? '');
+  const [answers, setAnswers] = useState<string[]>(
+    initialQuestion?.answers?.length ? [...initialQuestion.answers] : [''],
+  );
   const [addedCount, setAddedCount] = useState(0);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
@@ -145,7 +161,9 @@ const TriviaQuestionForm = ({
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    let payload: TriviaQuestionInput;
+
     if (format === 'multiple' || format === 'truefalse') {
       if (!question.trim()) {
         setSnackbar({ open: true, message: 'Escribí el enunciado de la pregunta.', severity: 'warning' });
@@ -160,14 +178,14 @@ const TriviaQuestionForm = ({
         return;
       }
 
-      onAdd({
+      payload = {
         question: question.trim(),
         mode,
         format,
         deadline: isEvaluation ? deadline : null,
         options: options.map((option) => option.trim()),
         correctAnswer: correct,
-      });
+      };
     } else if (format === 'conexion') {
       const validPairs = pairs.filter((pair) => pair.left.trim() && pair.right.trim());
       if (validPairs.length < 2) {
@@ -175,7 +193,7 @@ const TriviaQuestionForm = ({
         return;
       }
 
-      onAdd({
+      payload = {
         question: question.trim() || 'Conectá cada elemento de la izquierda con su par',
         mode,
         format,
@@ -184,7 +202,7 @@ const TriviaQuestionForm = ({
           left: pair.left.trim(),
           right: pair.right.trim(),
         })),
-      });
+      };
     } else {
       if (!text.trim()) {
         setSnackbar({ open: true, message: 'Escribí el texto con los espacios a completar.', severity: 'warning' });
@@ -199,16 +217,27 @@ const TriviaQuestionForm = ({
         return;
       }
 
-      onAdd({
+      payload = {
         question: '',
         mode,
         format,
         deadline: isEvaluation ? deadline : null,
         text: text.trim(),
         answers: answers.map((answer) => answer.trim()),
-      });
+      };
     }
 
+    if (isEditing) {
+      const saved = onUpdate ? await onUpdate(initialQuestion.id, payload) : true;
+      if (saved) {
+        onClose();
+      } else {
+        setSnackbar({ open: true, message: 'No se pudieron guardar los cambios.', severity: 'error' });
+      }
+      return;
+    }
+
+    onAdd(payload);
     resetForm();
     setPairs([{ left: '', right: '' }]);
     setText('');
@@ -221,7 +250,11 @@ const TriviaQuestionForm = ({
       <>
       <Box className={styles.formModal}>
         <Typography id="trivia-modal-title" variant="h6" component="h2" mb={2}>
-          {isEvaluation ? 'Nueva pregunta de evaluación' : 'Nueva pregunta de trivia'}
+          {isEditing
+            ? `Editar pregunta ${isEvaluation ? 'de evaluación' : 'de trivia'}`
+            : isEvaluation
+              ? 'Nueva pregunta de evaluación'
+              : 'Nueva pregunta de trivia'}
         </Typography>
 
         <Typography variant="caption" color="text.secondary">
@@ -361,19 +394,19 @@ const TriviaQuestionForm = ({
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mt={3} gap={2}>
           <Button onClick={onClose} variant="text" color="inherit">
-            Listo
+            {isEditing ? 'Cancelar' : 'Listo'}
           </Button>
           <Button
             variant="contained"
-            startIcon={<AddIcon />}
+            startIcon={isEditing ? <SaveIcon /> : <AddIcon />}
             onClick={handleSubmit}
             className={styles.buttonOrange}
           >
-            Agregar pregunta
+            {isEditing ? 'Guardar cambios' : 'Agregar pregunta'}
           </Button>
         </Box>
 
-        {addedCount > 0 && (
+        {!isEditing && addedCount > 0 && (
           <Typography variant="caption" color="success.main" display="block" mt={2}>
             {addedCount} {addedCount === 1 ? 'pregunta agregada' : 'preguntas agregadas'}{' '}
             {isEvaluation ? 'a la evaluación.' : 'a la trivia.'}

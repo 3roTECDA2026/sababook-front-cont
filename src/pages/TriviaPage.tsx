@@ -160,6 +160,15 @@ const TriviaPage = () => {
                   <Button
                     variant="outlined"
                     size="small"
+                    className={styles.triviaButton}
+                    startIcon={<QuizIcon />}
+                    onClick={() => selectBook(book)}
+                  >
+                    Trivia
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
                     className={styles.evalButton}
                     startIcon={<EventNoteIcon />}
                     disabled={evaluationsLoading}

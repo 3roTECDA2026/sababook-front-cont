@@ -16,6 +16,8 @@ export interface TriviaQuestion {
   question: string;
   deadline?: string | null;
   evaluationId?: number | null;
+  cursoId?: number | null;
+  docenteId?: number | null;
   options?: string[];
   correctAnswer?: number;
   pairs?: TriviaPar[];

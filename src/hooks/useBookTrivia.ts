@@ -6,7 +6,7 @@ import type { TriviaQuestion, TriviaModo } from '@/types';
 
 /**
  * Hook para administrar las preguntas de trivia de un libro, filtradas por
- * modo (trivia o evaluación). Expone la carga, el alta y el borrado.
+ * modo (trivia o evaluación). Expone la carga, el alta, la edición y el borrado.
  */
 export const useBookTrivia = (
   bookId: number | undefined,
@@ -28,7 +28,9 @@ export const useBookTrivia = (
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/libro/${bookId}`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/libro/${bookId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (!res.ok) throw new Error('Error al cargar las preguntas de trivia.');
       const data: TriviaQuestion[] = await res.json();
 
@@ -47,7 +49,7 @@ export const useBookTrivia = (
     } finally {
       setLoading(false);
     }
-  }, [bookId, mode, evaluationId]);
+  }, [bookId, mode, evaluationId, token]);
 
   useEffect(() => {
     fetchQuestions();
@@ -81,6 +83,33 @@ export const useBookTrivia = (
     }
   };
 
+  // Editar pregunta
+  const updateQuestion = async (id: number, input: Omit<TriviaQuestion, 'id'>): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error || 'Error al guardar los cambios.');
+      }
+
+      const updated: TriviaQuestion = await res.json();
+      setQuestions((prev) => prev.map((question) => (question.id === id ? updated : question)));
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message, err);
+      setError(message);
+      return false;
+    }
+  };
+
   // Eliminar pregunta
   const deleteQuestion = async (id: number): Promise<boolean> => {
     try {
@@ -100,5 +129,5 @@ export const useBookTrivia = (
     }
   };
 
-  return { questions, loading, error, addQuestion, deleteQuestion };
+  return { questions, loading, error, addQuestion, updateQuestion, deleteQuestion };
 };
