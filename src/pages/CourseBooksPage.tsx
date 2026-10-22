@@ -45,8 +45,9 @@ import {
   asignarLibroACurso,
   actualizarPuntajeLibro,
   quitarLibroDeCurso,
+  getAsignacionesAnteriores,
 } from '@/services/courseService';
-import type { Book, CourseBook, CourseSummary } from '@/types';
+import type { Book, CourseBook, CourseSummary, PreviousAssignment } from '@/types';
 
 const StyledTableContainer = styled(Paper)(({ theme }) => ({
   borderRadius: '16px',
@@ -123,6 +124,11 @@ export default function CourseBooksPage() {
   const [libroElegido, setLibroElegido] = useState<Book | null>(null);
   const [puntajeNuevo, setPuntajeNuevo] = useState<string>('');
 
+  // Alerta de asignaciones en años anteriores (null = diálogo cerrado)
+  const [asignacionesAnteriores, setAsignacionesAnteriores] = useState<PreviousAssignment[] | null>(
+    null
+  );
+
   // Edición de puntaje y borrado
   const [libroAEditar, setLibroAEditar] = useState<CourseBook | null>(null);
   const [puntajeEditado, setPuntajeEditado] = useState<string>('');
@@ -194,6 +200,29 @@ export default function CourseBooksPage() {
     }
   };
 
+  // Asigna el libro elegido al curso (después de pasar por la alerta, si hubo)
+  const realizarAsignacion = async () => {
+    if (cursoId === null || !libroElegido) return;
+
+    const puntaje = parsearPuntaje(puntajeNuevo);
+    if (puntaje === null) return;
+
+    setGuardando(true);
+    try {
+      await asignarLibroACurso(cursoId, libroElegido.libro_id, puntaje);
+      setAsignacionesAnteriores(null);
+      setDialogoAsignarAbierto(false);
+      mostrarMensaje('Libro asignado correctamente.', 'success');
+      await cargarLibros(cursoId);
+    } catch (error) {
+      mostrarMensaje(mensajeDeError(error), 'error');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  // Valida el puntaje y, antes de asignar, revisa si el libro ya se usó
+  // en años anteriores: si es así, muestra la alerta para confirmar
   const confirmarAsignacion = async () => {
     if (cursoId === null || !libroElegido) return;
 
@@ -205,15 +234,18 @@ export default function CourseBooksPage() {
 
     setGuardando(true);
     try {
-      await asignarLibroACurso(cursoId, libroElegido.libro_id, puntaje);
-      setDialogoAsignarAbierto(false);
-      mostrarMensaje('Libro asignado correctamente.', 'success');
-      await cargarLibros(cursoId);
-    } catch (error) {
-      mostrarMensaje(mensajeDeError(error), 'error');
-    } finally {
-      setGuardando(false);
+      const anteriores = await getAsignacionesAnteriores(cursoId, libroElegido.libro_id);
+      if (anteriores.length > 0) {
+        setAsignacionesAnteriores(anteriores);
+        setGuardando(false);
+        return;
+      }
+    } catch {
+      // Si no se pudo consultar, no se bloquea la asignación: la alerta es informativa
     }
+    setGuardando(false);
+
+    await realizarAsignacion();
   };
 
   const abrirDialogoEditar = (libro: CourseBook) => {
@@ -446,6 +478,50 @@ export default function CourseBooksPage() {
             sx={estiloBotonPrincipal}
           >
             {guardando ? <CircularProgress size={22} color="inherit" /> : 'Asignar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Alerta: el libro ya se asignó en años anteriores (no bloquea) */}
+      <Dialog
+        open={asignacionesAnteriores !== null}
+        onClose={() => !guardando && setAsignacionesAnteriores(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Este libro ya se asignó antes</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" mb={1}>
+            "{libroElegido?.titulo}" ya se asignó en años anteriores a:
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 3 }}>
+            {asignacionesAnteriores?.map((anterior) => (
+              <li key={anterior.curso.curso_id}>
+                <Typography variant="body2">
+                  {`${anterior.anio_lectivo} · ${anterior.curso.anio}°${anterior.curso.division}`}
+                </Typography>
+              </li>
+            ))}
+          </Box>
+          <Typography variant="body2" color="text.secondary" mt={2}>
+            ¿Querés asignarlo igual?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setAsignacionesAnteriores(null)}
+            disabled={guardando}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={realizarAsignacion}
+            disabled={guardando}
+            sx={estiloBotonPrincipal}
+          >
+            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Asignar igual'}
           </Button>
         </DialogActions>
       </Dialog>
