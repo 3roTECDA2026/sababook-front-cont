@@ -31,6 +31,9 @@ export interface Evaluacion {
   deadline: string | null;
   createdAt: string;
   questionCount: number;
+  habilitada?: boolean;
+  cursoId?: number | null;
+  docenteId?: number | null;
 }
 
 export interface EvaluacionDetalle {

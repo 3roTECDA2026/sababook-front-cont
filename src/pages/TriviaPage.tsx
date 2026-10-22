@@ -1,5 +1,5 @@
 // src/pages/TriviaPage.tsx
-import { useState, SyntheticEvent } from 'react';
+import { useEffect, useState, SyntheticEvent } from 'react';
 import {
   Alert,
   AlertColor,
@@ -29,6 +29,7 @@ interface TriviaSelection {
   mode: TriviaModo;
   deadline: string | null;
   evaluationId: number | null;
+  habilitada?: boolean;
 }
 
 interface SnackbarState {
@@ -41,7 +42,13 @@ const TriviaPage = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [selection, setSelection] = useState<TriviaSelection | null>(null);
   const { books, loading } = useBookData();
-  const { loading: evaluationsLoading, fetchEvaluations, createEvaluation } = useEvaluations();
+  const {
+    loading: evaluationsLoading,
+    fetchEvaluations,
+    createEvaluation,
+    setEvaluationHabilitada,
+    error: evaluationsError,
+  } = useEvaluations();
 
   const [evaluationDialogOpen, setEvaluationDialogOpen] = useState(false);
   const [evaluationBook, setEvaluationBook] = useState<Book | null>(null);
@@ -55,6 +62,8 @@ const TriviaPage = () => {
     message: '',
     severity: 'error',
   });
+
+  const [generatingId, setGeneratingId] = useState<number | null>(null);
 
   const handleMenuClose = () => setMenuOpen(false);
 
@@ -79,7 +88,9 @@ const TriviaPage = () => {
         mode: 'evaluacion',
         deadline: evaluacion.deadline,
         evaluationId: evaluacion.evaluationId,
+        habilitada: evaluacion.habilitada,
       });
+      setGeneratingId(null);
       return;
     }
 
@@ -114,15 +125,33 @@ const TriviaPage = () => {
       mode: 'evaluacion',
       deadline: evaluacion.deadline,
       evaluationId: evaluacion.evaluationId,
+      habilitada: evaluacion.habilitada,
     });
     setEvaluationDialogOpen(false);
     setEvaluationBook(null);
     setDeadline('');
+    setGeneratingId(null);
   };
 
   const selectBook = (book: Book) => {
     setSelection({ book, mode: 'trivia', deadline: null, evaluationId: null });
+    setGeneratingId(null);
   };
+
+  const evaluacionHabilitada = selection?.habilitada === true;
+
+  const toggleEvaluationHabilitada = async (evaluationId: number) => {
+    const result = await setEvaluationHabilitada(evaluationId, !evaluacionHabilitada);
+    if (result) {
+      setSelection((prev) => (prev ? { ...prev, habilitada: result.habilitada } : prev));
+    }
+  };
+
+  // Los errores del hook de evaluaciones se muestran como aviso global
+  useEffect(() => {
+    if (!evaluationsError) return;
+    setSnackbar({ open: true, message: evaluationsError, severity: 'error' });
+  }, [evaluationsError]);
 
   return (
     <div className={styles.page}>
@@ -130,6 +159,14 @@ const TriviaPage = () => {
         onMenuClick={() => setMenuOpen(true)}
         title="Trivia"
         subtitle="Generá preguntas por libro"
+        onBack={
+          selection
+            ? () => {
+                setSelection(null);
+                setGeneratingId(null);
+              }
+            : undefined
+        }
       />
       <SideMenu open={menuOpen} onClose={handleMenuClose} active="Trivia" />
 
@@ -147,43 +184,77 @@ const TriviaPage = () => {
             <ul className={styles.bookList}>
               {books.map((book) => (
                 <li key={book.libro_id} className={styles.bookRow}>
-                  <button type="button" className={styles.bookItem} onClick={() => selectBook(book)}>
-                    <img className={styles.bookCover} src={book.portada_url} alt="" />
-                    <span className={styles.bookInfo}>
-                      <span className={styles.bookTitle}>{book.titulo}</span>
-                      <span className={styles.bookMeta}>
-                        {book.autor} · {book.genero}
+                  <div className={styles.bookCard}>
+                    <button
+                      type="button"
+                      className={styles.bookItem}
+                      onClick={() => setGeneratingId(book.libro_id)}
+                    >
+                      <img className={styles.bookCover} src={book.portada_url} alt="" />
+                      <span className={styles.bookInfo}>
+                        <span className={styles.bookTitle}>{book.titulo}</span>
                       </span>
-                    </span>
-                    <QuizIcon className={styles.bookIcon} />
-                  </button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    className={styles.triviaButton}
-                    startIcon={<QuizIcon />}
-                    onClick={() => selectBook(book)}
-                  >
-                    Trivia
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    className={styles.evalButton}
-                    startIcon={<EventNoteIcon />}
-                    disabled={evaluationsLoading}
-                    onClick={() => openOrResumeEvaluation(book)}
-                  >
-                    Evaluación
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    className={styles.responsesButton}
-                    onClick={() => openResponses(book)}
-                  >
-                    Respuestas
-                  </Button>
+                      <span className={styles.bookMetaRight}>
+                        <span className={styles.bookMeta}>{book.autor}</span>
+                        <span className={styles.bookMeta}>{book.genero}</span>
+                      </span>
+                    </button>
+
+                    <div className={styles.bookCardActions}>
+                      {generatingId !== book.libro_id ? (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          className={styles.buttonOrange}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setGeneratingId(book.libro_id);
+                          }}
+                        >
+                          Generar
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            className={styles.buttonOrange}
+                            startIcon={<QuizIcon />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              selectBook(book);
+                            }}
+                          >
+                            Trivia
+                          </Button>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            className={styles.buttonOrange}
+                            startIcon={<EventNoteIcon />}
+                            disabled={evaluationsLoading}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openOrResumeEvaluation(book);
+                            }}
+                          >
+                            Evaluación
+                          </Button>
+                        </>
+                      )}
+
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openResponses(book);
+                        }}
+                      >
+                        Respuestas
+                      </Button>
+                    </div>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -200,10 +271,38 @@ const TriviaPage = () => {
                 selection.deadline &&
                 ` · límite: ${selection.deadline}`}
             </Typography>
-            <Typography component="span" className={styles.changeLink} onClick={() => setSelection(null)}>
+            <Typography
+              component="span"
+              className={styles.changeLink}
+              onClick={() => {
+                setSelection(null);
+                setGeneratingId(null);
+              }}
+            >
               Cambiar libro
             </Typography>
           </div>
+          {selection.mode === 'evaluacion' && selection.evaluationId && (
+            <Alert
+              severity={evaluacionHabilitada ? 'success' : 'warning'}
+              sx={{ mb: 2, alignItems: 'center' }}
+              action={
+                <Button
+                  variant="contained"
+                  size="small"
+                  className={styles.buttonOrange}
+                  onClick={() => toggleEvaluationHabilitada(selection.evaluationId as number)}
+                >
+                  {evaluacionHabilitada ? 'Deshabilitar' : 'Habilitar evaluación'}
+                </Button>
+              }
+            >
+              {evaluacionHabilitada
+                ? 'La evaluación está habilitada: los alumnos ya pueden responderla.'
+                : 'La evaluación está creada pero no habilitada para los alumnos.'}
+            </Alert>
+          )}
+
           <BookTriviaSection
             key={`${selection.book.libro_id}-${selection.mode}-${selection.evaluationId ?? 'n'}`}
             book={selection.book}

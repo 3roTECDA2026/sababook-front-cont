@@ -41,8 +41,10 @@ export const useTriviaPlay = (bookId: number) => {
     ])
       .then(([questions, evaluations]: [PlayQuestion[], Evaluacion[]]) => {
         if (!mounted) return;
-        setTriviaQuestions(questions);
-        const active = evaluations.find((evaluation) => {
+        setTriviaQuestions(Array.isArray(questions) ? questions : []);
+        const lista = Array.isArray(evaluations) ? evaluations : [];
+        const active = lista.find((evaluation) => {
+          if (isStudent && evaluation.habilitada === false) return false;
           if (!evaluation.deadline) return true;
           return !isDeadlineExpired(evaluation.deadline);
         });
@@ -50,6 +52,13 @@ export const useTriviaPlay = (bookId: number) => {
       })
       .catch((err) => {
         console.error('Error cargando trivia del libro:', err);
+        if (!mounted) return;
+        setTriviaQuestions([]);
+        setActiveEvaluation(null);
+        setNotice({
+          message: 'No se pudo cargar el contenido de trivia de este libro.',
+          severity: 'error',
+        });
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -92,6 +101,14 @@ export const useTriviaPlay = (bookId: number) => {
         `${API_BASE_URL}/api/v1/trivia/jugar/evaluacion/${activeEvaluation.evaluationId}`,
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined },
       );
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setNotice({
+          message: body?.error || 'No se pudo cargar la evaluación.',
+          severity: 'error',
+        });
+        return;
+      }
       questions = await res.json();
     } else {
       questions = triviaQuestions;
