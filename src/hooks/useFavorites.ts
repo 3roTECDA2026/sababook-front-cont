@@ -1,3 +1,4 @@
+
 // src/hooks/useFavorites.ts
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
@@ -22,12 +23,14 @@ export function useFavorites() {
         headers: { Authorization: `Bearer ${token}` },
         signal,
       });
+
       if (!res.ok) throw new Error('Error al obtener favoritos');
+
       const data: Book[] = await res.json();
       setFavoriteBooks(data);
-      console.log('FAVORITOS', data);
     } catch (err) {
       if ((err as { name?: string })?.name === 'AbortError') return;
+
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
       console.error('Error al cargar favoritos:', err);
@@ -39,12 +42,14 @@ export function useFavorites() {
   useEffect(() => {
     const controller = new AbortController();
     fetchFavorites(controller.signal);
+
     return () => controller.abort();
   }, [fetchFavorites]);
 
   // Agregar favorito
   const addFavorite = async (libro_id: number): Promise<boolean> => {
     if (!token) return false;
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/favorites`, {
         method: 'POST',
@@ -54,6 +59,7 @@ export function useFavorites() {
         },
         body: JSON.stringify({ libro_id }),
       });
+
       if (!res.ok) throw new Error('Error al agregar favorito');
 
       // Refrescar la lista completa de favoritos
@@ -68,6 +74,7 @@ export function useFavorites() {
   // Quitar favorito
   const removeFavorite = async (libro_id: number): Promise<boolean> => {
     if (!token) return false;
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/favorites`, {
         method: 'DELETE',
@@ -77,6 +84,7 @@ export function useFavorites() {
         },
         body: JSON.stringify({ libro_id }),
       });
+
       if (!res.ok) throw new Error('Error al quitar favorito');
 
       // Refrescar la lista completa de favoritos
@@ -89,8 +97,13 @@ export function useFavorites() {
   };
 
   // Toggle favorito (combina add/remove)
-  const toggleFavorite = async (libro_id: number, isFavorite: boolean): Promise<boolean> => {
-    return isFavorite ? await removeFavorite(libro_id) : await addFavorite(libro_id);
+  const toggleFavorite = async (
+    libro_id: number,
+    isFavorite: boolean
+  ): Promise<boolean> => {
+    return isFavorite
+      ? await removeFavorite(libro_id)
+      : await addFavorite(libro_id);
   };
 
   // Función para verificar si un libro es favorito
