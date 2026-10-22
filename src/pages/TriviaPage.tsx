@@ -1,8 +1,9 @@
 // src/pages/TriviaPage.tsx
-import { useEffect, useState, SyntheticEvent } from 'react';
+import { useEffect, useMemo, useState, SyntheticEvent } from 'react';
 import {
   Alert,
   AlertColor,
+  Box,
   Typography,
   Button,
   Dialog,
@@ -19,10 +20,21 @@ import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import BookTriviaSection from '@/components/ui/BookTriviaSection';
 import EvaluationResponsesDialog from '@/components/ui/EvaluationResponsesDialog';
+import FilterChips from '@/components/ui/FilterChips';
+import type { FilterCategoryId } from '@/components/ui/FilterChips';
+import SearchBar from '@/components/ui/SearchBar';
+import { useAuth } from '@/hooks/useAuth';
 import { useBookData } from '@/hooks/useBookData';
 import { useEvaluations } from '@/hooks/useEvaluations';
-import type { Book, TriviaModo } from '@/types';
+import { getCursos } from '@/services/courseService';
+import { obtenerLibrosFiltradosPorCursoOAnio } from '@/services/apiService';
+import type { Book, BookFilters, TriviaModo } from '@/types';
 import styles from '@/styles/trivia.module.css';
+
+const ADMIN_FILTER_CATEGORIES: FilterCategoryId[] = ['year', 'course'];
+
+const normalizeText = (text: string) =>
+  text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 interface TriviaSelection {
   book: Book;
@@ -42,6 +54,13 @@ const TriviaPage = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [selection, setSelection] = useState<TriviaSelection | null>(null);
   const { books, loading } = useBookData();
+  const { isAdmin, isTeacher, loading: authLoading } = useAuth();
+
+  const [filters, setFilters] = useState<BookFilters>({});
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filteredBooks, setFilteredBooks] = useState<Book[] | null>(null);
+  const [filteredLoading, setFilteredLoading] = useState<boolean>(false);
+  const [booksError, setBooksError] = useState<string | null>(null);
   const {
     loading: evaluationsLoading,
     fetchEvaluations,
@@ -153,6 +172,75 @@ const TriviaPage = () => {
     setSnackbar({ open: true, message: evaluationsError, severity: 'error' });
   }, [evaluationsError]);
 
+  // El admin filtra por año y curso; el docente solo ve los libros de sus cursos.
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!isAdmin && !isTeacher) {
+      setFilteredBooks(null);
+      return;
+    }
+
+    let active = true;
+
+    const loadBooks = async () => {
+      setFilteredLoading(true);
+      setBooksError(null);
+
+      try {
+        if (isAdmin) {
+          const hasFilters = filters.anio !== undefined || filters.curso_id !== undefined;
+          if (!hasFilters) {
+            if (active) setFilteredBooks(null);
+            return;
+          }
+
+          const data = await obtenerLibrosFiltradosPorCursoOAnio(filters);
+          if (active) setFilteredBooks(data);
+          return;
+        }
+
+        const courses = await getCursos(true);
+        const bookLists = await Promise.all(
+          courses.map((course) =>
+            obtenerLibrosFiltradosPorCursoOAnio({ curso_id: course.curso_id })
+          )
+        );
+
+        const uniqueBooks = new Map<number, Book>();
+        bookLists.flat().forEach((book) => uniqueBooks.set(book.libro_id, book));
+
+        if (active) setFilteredBooks(Array.from(uniqueBooks.values()));
+      } catch (error) {
+        if (!active) return;
+        setFilteredBooks([]);
+        setBooksError(
+          error instanceof Error ? error.message : 'No se pudieron cargar los libros.'
+        );
+      } finally {
+        if (active) setFilteredLoading(false);
+      }
+    };
+
+    loadBooks();
+
+    return () => {
+      active = false;
+    };
+  }, [authLoading, isAdmin, isTeacher, filters]);
+
+  const sourceBooks = filteredBooks ?? (isTeacher ? [] : books);
+
+  const visibleBooks = useMemo(() => {
+    const query = normalizeText(searchQuery);
+    if (!query) return sourceBooks;
+    return sourceBooks.filter((book) =>
+      normalizeText(`${book.titulo} ${book.autor} ${book.genero}`).includes(query)
+    );
+  }, [sourceBooks, searchQuery]);
+
+  const booksLoading = loading || filteredLoading;
+
   return (
     <div className={styles.page}>
       <AppHeader
@@ -172,17 +260,60 @@ const TriviaPage = () => {
 
       {!selection && (
         <>
-          <Typography variant="h6" className={styles.sectionTitle}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              alignItems: 'flex-start',
+              flexWrap: 'wrap',
+              mb: 1,
+            }}
+          >
+            {isAdmin && (
+              <Box sx={{ flex: '1 1 420px', minWidth: 0 }}>
+                <FilterChips
+                  categories={ADMIN_FILTER_CATEGORIES}
+                  onFilterChange={setFilters}
+                  sx={{ mb: 0 }}
+                />
+              </Box>
+            )}
+
+            <Box
+              sx={{
+                flex: { xs: '1 1 100%', sm: '0 1 320px' },
+                minWidth: { xs: '100%', sm: 240 },
+              }}
+            >
+              <SearchBar onSearch={setSearchQuery} sx={{ mb: 0 }} />
+            </Box>
+          </Box>
+
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            {isAdmin
+              ? 'Filtrá por año y curso para acotar los libros. También podés buscar por título, autor o género.'
+              : 'Buscá por título, autor o género entre los libros de tus cursos asignados.'}
+          </Typography>
+
+          <Typography variant="h6" className={styles.sectionTitle} sx={{ mt: 1, mb: 3 }}>
             Seleccioná un libro para cargar sus preguntas
           </Typography>
 
-          {!loading && books.length === 0 ? (
+          {booksError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {booksError}
+            </Alert>
+          )}
+
+          {!booksLoading && visibleBooks.length === 0 ? (
             <Typography variant="body2" className={styles.emptyText}>
-              No hay libros disponibles.
+              {searchQuery
+                ? 'No se encontraron libros con esa búsqueda.'
+                : 'No hay libros disponibles.'}
             </Typography>
           ) : (
             <ul className={styles.bookList}>
-              {books.map((book) => (
+              {visibleBooks.map((book) => (
                 <li key={book.libro_id} className={styles.bookRow}>
                   <div className={styles.bookCard}>
                     <button

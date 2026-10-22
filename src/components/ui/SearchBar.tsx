@@ -1,6 +1,7 @@
 // src/components/SearchBar.tsx
 import { useState, forwardRef, useImperativeHandle, KeyboardEvent } from 'react';
 import { InputAdornment, IconButton, styled, OutlinedInput, FormControl } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
 const StyledFormControl = styled(FormControl)(({ theme }) => ({
@@ -33,13 +34,14 @@ const StyledFormControl = styled(FormControl)(({ theme }) => ({
 
 interface SearchBarProps {
   onSearch?: (query: string) => void;
+  sx?: SxProps<Theme>;
 }
 
 export interface SearchBarHandle {
   clear: () => void;
 }
 
-const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onSearch }, ref) => {
+const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onSearch, sx }, ref) => {
   const [query, setQuery] = useState<string>('');
 
   useImperativeHandle(ref, () => ({
@@ -55,7 +57,7 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onSearch }, ref
   };
 
   return (
-    <StyledFormControl variant="outlined">
+    <StyledFormControl variant="outlined" sx={sx}>
       <OutlinedInput
         placeholder="Buscar por título o autor..."
         value={query}
