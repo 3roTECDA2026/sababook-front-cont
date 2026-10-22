@@ -93,11 +93,11 @@ interface SnackbarState {
 const etiquetaCurso = (curso: CourseSummary) =>
   `${curso.anio}°${curso.division} · ${curso.anio_lectivo} · ${curso.materia.nombre}`;
 
-// Devuelve el puntaje como entero >= 0, o null si no es válido
+// Devuelve el puntaje como entero entre 1 y 100 (misma regla que el back), o null si no es válido
 const parsearPuntaje = (valor: string): number | null => {
   if (valor.trim() === '') return null;
   const numero = Number(valor);
-  return Number.isInteger(numero) && numero >= 0 ? numero : null;
+  return Number.isInteger(numero) && numero >= 1 && numero <= 100 ? numero : null;
 };
 
 const mensajeDeError = (error: unknown) =>
@@ -228,7 +228,7 @@ export default function CourseBooksPage() {
 
     const puntaje = parsearPuntaje(puntajeNuevo);
     if (puntaje === null) {
-      mostrarMensaje('El puntaje debe ser un número entero mayor o igual a 0.', 'warning');
+      mostrarMensaje('El puntaje debe ser un número entero entre 1 y 100.', 'warning');
       return;
     }
 
@@ -258,7 +258,7 @@ export default function CourseBooksPage() {
 
     const puntaje = parsearPuntaje(puntajeEditado);
     if (puntaje === null) {
-      mostrarMensaje('El puntaje debe ser un número entero mayor o igual a 0.', 'warning');
+      mostrarMensaje('El puntaje debe ser un número entero entre 1 y 100.', 'warning');
       return;
     }
 
@@ -459,7 +459,7 @@ export default function CourseBooksPage() {
               type="number"
               value={puntajeNuevo}
               onChange={(e) => setPuntajeNuevo(e.target.value)}
-              slotProps={{ htmlInput: { min: 0, step: 1 } }}
+              slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
             />
           </Box>
         </DialogContent>
@@ -546,7 +546,7 @@ export default function CourseBooksPage() {
             fullWidth
             value={puntajeEditado}
             onChange={(e) => setPuntajeEditado(e.target.value)}
-            slotProps={{ htmlInput: { min: 0, step: 1 } }}
+            slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
