@@ -108,8 +108,25 @@ Muchos hooks viejos hacen `fetch` directo. Para código nuevo, centralizar las l
 - **Colores del tema, no valores fijos:** `theme.palette.button.main` (naranja de marca,
   `BUTTON_ORANGE`), `theme.palette.primary.main`, `theme.palette.body.main`.
   Las constantes están en `theme/theme.ts`.
-- El tema fuerza un estilo común para todos los `Button` (`unifiedButtonOverrides`);
-  pisarlo requiere `!important`. Si se hace, dejar un comentario explicando por qué.
+- **Botones (`Button` de MUI): siempre fondo naranja y texto blanco.**
+  - El tema ya lo aplica a todos los `Button` (`unifiedButtonOverrides` en `theme/theme.ts`:
+    fondo `BUTTON_ORANGE`, texto `#FFFFFF`, hover `BUTTON_ORANGE_DARK`), sin importar el
+    `variant` ni el `color` que se declare. Usar `<Button>` sin pisar `backgroundColor` ni `color`.
+  - No cambiar el color de fondo ni del texto con `sx`, `styled()`, clases CSS ni `!important`
+    (por ejemplo, no hacer botones "outlined" con texto naranja).
+  - Única excepción: las acciones destructivas (eliminar) usan `color="error"`, que el tema
+    muestra en naranja claro con texto oscuro (`DELETE_ORANGE` / `DELETE_TEXT`).
+  - Si se necesita un botón con otro aspecto, consultarlo con el equipo y agregarlo al tema,
+    no resolverlo en el componente.
+- **Eliminar siempre pide confirmación.** Ninguna acción que borre algo (libro, comentario,
+  foro, lista, usuario, pregunta, asignación, etc.) se ejecuta con un solo clic:
+  - Usar `ConfirmationModal` (`components/ui/ConfirmationModal.tsx`) con un `title` claro y un
+    `message` que nombre lo que se va a borrar (ej. `¿Querés quitar "Rayuela" de este curso?`).
+  - La llamada a la API se hace recién en `onConfirm`; mientras se procesa, deshabilitar el botón
+    para evitar dobles envíos.
+  - Al terminar, informar el resultado (`Snackbar` / `useNotification()`), incluido el mensaje de
+    error que devuelva el back (por ejemplo, un 409 porque el elemento está en uso).
+  - El botón que abre la confirmación usa `color="error"` (estilo de acción destructiva del tema).
 - Estilos con `sx` de MUI o `styled()`. Evitar `style={{}}` en línea y no mezclarlo con CSS modules.
 - Avisos y errores: `Alert` de MUI (con `action` si hay botón) o `useNotification()` / `Snackbar`.
 - Cuidar los estados de cada pantalla: **cargando**, **vacío**, **error** (sin mostrar datos viejos
@@ -157,5 +174,7 @@ Muchos hooks viejos hacen `fetch` directo. Para código nuevo, centralizar las l
 - [ ] Probado en el navegador con el back local, con los roles que correspondan.
 - [ ] Estados de carga, vacío y error contemplados.
 - [ ] Se reutilizaron componentes de `components/ui` y colores del tema.
+- [ ] Los `Button` mantienen el estilo del tema (fondo naranja, texto blanco), sin colores pisados.
+- [ ] Toda acción de eliminar pide confirmación con `ConfirmationModal` antes de llamar a la API.
 - [ ] Las llamadas a la API usan `API_BASE_URL` y mandan el token cuando hace falta.
 - [ ] Sin `console.log` de depuración, código comentado ni archivos ajenos a la tarea.
