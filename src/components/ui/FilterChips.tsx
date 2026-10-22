@@ -1,62 +1,130 @@
 // src/components/FilterChips.tsx
-import { useState, MouseEvent } from 'react';
-import { Stack, Chip, Menu, MenuItem } from '@mui/material';
-import { buscarLibros } from '@/services/apiService';
-import type { Book, BookFilters } from '@/types';
+import { useState, useEffect, useMemo, MouseEvent } from 'react';
+import { Stack, Chip, Menu, MenuItem, Box, Button } from '@mui/material';
+import SchoolIcon from '@mui/icons-material/School';
+import ClassIcon from '@mui/icons-material/Class';
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
+import { getCursos } from '@/services/courseService';
+import type { BookFilters, CourseSummary } from '@/types';
 
-interface FilterData {
-  id: string;
-  name: string;
-  options: string[];
+interface FilterOption {
+  label: string;
+  value: string | number;
 }
 
-const FILTERS_DATA: FilterData[] = [
+interface FilterCategory {
+  id: 'year' | 'course' | 'genre' | 'level';
+  name: string;
+  icon?: React.ReactElement;
+  getOptions: (cursos: CourseSummary[], selectedFilters: BookFilters) => FilterOption[];
+}
+
+const STATIC_GENRES = [
+  'Novela',
+  'Ficción',
+  'Poesía',
+  'Ensayo',
+  'Biografía',
+  'Terror',
+  'Romance',
+  'Policial',
+  'Ciencia Ficción',
+  'Fantasía',
+  'Académico',
+];
+
+const STATIC_LEVELS = ['Básico', 'Superior'];
+
+const FILTERS_CONFIG: FilterCategory[] = [
+  {
+    id: 'year',
+    name: 'Año',
+    icon: <SchoolIcon fontSize="small" />,
+    getOptions: (cursos) => {
+      const aniosUnicos = Array.from(new Set(cursos.map((c) => c.anio))).sort((a, b) => a - b);
+      return aniosUnicos.map((a) => ({
+        label: `${a}° Año`,
+        value: a,
+      }));
+    },
+  },
+  {
+    id: 'course',
+    name: 'Curso',
+    icon: <ClassIcon fontSize="small" />,
+    getOptions: (cursos, selectedFilters) => {
+      let cursosFiltrados = cursos;
+      if (selectedFilters.anio) {
+        cursosFiltrados = cursos.filter((c) => c.anio === Number(selectedFilters.anio));
+      }
+      return cursosFiltrados.map((c) => ({
+        label: `${c.anio}°${c.division} · ${c.materia.nombre}`,
+        value: c.curso_id,
+      }));
+    },
+  },
   {
     id: 'genre',
     name: 'Género',
-    options: ['Novela', 'Ficción', 'Poesía', 'Ensayo', 'Biografía', 'Terror', 'Romance', 'Policial', 'Ciencia Ficción', 'Fantasía', 'Académico'],
+    getOptions: () => STATIC_GENRES.map((g) => ({ label: g, value: g })),
   },
   {
     id: 'level',
     name: 'Nivel Educativo',
-    options: ['Básico', 'Superior'],
+    getOptions: () => STATIC_LEVELS.map((l) => ({ label: l, value: l })),
   },
-  // {
-  //   id: 'lists',
-  //   name: 'Listas',
-  //   options: ['Favoritos', 'Pendientes']
-  // },
-  // {
-  //   id: 'highlights',
-  //   name: 'Destacados',
-  //   options: ['Populares', 'Nuevos', 'Mejor Calificados']
-  // },
 ];
 
-// Mapa inverso para mostrar nombres legibles
-const reverseMapping: Record<string, string> = {
-  genero: 'Género',
-  nivel_educativo: 'Nivel Educativo',
-};
-
 interface FilterChipsProps {
-  onFilterChange?: (resultados: Book[], filtros: BookFilters) => void;
+  onFilterChange?: (filtros: BookFilters) => void;
   onClearSearch?: () => void;
 }
 
 export default function FilterChips({ onFilterChange, onClearSearch }: FilterChipsProps) {
-  // Estado para el elemento de anclaje (donde se abre el menú)
+  const [cursos, setCursos] = useState<CourseSummary[]>([]);
+  const [cargandoCursos, setCargandoCursos] = useState(true);
+  const [errorCursos, setErrorCursos] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  // Estado para saber qué filtro está activo (e.g., 'Género')
   const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
-  // Estado para los filtros seleccionados
   const [selectedFilters, setSelectedFilters] = useState<BookFilters>({});
+
   const openMenu = Boolean(anchorEl);
 
+  useEffect(() => {
+    let montado = true;
+    getCursos(false)
+      .then((data) => {
+        if (!montado) return;
+        if (Array.isArray(data)) {
+          setCursos(data);
+        }
+        setCargandoCursos(false);
+      })
+      .catch((error) => {
+        console.error('Error al cargar cursos para filtros:', error);
+        if (!montado) return;
+        setErrorCursos(true);
+        setCargandoCursos(false);
+      });
+
+    return () => {
+      montado = false;
+    };
+  }, []);
+
+  // Solo se muestran los cursos del año lectivo vigente (el más reciente),
+  // para no mezclar libros asignados en años anteriores.
+  const cursosVigentes = useMemo(() => {
+    if (cursos.length === 0) return [];
+    const anioLectivoVigente = cursos.reduce(
+      (max, c) => (c.anio_lectivo > max ? c.anio_lectivo : max),
+      Number.NEGATIVE_INFINITY
+    );
+    return cursos.filter((c) => c.anio_lectivo === anioLectivoVigente);
+  }, [cursos]);
+
   const handleChipClick = (event: MouseEvent<HTMLDivElement>, filterId: string) => {
-    // 1. Establece el chip clicado como el ancla
     setAnchorEl(event.currentTarget);
-    // 2. Registra el ID del filtro activo
     setActiveFilterId(filterId);
   };
 
@@ -65,94 +133,163 @@ export default function FilterChips({ onFilterChange, onClearSearch }: FilterChi
     setActiveFilterId(null);
   };
 
-  const handleMenuItemClick = async (filterId: string | null, option: string) => {
-    console.log(`Filtro [${filterId}] seleccionado: ${option}`);
-
-    // Mapear los IDs de filtro a los nombres de campo de la API
-    const filterMapping: Record<string, keyof BookFilters> = {
-      genre: 'genero',
-      level: 'nivel_educativo',
-      // 'lists' y 'highlights' no se mapean directamente a la API de libros
-    };
-
-    const apiField = filterId ? filterMapping[filterId] : undefined;
-    if (apiField) {
-      // Actualizar filtros seleccionados
-      const newFilters: BookFilters = { ...selectedFilters, [apiField]: option };
-      setSelectedFilters(newFilters);
-
-      try {
-        // Llamar a la API con los filtros
-        const resultados = await buscarLibros(newFilters);
-        console.log('Resultados de búsqueda:', resultados);
-
-        // Notificar al componente padre sobre el cambio de filtros
-        if (onFilterChange) {
-          onFilterChange(resultados, newFilters);
-        }
-      } catch (error) {
-        console.error('Error al buscar libros:', error);
-      }
+  const aplicarFiltros = (filtros: BookFilters) => {
+    if (onFilterChange) {
+      onFilterChange(filtros);
     }
-
-    handleMenuClose();
   };
 
-  const handleDeleteFilter = async (apiField: string) => {
+  const handleOptionSelect = (filterId: string, option: FilterOption) => {
     const newFilters: BookFilters = { ...selectedFilters };
-    delete newFilters[apiField as keyof BookFilters];
-    setSelectedFilters(newFilters);
 
-    // Limpiar la barra de búsqueda
-    if (onClearSearch) onClearSearch();
-
-    try {
-      const resultados = await buscarLibros(newFilters);
-      if (onFilterChange) {
-        onFilterChange(resultados, newFilters);
+    if (filterId === 'year') {
+      newFilters.anio = option.value;
+      // Si el curso actual no coincide con el año elegido, resetearlo
+      if (newFilters.curso_id) {
+        const cursoActual = cursosVigentes.find((c) => c.curso_id === Number(newFilters.curso_id));
+        if (cursoActual && cursoActual.anio !== Number(option.value)) {
+          delete newFilters.curso_id;
+        }
       }
-    } catch (error) {
-      console.error('Error al eliminar filtro:', error);
+    } else if (filterId === 'course') {
+      newFilters.curso_id = option.value;
+      // Sincronizar año si no estaba definido o era distinto
+      const cursoElegido = cursosVigentes.find((c) => c.curso_id === Number(option.value));
+      if (cursoElegido) {
+        newFilters.anio = cursoElegido.anio;
+      }
+    } else if (filterId === 'genre') {
+      newFilters.genero = String(option.value);
+    } else if (filterId === 'level') {
+      newFilters.nivel_educativo = String(option.value);
     }
+
+    setSelectedFilters(newFilters);
+    handleMenuClose();
+    aplicarFiltros(newFilters);
   };
 
-  const activeFilterData = FILTERS_DATA.find((f) => f.id === activeFilterId);
+  const handleDeleteFilter = (filterKey: keyof BookFilters) => {
+    const newFilters: BookFilters = { ...selectedFilters };
+    delete newFilters[filterKey];
+
+    // Si se quita el año y el curso pertenecía a él, también se limpia curso
+    if (filterKey === 'anio' && newFilters.curso_id) {
+      delete newFilters.curso_id;
+    }
+
+    setSelectedFilters(newFilters);
+    aplicarFiltros(newFilters);
+  };
+
+  const handleLimpiarTodo = () => {
+    setSelectedFilters({});
+    if (onClearSearch) onClearSearch();
+    aplicarFiltros({});
+  };
+
+  // Helper para generar texto descriptivo del chip activo
+  const obtenerEtiquetaChipActivo = (key: keyof BookFilters, value: unknown): string => {
+    if (key === 'anio') {
+      return `Año: ${value}° Año`;
+    }
+    if (key === 'curso_id') {
+      const curso = cursosVigentes.find((c) => c.curso_id === Number(value));
+      return curso ? `Curso: ${curso.anio}°${curso.division} (${curso.materia.nombre})` : `Curso #${value}`;
+    }
+    if (key === 'genero') {
+      return `Género: ${value}`;
+    }
+    if (key === 'nivel_educativo') {
+      return `Nivel: ${value}`;
+    }
+    return `${key}: ${value}`;
+  };
+
+  const activeCategory = FILTERS_CONFIG.find((f) => f.id === activeFilterId);
+  const currentOptions = activeCategory ? activeCategory.getOptions(cursosVigentes, selectedFilters) : [];
 
   return (
-    <>
-      <Stack direction="row" spacing={1} mb={2} sx={{ overflowX: 'auto' }}>
-        {/* Mapea y renderiza todos los chips */}
-        {FILTERS_DATA.map((filter) => (
-          <Chip
-            key={filter.id}
-            label={filter.name}
-            onClick={(e) => handleChipClick(e, filter.id)}
-            aria-controls={activeFilterId === filter.id ? 'filter-menu' : undefined}
-            aria-haspopup="true"
-            aria-expanded={activeFilterId === filter.id ? 'true' : undefined}
-            color={activeFilterId === filter.id ? 'primary' : 'default'}
-            variant="outlined"
-          />
-        ))}
+    <Box sx={{ mb: 2 }}>
+      {/* Botones selectores de filtros */}
+      <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 0.5 }}>
+        {FILTERS_CONFIG.map((filter) => {
+          const isActive =
+            (filter.id === 'year' && selectedFilters.anio !== undefined) ||
+            (filter.id === 'course' && selectedFilters.curso_id !== undefined) ||
+            (filter.id === 'genre' && Boolean(selectedFilters.genero)) ||
+            (filter.id === 'level' && Boolean(selectedFilters.nivel_educativo));
+
+          return (
+            <Chip
+              key={filter.id}
+              icon={filter.icon}
+              label={filter.name}
+              onClick={(e) => handleChipClick(e, filter.id)}
+              aria-controls={activeFilterId === filter.id ? 'filter-menu' : undefined}
+              aria-haspopup="true"
+              aria-expanded={activeFilterId === filter.id ? 'true' : undefined}
+              color={isActive ? 'primary' : 'default'}
+              variant={isActive ? 'filled' : 'outlined'}
+              sx={{
+                fontWeight: isActive ? 600 : 500,
+                cursor: 'pointer',
+                borderColor: isActive ? '#f25600' : undefined,
+                bgcolor: isActive ? '#f25600' : undefined,
+                color: isActive ? '#fff' : undefined,
+                '&:hover': {
+                  borderColor: '#f25600',
+                },
+              }}
+            />
+          );
+        })}
       </Stack>
 
-      {/* Chips de filtros seleccionados */}
+      {/* Chips de filtros seleccionados actualmente */}
       {Object.keys(selectedFilters).length > 0 && (
-        <Stack direction="row" spacing={1} mt={1} sx={{ overflowX: 'auto' }}>
-          {Object.entries(selectedFilters).map(([apiField, value]) => (
-            <Chip
-              key={apiField}
-              label={`${reverseMapping[apiField] || apiField}: ${value}`}
-              onDelete={() => handleDeleteFilter(apiField)}
-              color="primary"
-              variant="filled"
-              size="small"
-            />
-          ))}
+        <Stack direction="row" spacing={1} mt={1.5} alignItems="center" flexWrap="wrap" sx={{ gap: 1 }}>
+          {Object.entries(selectedFilters).map(([key, val]) => {
+            if (val === undefined || val === '') return null;
+            const filterKey = key as keyof BookFilters;
+            return (
+              <Chip
+                key={key}
+                label={obtenerEtiquetaChipActivo(filterKey, val)}
+                onDelete={() => handleDeleteFilter(filterKey)}
+                color="primary"
+                variant="outlined"
+                size="small"
+                sx={{
+                  borderColor: '#f25600',
+                  color: '#f25600',
+                  fontWeight: 600,
+                  bgcolor: 'rgba(242, 86, 0, 0.06)',
+                }}
+              />
+            );
+          })}
+
+          <Button
+            size="small"
+            startIcon={<FilterAltOffIcon fontSize="small" />}
+            onClick={handleLimpiarTodo}
+            sx={{
+              textTransform: 'none',
+              fontSize: '0.8rem',
+              color: 'text.secondary',
+              '&:hover': {
+                color: '#f25600',
+                bgcolor: 'transparent',
+              },
+            }}
+          >
+            Limpiar filtros
+          </Button>
         </Stack>
       )}
 
-      {/* El componente Menu se renderiza para el filtro activo */}
+      {/* Menú desplegable para opciones del filtro seleccionado */}
       <Menu
         id="filter-menu"
         anchorEl={anchorEl}
@@ -160,13 +297,50 @@ export default function FilterChips({ onFilterChange, onClearSearch }: FilterChi
         onClose={handleMenuClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        slotProps={{
+          paper: {
+            sx: {
+              maxHeight: 320,
+              minWidth: 180,
+              borderRadius: '12px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+            },
+          },
+        }}
       >
-        {activeFilterData?.options.map((option) => (
-          <MenuItem key={option} onClick={() => handleMenuItemClick(activeFilterId, option)}>
-            {option}
+        {cargandoCursos && (activeFilterId === 'year' || activeFilterId === 'course') ? (
+          <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
+            Cargando cursos…
           </MenuItem>
-        ))}
+        ) : errorCursos && (activeFilterId === 'year' || activeFilterId === 'course') ? (
+          <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'error.main' }}>
+            No se pudieron cargar los cursos. Intente nuevamente más tarde.
+          </MenuItem>
+        ) : currentOptions.length === 0 ? (
+          <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
+            {activeFilterId === 'course' && selectedFilters.anio
+              ? `No hay cursos cargados para ${selectedFilters.anio}° Año`
+              : 'No hay opciones disponibles'}
+          </MenuItem>
+        ) : (
+          currentOptions.map((opt) => (
+            <MenuItem
+              key={String(opt.value)}
+              onClick={() => activeFilterId && handleOptionSelect(activeFilterId, opt)}
+              sx={{
+                fontSize: '0.9rem',
+                py: 1,
+                '&:hover': {
+                  bgcolor: 'rgba(242, 86, 0, 0.08)',
+                  color: '#f25600',
+                },
+              }}
+            >
+              {opt.label}
+            </MenuItem>
+          ))
+        )}
       </Menu>
-    </>
+    </Box>
   );
 }

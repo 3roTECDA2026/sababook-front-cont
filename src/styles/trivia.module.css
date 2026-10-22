@@ -134,6 +134,19 @@
   border-color: var(--trivia-orange) !important;
 }
 
+.triviaButton {
+  color: var(--trivia-orange) !important;
+  border: 1px solid var(--trivia-orange) !important;
+  font-weight: 700;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.triviaButton:hover {
+  background-color: var(--trivia-orange-soft) !important;
+  border-color: var(--trivia-orange) !important;
+}
+
 .responsesButton {
   border: 1px solid var(--trivia-border) !important;
   font-weight: 700;

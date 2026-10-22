@@ -1,5 +1,5 @@
 
-// src/services/apiService.ts
+ // src/services/apiService.ts
 
 import { API_BASE_URL } from '@/environments/api';
 
@@ -13,14 +13,12 @@ import type {
   User,
 } from '@/types';
 
+import { getCursos, getLibrosDelCurso } from '@/services/courseService';
+import { normalizarTexto } from '@/utils/normalize';
+
 /**
  * Función genérica para realizar peticiones HTTP.
- *
- * - Construye la URL de la API.
- * - Permite enviar headers, body, method y signal.
- * - Verifica el estado HTTP.
- * - Ignora en consola las cancelaciones esperadas (AbortError).
- * - Propaga los errores para que el componente pueda manejarlos.
+ * Mantiene el manejo de cancelaciones con AbortController.
  */
 async function apiRequest<T>(
   endpoint: string,
@@ -34,7 +32,6 @@ async function apiRequest<T>(
     },
   };
 
-  // Combinar los headers predeterminados con los recibidos.
   const config: RequestInit = {
     ...defaultOptions,
     ...options,
@@ -48,46 +45,36 @@ async function apiRequest<T>(
     const response = await fetch(url, config);
 
     if (!response.ok) {
-      throw new Error(
-        `HTTP error! status: ${response.status}`
-      );
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     return (await response.json()) as T;
   } catch (error) {
-    // Una solicitud cancelada mediante AbortController
-    // no representa necesariamente un fallo del servidor.
-    // La propagamos sin registrar un error en consola.
-    if (
-      error instanceof Error &&
-      error.name === 'AbortError'
-    ) {
+    // No registrar las cancelaciones esperadas como errores.
+    if (error instanceof Error && error.name === 'AbortError') {
       throw error;
     }
 
-    // Registrar los errores reales.
-    console.error(
-      `Error en la petición a ${endpoint}:`,
-      error
-    );
-
+    console.error(`Error en la petición a ${endpoint}:`, error);
     throw error;
   }
 }
 
 // =====================================================
-// FUNCIONES PARA LIBROS Y FILTROS
+// LIBROS Y FILTROS
 // =====================================================
 
 /**
- * Obtener catálogo completo de libros.
+ * Obtener el catálogo completo de libros.
  */
-export async function getCatalogoLibros(): Promise<Book[]> {
-  return await apiRequest<Book[]>('/libros');
+export async function getCatalogoLibros(
+  signal?: AbortSignal
+): Promise<Book[]> {
+  return await apiRequest<Book[]>('/libros', { signal });
 }
 
 /**
- * Buscar libros con filtros.
+ * Buscar libros mediante los filtros de la API.
  */
 export async function buscarLibros(
   filtros: BookFilters = {}
@@ -95,8 +82,12 @@ export async function buscarLibros(
   const params = new URLSearchParams();
 
   Object.entries(filtros).forEach(([key, value]) => {
-    if (value && value.trim()) {
-      params.append(key, value.trim());
+    if (
+      value !== undefined &&
+      value !== null &&
+      String(value).trim()
+    ) {
+      params.append(key, String(value).trim());
     }
   });
 
@@ -110,10 +101,155 @@ export async function buscarLibros(
 }
 
 /**
- * Buscar libros con paginación.
+ * Aplicar filtros de texto a una lista de libros.
+ */
+function aplicarFiltrosTexto(
+  libros: Book[],
+  filtros: BookFilters
+): Book[] {
+  let resultado = libros;
+
+  if (filtros.query) {
+    const q = normalizarTexto(filtros.query);
+
+    resultado = resultado.filter(
+      (b) =>
+        normalizarTexto(b.titulo).includes(q) ||
+        normalizarTexto(b.autor).includes(q)
+    );
+  }
+
+  if (filtros.titulo) {
+    const q = normalizarTexto(filtros.titulo);
+
+    resultado = resultado.filter((b) =>
+      normalizarTexto(b.titulo).includes(q)
+    );
+  }
+
+  if (filtros.autor) {
+    const q = normalizarTexto(filtros.autor);
+
+    resultado = resultado.filter((b) =>
+      normalizarTexto(b.autor).includes(q)
+    );
+  }
+
+  if (filtros.genero) {
+    resultado = resultado.filter(
+      (b) => b.genero === filtros.genero
+    );
+  }
+
+  if (filtros.nivel_educativo) {
+    resultado = resultado.filter(
+      (b) => b.nivel_educativo === filtros.nivel_educativo
+    );
+  }
+
+  return resultado;
+}
+
+/**
+ * Obtener libros asignados a un curso o año escolar.
  *
- * Permite cancelar solicitudes anteriores
- * mediante AbortController.
+ * Conserva la lógica incorporada en develop.
+ */
+async function obtenerLibrosFiltradosPorCursoOAnio(
+  filtros: BookFilters,
+  signal?: AbortSignal
+): Promise<Book[]> {
+  let cursosIds: number[];
+
+  if (filtros.curso_id) {
+    cursosIds = [Number(filtros.curso_id)];
+  } else {
+    const cursos = await getCursos(false, signal);
+
+    const anioLectivoVigente = cursos.reduce(
+      (max, c) =>
+        c.anio_lectivo > max ? c.anio_lectivo : max,
+      Number.NEGATIVE_INFINITY
+    );
+
+    cursosIds = cursos
+      .filter(
+        (c) =>
+          c.anio === Number(filtros.anio) &&
+          c.anio_lectivo === anioLectivoVigente
+      )
+      .map((c) => c.curso_id);
+  }
+
+  if (cursosIds.length === 0) {
+    return [];
+  }
+
+  const listasLibros = await Promise.all(
+    cursosIds.map((id) =>
+      getLibrosDelCurso(id, signal).catch((error) => {
+        if (
+          error instanceof Error &&
+          error.name === 'AbortError'
+        ) {
+          throw error;
+        }
+
+        return [];
+      })
+    )
+  );
+
+  const libroIdSet = new Set<number>();
+
+  const librosAsignados: {
+    libro_id: number;
+    titulo: string;
+    autor: string;
+    portada_url: string | null;
+    puntaje: number;
+  }[] = [];
+
+  for (const lista of listasLibros) {
+    for (const b of lista) {
+      if (!libroIdSet.has(b.libro_id)) {
+        libroIdSet.add(b.libro_id);
+        librosAsignados.push(b);
+      }
+    }
+  }
+
+  const catalogo = await getCatalogoLibros(signal);
+
+  const catalogoMap = new Map<number, Book>(
+    catalogo.map((b) => [b.libro_id, b])
+  );
+
+  const hidratados: Book[] = librosAsignados.map((cb) => {
+    const completo = catalogoMap.get(cb.libro_id);
+
+    if (completo) {
+      return completo;
+    }
+
+    return {
+      libro_id: cb.libro_id,
+      titulo: cb.titulo,
+      autor: cb.autor,
+      genero: '',
+      nivel_educativo: '',
+      descripcion: '',
+      portada_url: cb.portada_url ?? '',
+      calificacion_promedio: cb.puntaje ?? 0,
+    };
+  });
+
+  return aplicarFiltrosTexto(hidratados, filtros);
+}
+
+/**
+ * Buscar libros con paginación y filtros.
+ * Admite cancelación de solicitudes.
  */
 export async function buscarLibrosPaginado(
   filtros: BookFilters = {},
@@ -121,11 +257,35 @@ export async function buscarLibrosPaginado(
   limit = 10,
   signal?: AbortSignal
 ): Promise<Paginated<Book>> {
+  if (filtros.curso_id || filtros.anio) {
+    const libros = await obtenerLibrosFiltradosPorCursoOAnio(
+      filtros,
+      signal
+    );
+
+    const total = libros.length;
+    const start = (page - 1) * limit;
+    const data = libros.slice(start, start + limit);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+      hasMore: start + data.length < total,
+    };
+  }
+
   const params = new URLSearchParams();
 
   Object.entries(filtros).forEach(([key, value]) => {
-    if (value && value.trim()) {
-      params.append(key, value.trim());
+    if (
+      value !== undefined &&
+      value !== null &&
+      String(value).trim()
+    ) {
+      params.append(key, String(value).trim());
     }
   });
 
@@ -138,11 +298,10 @@ export async function buscarLibrosPaginado(
   );
 }
 
-/**
- * Obtener usuarios paginados.
- *
- * Incluye JWT cuando está disponible.
- */
+// =====================================================
+// USUARIOS
+// =====================================================
+
 export async function getUsersPaginated(
   page = 1,
   limit = 5,
@@ -157,20 +316,20 @@ export async function getUsersPaginated(
   );
 }
 
-/**
- * Obtener detalle de un libro específico.
- */
+// =====================================================
+// DETALLE DE LIBROS
+// =====================================================
+
 export async function getLibroById(
   libroId: number
 ): Promise<Book> {
-  return await apiRequest<Book>(
-    `/libros/${libroId}`
-  );
+  return await apiRequest<Book>(`/libros/${libroId}`);
 }
 
-/**
- * Obtener medallas de un usuario.
- */
+// =====================================================
+// MEDALLAS
+// =====================================================
+
 export async function getUserMedals(
   userId: number | string,
   signal?: AbortSignal
@@ -181,13 +340,20 @@ export async function getUserMedals(
   );
 }
 
+export async function getCatalogoMedals(
+  userId: number | string,
+  signal?: AbortSignal
+): Promise<Medal[]> {
+  return await apiRequest<Medal[]>(
+    `/medal/catalog/${userId}`,
+    { signal }
+  );
+}
+
 // =====================================================
-// FUNCIONES PARA CAFÉS LITERARIOS
+// CAFÉS LITERARIOS
 // =====================================================
 
-/**
- * Obtener todos los cafés literarios.
- */
 export async function getCafesLiterarios(
   usuarioId: number | null = null,
   signal?: AbortSignal
@@ -202,9 +368,6 @@ export async function getCafesLiterarios(
   );
 }
 
-/**
- * Obtener detalle de un café literario.
- */
 export async function getCafeById(
   cafeId: number,
   usuarioId: number | null = null
@@ -218,9 +381,6 @@ export async function getCafeById(
   );
 }
 
-/**
- * Crear un café literario.
- */
 export async function crearCafeLiterario(data: {
   titulo: string;
   descripcion: string;
@@ -238,9 +398,6 @@ export async function crearCafeLiterario(data: {
   });
 }
 
-/**
- * Confirmar o alternar asistencia.
- */
 export async function toggleAsistenciaCafe(
   cafeId: number,
   _usuarioId?: number,
@@ -258,9 +415,6 @@ export async function toggleAsistenciaCafe(
   );
 }
 
-/**
- * Registrar voto post-lectura.
- */
 export async function votarCafeLiterario(
   cafeId: number,
   _usuarioId: number | undefined,
@@ -283,26 +437,10 @@ export async function votarCafeLiterario(
   );
 }
 
-/**
- * Obtener catálogo completo de medallas.
- */
-export async function getCatalogoMedals(
-  userId: number | string,
-  signal?: AbortSignal
-): Promise<Medal[]> {
-  return await apiRequest<Medal[]>(
-    `/medal/catalog/${userId}`,
-    { signal }
-  );
-}
-
 // =====================================================
 // AUTENTICACIÓN JWT
 // =====================================================
 
-/**
- * Obtener los headers de autenticación.
- */
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('token');
 
@@ -315,7 +453,7 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 // =====================================================
-// FUNCIONES PARA METAS DE LECTURA
+// METAS DE LECTURA
 // =====================================================
 
 interface CreateGoalData {
@@ -326,9 +464,6 @@ interface CreateGoalData {
   end_date: string;
 }
 
-/**
- * Obtener la meta activa del usuario.
- */
 export async function getActiveReadingGoal(
   userId: number | string
 ): Promise<ReadingGoal | null> {
@@ -344,9 +479,6 @@ export async function getActiveReadingGoal(
   );
 }
 
-/**
- * Crear una nueva meta de lectura.
- */
 export async function createReadingGoal(
   goalData: CreateGoalData
 ): Promise<ReadingGoal> {
@@ -369,9 +501,6 @@ export async function createReadingGoal(
   );
 }
 
-/**
- * Registrar un libro como leído.
- */
 export async function logBookProgress(
   bookId: number | string
 ): Promise<ReadingGoal> {
@@ -380,16 +509,11 @@ export async function logBookProgress(
     {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({
-        bookId,
-      }),
+      body: JSON.stringify({ bookId }),
     }
   );
 }
 
-/**
- * Obtener todas las metas del sistema.
- */
 export async function getAllReadingGoals(): Promise<
   ReadingGoal[]
 > {
@@ -401,9 +525,6 @@ export async function getAllReadingGoals(): Promise<
   );
 }
 
-/**
- * Actualizar una meta de lectura.
- */
 export async function updateReadingGoal(
   metaId: number | string,
   goalData: Partial<ReadingGoal>
@@ -418,9 +539,6 @@ export async function updateReadingGoal(
   );
 }
 
-/**
- * Eliminar una meta de lectura.
- */
 export async function deleteReadingGoal(
   metaId: number | string
 ): Promise<{ success: boolean }> {

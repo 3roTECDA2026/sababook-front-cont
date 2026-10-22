@@ -19,6 +19,8 @@ export interface BookFilters {
   autor?: string;
   genero?: string;
   nivel_educativo?: string;
+  anio?: string | number;
+  curso_id?: string | number;
 }
 
 export interface FeaturedBook {
