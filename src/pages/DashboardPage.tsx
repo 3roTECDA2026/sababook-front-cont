@@ -1,7 +1,7 @@
 // src/pages/DashboardPage.tsx
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import Dashboard from '@/components/Dashboard';
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
@@ -14,6 +14,7 @@ const DashboardPage = () => {
     localStorage.getItem('rol') === '3' ||
     roleName === 'administrador' ||
     roleName === 'admin';
+
   if (!isAdmin) {
     return <Navigate to="/home" replace />;
   }
@@ -25,15 +26,16 @@ const DashboardPage = () => {
         backgroundColor: '#FFFFFF',
         boxSizing: 'border-box',
         width: '100%',
-        maxWidth: 1200, // Un ancho máximo para que no se estire demasiado en pantallas grandes
+        maxWidth: 1200,
         margin: '0 auto',
-        padding: { xs: 1, sm: 2, md: 3 }, // Padding responsivo
+        padding: { xs: 1, sm: 2, md: 3 },
       }}
     >
       <AppHeader onMenuClick={() => setMenuOpen(true)} title="Dashboard" subtitle="Panel de Administración" />
 
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} active="Dashboard" />
-      <Outlet />
+      
+      {/* Si usas sub-rutas con React Router, usa <Outlet />. Si todo está en el componente Dashboard, usa solo <Dashboard /> */}
       <Dashboard />
     </Box>
   );
