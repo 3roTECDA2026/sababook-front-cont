@@ -33,6 +33,7 @@ import GoalTable from './tables/GoalTable';
 import { usePagination } from '@/hooks/usePagination';
 import { getUsersPaginated } from '@/services/apiService';
 import { getHistorialAsignaciones } from '@/services/courseService';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 const DashboardContainer = Box;
 
@@ -81,7 +82,7 @@ const Dashboard = () => {
   const [openGoalModal, setOpenGoalModal] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<ReadingGoal | null>(null);
   const [openDeleteGoalConfirm, setOpenDeleteGoalConfirm] = useState(false);
-  const [goalToDeleteId, setGoalToDeleteId] = useState<number | null>(null);
+  const [goalToDelete, setGoalToDelete] = useState<ReadingGoal | null>(null);
 
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
 
@@ -93,7 +94,7 @@ const Dashboard = () => {
 
   const [isApiLoading, setIsApiLoading] = useState(false);
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
-  const [bookToDeleteId, setBookToDeleteId] = useState<number | null>(null);
+  const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
 
   // Estados de foros
   const [forums, setForums] = useState<Forum[]>([]);
@@ -103,7 +104,7 @@ const Dashboard = () => {
   const [openForumDetail, setOpenForumDetail] = useState(false);
   const [forumToEdit, setForumToEdit] = useState<Forum | null>(null);
   const [openDeleteForumConfirm, setOpenDeleteForumConfirm] = useState(false);
-  const [forumToDeleteId, setForumToDeleteId] = useState<number | null>(null);
+  const [forumToDelete, setForumToDelete] = useState<Forum | null>(null);
 
   // Cargar libros
   const fetchBooks = async (signal?: AbortSignal) => {
@@ -343,22 +344,24 @@ const Dashboard = () => {
       // el back igual valida y responde 409 si corresponde
     }
 
-    setBookToDeleteId(bookId); // Guarda el ID del libro
+    const foundBook = books.find((b) => (b.id ?? b.libro_id) === bookId) ?? null;
+    setBookToDelete(foundBook);
     setOpenDeleteConfirm(true); // Abre el modal
   };
 
   const handleCloseDeleteConfirm = () => {
     setOpenDeleteConfirm(false);
-    setBookToDeleteId(null);
+    setBookToDelete(null);
   };
 
   const handleConfirmDeleteBook = async () => {
     setOpenDeleteConfirm(false);
-    if (!bookToDeleteId) return;
+    const bookId = bookToDelete?.id ?? bookToDelete?.libro_id;
+    if (!bookId) return;
 
     setIsApiLoading(true);
     const token = localStorage.getItem('token');
-    const endpoint = `${API_BASE_URL}/api/v1/books/${bookToDeleteId}`;
+    const endpoint = `${API_BASE_URL}/api/v1/books/${bookId}`;
 
     try {
       const response = await fetch(endpoint, {
@@ -391,7 +394,7 @@ const Dashboard = () => {
       });
     } finally {
       setIsApiLoading(false);
-      setBookToDeleteId(null);
+      setBookToDelete(null);
     }
   };
 
@@ -399,30 +402,32 @@ const Dashboard = () => {
   const handleEditForumClick = (forum: Forum) => {
     setForumToEdit(forum);
     setOpenForumModal(true);
-    setBookToDeleteId(null);
+    setBookToDelete(null);
   };
 
   // Eliminar meta
   const handleOpenDeleteGoalConfirm = (goalId: number) => {
-    setGoalToDeleteId(goalId);
+    const foundGoal = goals.find((g) => (g.id ?? g.meta_id) === goalId) ?? null;
+    setGoalToDelete(foundGoal);
     setOpenDeleteGoalConfirm(true);
   };
 
   const handleCloseDeleteGoalConfirm = () => {
     setOpenDeleteGoalConfirm(false);
-    setGoalToDeleteId(null);
+    setGoalToDelete(null);
   };
 
   const handleConfirmDeleteGoal = async () => {
     setOpenDeleteGoalConfirm(false);
-    if (!goalToDeleteId) return;
+    const goalId = goalToDelete?.id ?? goalToDelete?.meta_id;
+    if (!goalId) return;
 
     setIsApiLoading(true);
     const token = localStorage.getItem('token');
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/metas-lectura/${goalToDeleteId}`,
+        `${API_BASE_URL}/api/v1/metas-lectura/${goalId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
@@ -447,7 +452,7 @@ const Dashboard = () => {
       setGoalsError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsApiLoading(false);
-      setGoalToDeleteId(null);
+      setGoalToDelete(null);
     }
   };
 
@@ -526,25 +531,27 @@ const Dashboard = () => {
 
   // Eliminar foro
   const handleOpenDeleteForumConfirm = (forumId: number) => {
-    setForumToDeleteId(forumId);
+    const foundForum = forums.find((f) => (f.id ?? f.foro_id) === forumId) ?? null;
+    setForumToDelete(foundForum);
     setOpenDeleteForumConfirm(true);
   };
 
   const handleCloseDeleteForumConfirm = () => {
     setOpenDeleteForumConfirm(false);
-    setForumToDeleteId(null);
+    setForumToDelete(null);
   };
 
   const handleConfirmDeleteForum = async () => {
     setOpenDeleteForumConfirm(false);
-    if (!forumToDeleteId) return;
+    const forumId = forumToDelete?.id ?? forumToDelete?.foro_id;
+    if (!forumId) return;
 
     setIsApiLoading(true);
     const token = localStorage.getItem('token');
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/forums/${forumToDeleteId}`,
+        `${API_BASE_URL}/api/v1/forums/${forumId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
@@ -845,129 +852,43 @@ const Dashboard = () => {
       </Modal>
 
       {/* Confirmación eliminar libro */}
-      <Dialog
+      <ConfirmationModal
         open={openDeleteConfirm}
         onClose={handleCloseDeleteConfirm}
-        aria-labelledby="confirmar-eliminacion-titulo"
-        aria-describedby="confirmar-eliminacion-descripcion"
-      >
-        <DialogTitle id="confirmar-eliminacion-titulo">
-          Confirmar Eliminación
-        </DialogTitle>
-
-        <DialogContent>
-          <DialogContentText id="confirmar-eliminacion-descripcion">
-            Estás a punto de eliminar el libro con ID: {bookToDeleteId}.
-            ¿Estás seguro de que querés eliminar este libro?
-            Esta acción no se puede deshacer.
-          </DialogContentText>
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            onClick={handleCloseDeleteConfirm}
-            color="primary"
-            disabled={isApiLoading}
-          >
-            Cancelar
-          </Button>
-
-          <Button
-            onClick={handleConfirmDeleteBook}
-            color="error"
-            variant="contained"
-            disabled={isApiLoading}
-          >
-            {isApiLoading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              'Sí, Eliminar'
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleConfirmDeleteBook}
+        title="Confirmar Eliminación"
+        message={
+          bookToDelete
+            ? `¿Estás seguro de que querés eliminar el libro "${bookToDelete.titulo}"? Esta acción no se puede deshacer.`
+            : ''
+        }
+      />
 
       {/* Confirmación eliminar foro */}
-      <Dialog
+      <ConfirmationModal
         open={openDeleteForumConfirm}
         onClose={handleCloseDeleteForumConfirm}
-        aria-labelledby="confirmar-eliminacion-foro-titulo"
-      >
-        <DialogTitle id="confirmar-eliminacion-foro-titulo">
-          Confirmar Eliminación del Foro
-        </DialogTitle>
-
-        <DialogContent>
-          <DialogContentText>
-            Estás a punto de eliminar el foro con ID: {forumToDeleteId}.
-            ¿Estás seguro de que querés eliminarlo?
-            Esta acción no se puede deshacer.
-          </DialogContentText>
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            onClick={handleCloseDeleteForumConfirm}
-            color="primary"
-            disabled={isApiLoading}
-          >
-            Cancelar
-          </Button>
-
-          <Button
-            onClick={handleConfirmDeleteForum}
-            color="error"
-            variant="contained"
-            disabled={isApiLoading}
-          >
-            {isApiLoading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              'Sí, Eliminar Foro'
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleConfirmDeleteForum}
+        title="Confirmar Eliminación del Foro"
+        message={
+          forumToDelete
+            ? `¿Estás seguro de que querés eliminar el foro "${forumToDelete.titulo}"? Esta acción no se puede deshacer.`
+            : ''
+        }
+      />
 
       {/* Confirmación eliminar meta */}
-      <Dialog
+      <ConfirmationModal
         open={openDeleteGoalConfirm}
         onClose={handleCloseDeleteGoalConfirm}
-      >
-        <DialogTitle>
-          Confirmar Eliminación de la Meta
-        </DialogTitle>
-
-        <DialogContent>
-          <DialogContentText>
-            Estás a punto de eliminar la meta de lectura con ID:
-            {' '}{goalToDeleteId}. ¿Estás seguro de que querés eliminarla?
-          </DialogContentText>
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            onClick={handleCloseDeleteGoalConfirm}
-            color="primary"
-            disabled={isApiLoading}
-          >
-            Cancelar
-          </Button>
-
-          <Button
-            onClick={handleConfirmDeleteGoal}
-            color="error"
-            variant="contained"
-            disabled={isApiLoading}
-          >
-            {isApiLoading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              'Sí, Eliminar Meta'
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleConfirmDeleteGoal}
+        title="Confirmar Eliminación de la Meta"
+        message={
+          goalToDelete
+            ? `¿Estás seguro de que querés eliminar la meta de lectura "${goalToDelete.descripcion || goalToDelete.meta_id || goalToDelete.id}"? Esta acción no se puede deshacer.`
+            : ''
+        }
+      />
 
       {/* Notificaciones */}
       <Snackbar
