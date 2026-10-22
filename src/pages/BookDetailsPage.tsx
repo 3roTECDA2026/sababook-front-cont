@@ -1,4 +1,3 @@
-
 import { API_BASE_URL } from '@/environments/api';
 import { recomendacionService } from '@/services/recomendacionService';
 import ReadingProgress from '@/components/ReadingProgress';
@@ -10,9 +9,11 @@ import {
   CircularProgress,
   Divider,
   Snackbar,
+  Typography,
   useTheme,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useParams } from 'react-router-dom';
 
 import SideMenu from '@/components/layout/SideMenu';
@@ -21,6 +22,7 @@ import NavButton from '@/components/ui/NavButton';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookDetails } from '@/hooks/useBookDetails';
 import { useBookOpinion } from '@/hooks/useBookOpinion';
+import { useReadingStatus } from '@/hooks/useReadingStatus';
 import BookDetailsHeader from '@/components/ui/BookDetailsHeader';
 import BookCommentBox from '@/components/BookCommentBox';
 import BookOpinionList from '@/components/ui/BookOpinionList';
@@ -37,16 +39,25 @@ interface Recomendacion {
   explicacion?: string;
 }
 
+const formatearFecha = (fecha: string) =>
+  new Date(fecha).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
 const BookDetailsPage = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { getReadingStatus, getReadingDate, setReadingStatus } = useReadingStatus();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [newRating, setNewRating] = useState(0);
   const [currentProgress, setCurrentProgress] = useState<number | null>(null);
+  const [guardandoLectura, setGuardandoLectura] = useState(false);
 
   const [recomendaciones, setRecomendaciones] = useState<Recomendacion[]>([]);
   const [loadingRecomendaciones, setLoadingRecomendaciones] = useState(true);
@@ -221,6 +232,31 @@ const BookDetailsPage = () => {
   };
 
   // =====================================================
+  // MARCAR COMO LEÍDO
+  // =====================================================
+  // Marcar = estado "leido"; desmarcar = volver a "general".
+  // Si el libro no estaba en la biblioteca, el back lo agrega.
+  const handleToggleLeido = async () => {
+    if (!book || guardandoLectura) return;
+
+    const yaLeido = getReadingStatus(book.libro_id) === 'leido';
+
+    setGuardandoLectura(true);
+    const ok = await setReadingStatus(book.libro_id, yaLeido ? 'general' : 'leido');
+    setGuardandoLectura(false);
+
+    setNotification({
+      open: true,
+      message: ok
+        ? yaLeido
+          ? 'Se quitó la marca de leído.'
+          : '¡Libro marcado como leído!'
+        : 'No se pudo guardar. Intentá de nuevo en un momento.',
+      severity: ok ? 'success' : 'error',
+    });
+  };
+
+  // =====================================================
   // COMENTARIOS
   // =====================================================
   const handleCommentClick = () => {
@@ -285,6 +321,8 @@ const BookDetailsPage = () => {
   }
 
   const coverImageSrc = book.portada_url?.trim() || undefined;
+  const leido = getReadingStatus(book.libro_id) === 'leido';
+  const fechaLectura = getReadingDate(book.libro_id);
 
   return (
     <Box
@@ -333,6 +371,58 @@ const BookDetailsPage = () => {
           }
           onUpdateProgress={handleUpdateProgress}
         />
+
+        {/* MARCAR COMO LEÍDO */}
+        {user && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 1,
+              mt: 2,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              {leido && fechaLectura
+                ? `Leído el ${formatearFecha(fechaLectura)}`
+                : 'Todavía no lo marcaste como leído.'}
+            </Typography>
+
+            <Button
+              variant={leido ? 'outlined' : 'contained'}
+              startIcon={leido && !guardandoLectura ? <CheckCircleIcon /> : undefined}
+              disabled={guardandoLectura}
+              onClick={handleToggleLeido}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: '8px',
+                px: 2.5,
+                ...(leido
+                  ? {
+                      color: ORANGE_COLOR,
+                      borderColor: ORANGE_COLOR,
+                      '&:hover': { borderColor: '#cc4800', backgroundColor: 'rgba(255, 102, 51, 0.06)' },
+                    }
+                  : {
+                      backgroundColor: ORANGE_COLOR,
+                      color: '#fff',
+                      '&:hover': { backgroundColor: '#cc4800' },
+                    }),
+              }}
+            >
+              {guardandoLectura ? (
+                <CircularProgress size={17} sx={{ color: 'inherit' }} />
+              ) : leido ? (
+                'Desmarcar como leído'
+              ) : (
+                'Marcar como leído'
+              )}
+            </Button>
+          </Box>
+        )}
 
         {/* FORMULARIO DE COMENTARIOS */}
         {showCommentBox && user && (
