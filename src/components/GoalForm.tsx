@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import {
   Box,
   TextField,
-  Button,
   Typography,
 } from "@mui/material";
+import { AppButton } from "@/components/atoms/AppButton";
 
 interface GoalFormProps {
   goalToEdit?: any; // Podés reemplazar 'any' por tu interfaz de Meta si la tenés
@@ -105,12 +105,12 @@ interface GoalFormProps {
       </Box>
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3, gap: 2 }}>
-        <Button onClick={onCancel} variant="outlined">
+        <AppButton onClick={onCancel} variant="outlined">
           Cancelar
-        </Button>
-        <Button type="submit" variant="contained" sx={{ backgroundColor: "button.main" }}>
+        </AppButton>
+        <AppButton type="submit" variant="primary">
           Guardar Cambios
-        </Button>
+        </AppButton>
       </Box>
     </Box>
   );

@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import {
   Alert,
   Box,
-  Button,
   CircularProgress,
   Divider,
   Snackbar,
@@ -15,6 +14,7 @@ import {
 import type { SxProps, Theme } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useParams } from 'react-router-dom';
+import { AppButton } from '@/components/atoms/AppButton';
 
 import SideMenu from '@/components/layout/SideMenu';
 import AppHeader from '@/components/layout/AppHeader';
@@ -390,37 +390,16 @@ const BookDetailsPage = () => {
                 : 'Todavía no lo marcaste como leído.'}
             </Typography>
 
-            <Button
-              variant={leido ? 'outlined' : 'contained'}
+            <AppButton
+              variant={leido ? 'outlined' : 'primary'}
               startIcon={leido && !guardandoLectura ? <CheckCircleIcon /> : undefined}
               disabled={guardandoLectura}
+              loading={guardandoLectura}
               onClick={handleToggleLeido}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: '8px',
-                px: 2.5,
-                ...(leido
-                  ? {
-                      color: ORANGE_COLOR,
-                      borderColor: ORANGE_COLOR,
-                      '&:hover': { borderColor: '#cc4800', backgroundColor: 'rgba(255, 102, 51, 0.06)' },
-                    }
-                  : {
-                      backgroundColor: ORANGE_COLOR,
-                      color: '#fff',
-                      '&:hover': { backgroundColor: '#cc4800' },
-                    }),
-              }}
+              sx={{ px: 2.5 }}
             >
-              {guardandoLectura ? (
-                <CircularProgress size={17} sx={{ color: 'inherit' }} />
-              ) : leido ? (
-                'Desmarcar como leído'
-              ) : (
-                'Marcar como leído'
-              )}
-            </Button>
+              {leido ? 'Desmarcar como leído' : 'Marcar como leído'}
+            </AppButton>
           </Box>
         )}
 
@@ -454,17 +433,13 @@ const BookDetailsPage = () => {
               mb: 2,
             }}
           >
-            <Button
-              variant="contained"
-              color="primary"
+            <AppButton
+              variant="primary"
               disabled={removingRecommendation}
+              loading={removingRecommendation}
               onClick={handleRemoveRecommendation}
               sx={{
                 backgroundColor: BLUE_COLOR,
-                color: '#fff',
-                fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: '8px',
                 px: 2.5,
                 py: 1,
                 '&:hover': {
@@ -472,18 +447,8 @@ const BookDetailsPage = () => {
                 },
               }}
             >
-              {removingRecommendation ? (
-                <>
-                  <CircularProgress
-                    size={17}
-                    sx={{ color: '#fff', mr: 1 }}
-                  />
-                  Quitando...
-                </>
-              ) : (
-                'Dejar de recomendar'
-              )}
-            </Button>
+              Dejar de recomendar
+            </AppButton>
           </Box>
         )}
 
