@@ -1,29 +1,9 @@
 // src/components/DashboardLayout.tsx
 import React, { ReactNode } from 'react';
-import { AppBar, Toolbar, Button, Box, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Box, IconButton } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled, useTheme } from '@mui/material/styles';
-
-// --- Estilos personalizados (Styled Components) ---
-interface NavButtonProps {
-  active?: boolean;
-}
-
-const NavButton = styled(Button, {
-  shouldForwardProp: (prop) => prop !== 'active',
-})<NavButtonProps>(({ active }) => ({
-  backgroundColor: active ? '#FF6600' : 'transparent',
-  color: active ? 'white' : 'black',
-  '&:hover': {
-    backgroundColor: active ? '#E05C00' : 'rgba(0, 0, 0, 0.04)',
-  },
-  borderRadius: '4px',
-  padding: '8px 32px', // theme.spacing(1, 4)
-  marginRight: '4px',
-  fontSize: '1rem',
-  fontWeight: 'bold',
-  textTransform: 'none',
-}));
+import { AppButton } from '@/components/atoms/AppButton';
 
 // Estilo para el contenedor con borde redondeado y sombra
 const MainContentBox = styled(Box)(({ theme }) => ({
@@ -66,11 +46,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       <MainContentBox>
         {/* BOTONES DE NAVEGACIÓN PRINCIPAL */}
-        <Box sx={{ display: 'flex', mb: 3 }}>
+        <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
           {/* El botón 'Usuarios' está activo */}
-          <NavButton active>Usuarios</NavButton>
-          <NavButton>Libros</NavButton>
-          <NavButton>Foros</NavButton>
+          <AppButton variant="primary">Usuarios</AppButton>
+          <AppButton variant="text" sx={{ color: 'black' }}>Libros</AppButton>
+          <AppButton variant="text" sx={{ color: 'black' }}>Foros</AppButton>
         </Box>
 
         {/* CONTENIDO PRINCIPAL (Recibido como children) */}
