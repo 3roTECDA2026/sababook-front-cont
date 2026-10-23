@@ -1,6 +1,6 @@
 // src/components/ui/BookTriviaSection.tsx
 import { useState } from 'react';
-import { Typography, Button } from '@mui/material';
+import { Typography } from '@mui/material';
 import QuizIcon from '@mui/icons-material/Quiz';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import { useBookTrivia } from '@/hooks/useBookTrivia';
@@ -10,6 +10,7 @@ import TriviaQuestionCard from '@/components/ui/TriviaQuestionCard';
 import TriviaQuestionForm from '@/components/forms/TriviaQuestionForm';
 import { formatDate, isDeadlineExpired } from '@/utils/formatDate';
 import styles from '@/styles/trivia.module.css';
+import { AppButton } from '@/components/atoms/AppButton';
 
 interface BookTriviaSectionProps {
   book: Book;
@@ -63,15 +64,15 @@ const BookTriviaSection = ({
         {isEvaluation ? 'Evaluación del libro' : 'Trivia del libro'}: {book.titulo}
       </Typography>
 
-      <Button
-        variant="contained"
-        className={`${styles.buttonOrange} ${styles.buttonTop} ${evaluationEnded ? styles.buttonDisabled : ''}`}
+      <AppButton
+        variant="primary"
+        className={`${styles.buttonTop} ${evaluationEnded ? styles.buttonDisabled : ''}`}
         onClick={() => setModalOpen(true)}
         disabled={evaluationEnded}
         startIcon={isEvaluation ? <EventNoteIcon /> : <QuizIcon />}
       >
         {isEvaluation ? 'Generar preguntas de evaluación' : 'Generar preguntas'}
-      </Button>
+      </AppButton>
 
       {evaluationEnded && (
         <Typography variant="caption" className={styles.endedText}>

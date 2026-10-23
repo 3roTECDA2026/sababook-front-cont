@@ -4,7 +4,6 @@ import {
   type AlertColor,
   Box,
   Typography,
-  Button,
   TextField,
   Select,
   MenuItem,
@@ -24,6 +23,7 @@ import { formatDate } from '@/utils/formatDate';
 import { useAuth } from '@/hooks/useAuth';
 import { useTriviaPlay } from '@/hooks/useTriviaPlay';
 import styles from '@/styles/trivia.module.css';
+import { AppButton } from '@/components/atoms/AppButton';
 
 const BLANK_MARKER = '{blank}';
 
@@ -237,16 +237,15 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
       <>
         {playNotice}
         {triviaQuestions.length > 0 && (
-          <Button
-            variant="contained"
-            className={styles.buttonOrange}
+          <AppButton
+            variant="primary"
             size="small"
             startIcon={<QuizIcon />}
             sx={{ px: 1.5, py: 0.4 }}
             onClick={() => startPlay('trivia')}
           >
             Jugar trivia ({triviaQuestions.length})
-          </Button>
+          </AppButton>
         )}
         {activeEvaluation && token && answered !== true && (
           <Tooltip
@@ -256,21 +255,18 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
                 : 'Evaluación del libro'
             }
           >
-            <Button
-              variant="contained"
+            <AppButton
+              variant="destructive"
               size="small"
               startIcon={<EventNoteIcon />}
               sx={{
                 px: 1.5,
                 py: 0.4,
-                backgroundColor: '#d32f2f !important',
-                boxShadow: '0 4px 10px rgba(211, 47, 47, 0.4) !important',
-                '&:hover': { backgroundColor: '#b71c1c !important' },
               }}
               onClick={() => startPlay('evaluacion')}
             >
               Jugar evaluación
-            </Button>
+            </AppButton>
           </Tooltip>
         )}
         {activeEvaluation && answered === true && (
@@ -346,31 +342,29 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
             )}
 
             <Box display="flex" justifyContent="space-between" mt={3}>
-              <Button
+              <AppButton
                 variant="text"
-                color="inherit"
                 disabled={currentIndex === 0}
                 onClick={goToPrev}
               >
                 Anterior
-              </Button>
+              </AppButton>
               {currentIndex < playQuestions.length - 1 ? (
-                <Button
-                  variant="contained"
-                  className={styles.buttonOrange}
+                <AppButton
+                  variant="primary"
                   onClick={goToNext}
                 >
                   Siguiente
-                </Button>
+                </AppButton>
               ) : (
-                <Button
-                  variant="contained"
-                  className={styles.buttonOrange}
+                <AppButton
+                  variant="primary"
                   disabled={checking}
+                  loading={checking}
                   onClick={submit}
                 >
-                  {checking ? 'Corrigiendo...' : 'Finalizar'}
-                </Button>
+                  Finalizar
+                </AppButton>
               )}
             </Box>
           </>
@@ -443,9 +437,9 @@ const TriviaPlaySection = ({ bookId }: TriviaPlaySectionProps) => {
           )}
 
           <Box display="flex" gap={2} mt={2}>
-            <Button variant="contained" className={styles.buttonOrange} onClick={backToEntry}>
+            <AppButton variant="primary" onClick={backToEntry}>
               Volver
-            </Button>
+            </AppButton>
           </Box>
           </>
         )}

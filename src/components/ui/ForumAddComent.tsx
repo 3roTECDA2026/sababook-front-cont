@@ -1,8 +1,9 @@
 // src/components/ui/ForumAddComent.tsx
 import { useState } from 'react';
-import { Box, Button, TextField, Alert, Typography } from '@mui/material';
+import { Box, TextField, Alert, Typography } from '@mui/material';
 import { API_BASE_URL } from '@/environments/api';
 import type { ForumDetailComment } from '@/types';
+import { AppButton } from '@/components/atoms/AppButton';
 
 const MAX_COMMENT_LENGTH = 250;
 
@@ -101,14 +102,14 @@ const ForumAddComment = ({
         }
       />
 
-      <Button
-        variant="contained"
-        color="warning"
+      <AppButton
+        variant="primary"
         onClick={handleSend}
         disabled={sending || !text.trim() || text.length > MAX_COMMENT_LENGTH}
+        loading={sending}
       >
-        {sending ? 'Enviando...' : 'Publicar comentario'}
-      </Button>
+        Publicar comentario
+      </AppButton>
     </Box>
   );
 };
