@@ -96,6 +96,20 @@ Patrón a seguir para código nuevo (ver `TeacherPanelPage` como referencia):
 
 Muchos hooks viejos hacen `fetch` directo. Para código nuevo, centralizar las llamadas en un servicio.
 
+### Idioma: el código nuevo va en inglés; lo que ve el usuario, en español
+
+- En **inglés**: variables, funciones, componentes, hooks, props, tipos, interfaces, constantes
+  y nombres de archivos (`useReadingStats`, `AbandonedReadingsTable`, `isLoading`, `courseId`).
+- En **español**: todo lo visible en pantalla, como títulos, textos, etiquetas, botones,
+  placeholders, mensajes de error, de éxito y de confirmación
+  (`<Button>Guardar cambios</Button>`, `'No se pudo cargar el panel.'`).
+- Gran parte del código existente está en español (`cargando`, `etiquetaCurso`, `solicitud()`):
+  **no se migra por ahora**. Se puede seguir usando, pero lo nuevo va en inglés. Si se edita un
+  archivo existente, no hace falta renombrar lo que ya estaba en el mismo PR.
+- Los campos que vienen del back se usan con el nombre que tienen en la API (`libro_id`,
+  `estado_lectura`), aunque estén en español.
+- Comentarios en el código y mensajes de commit: en español, como hasta ahora.
+
 ## 7. Componentes y estilos
 
 - **Reutilizar antes de crear.** Revisar `components/ui` y `components/layout`:
@@ -171,6 +185,7 @@ Muchos hooks viejos hacen `fetch` directo. Para código nuevo, centralizar las l
 ## 11. Checklist antes de abrir un PR
 
 - [ ] `npx tsc --noEmit -p .` sin errores y `npm run build` compila.
+- [ ] Código nuevo con nombres en inglés; textos visibles para el usuario en español.
 - [ ] Probado en el navegador con el back local, con los roles que correspondan.
 - [ ] Estados de carga, vacío y error contemplados.
 - [ ] Se reutilizaron componentes de `components/ui` y colores del tema.
