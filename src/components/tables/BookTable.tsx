@@ -14,10 +14,10 @@ import {
   styled,
   useTheme,
   CircularProgress,
-  Button,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { Book } from '@/types';
+import { AppButton } from '@/components/atoms/AppButton';
 
 // Se eliminan imports relacionados con la API, Dialogs, Snackbar, y useNavigate
 import EditIcon from '@mui/icons-material/Edit';
@@ -144,15 +144,14 @@ const BookTable = ({
   return (
     <>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <Button
-          variant="contained"
+        <AppButton
+          variant="primary"
           startIcon={<DownloadIcon />}
           onClick={handleDownload}
           disabled={books.length === 0 || isLoading || Boolean(error)}
-          sx={{ backgroundColor: 'button.main', textTransform: 'none' }}
         >
           Descargar CSV
-        </Button>
+        </AppButton>
       </Box>
       <StyledTableContainer>
         <TableContainer>
