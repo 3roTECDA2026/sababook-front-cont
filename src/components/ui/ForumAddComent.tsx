@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Box, Button, TextField, Alert, Typography } from '@mui/material';
 import { API_BASE_URL } from '@/environments/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { ForumDetailComment } from '@/types';
 
 const MAX_COMMENT_LENGTH = 250;
@@ -27,6 +28,7 @@ const ForumAddComment = ({
     severity: 'error' | 'warning' | 'success' | 'info';
     message: string;
   } | null>(null);
+  const { token } = useAuth();
 
   const handleSend = async () => {
     if (!text.trim() || text.length > MAX_COMMENT_LENGTH) return;
@@ -37,8 +39,12 @@ const ForumAddComment = ({
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/forums/${forumId}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, content: text }),
+        // La ruta exige sesión (verifyToken): el back toma el usuario del token
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ contenido: text }),
       });
 
       const data = await res.json();
@@ -46,7 +52,10 @@ const ForumAddComment = ({
       if (!res.ok || res.status === 202 || data.ok === false) {
         const severity =
           res.status === 202 || data.error === 'EN_REVISION' ? 'info' : 'error';
-        setFeedback({ severity, message: data.mensaje || data.error || 'Error al agregar el comentario' });
+        setFeedback({
+          severity,
+          message: data.mensaje || data.error || data.message || 'Error al agregar el comentario',
+        });
         setText('');
         return;
       }
