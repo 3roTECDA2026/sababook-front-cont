@@ -44,7 +44,7 @@ const ForumAddComment = ({
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ userId, content: text }),
+        body: JSON.stringify({ contenido: text }),
       });
 
       const data = await res.json();
