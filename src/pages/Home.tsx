@@ -2,7 +2,6 @@
 import {
   Box,
   Typography,
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -10,6 +9,7 @@ import {
   TextField,
   Alert,
 } from "@mui/material";
+import { AppButton } from "@/components/atoms/AppButton";
 
 import {
   useEffect,
@@ -889,12 +889,12 @@ export default function Home() {
             {error}
           </Typography>
 
-          <Button
+          <AppButton
             variant="outlined"
             onClick={reload}
           >
             Reintentar
-          </Button>
+          </AppButton>
         </Box>
       )}
 
@@ -1009,7 +1009,8 @@ export default function Home() {
         <DialogActions
           sx={{ p: 2 }}
         >
-          <Button
+          <AppButton
+            variant="outlined"
             disabled={
               guardandoRecomendacion
             }
@@ -1028,10 +1029,11 @@ export default function Home() {
             }}
           >
             Cancelar
-          </Button>
+          </AppButton>
 
-          <Button
-            variant="contained"
+          <AppButton
+            variant="primary"
+            loading={guardandoRecomendacion}
             disabled={
               guardandoRecomendacion ||
               !comentarioRecomendacion.trim()
@@ -1039,17 +1041,9 @@ export default function Home() {
             onClick={() => {
               void guardarRecomendacionConComentario();
             }}
-            sx={{
-              bgcolor: "#f25600",
-              "&:hover": {
-                bgcolor: "#d64500",
-              },
-            }}
           >
-            {guardandoRecomendacion
-              ? "Guardando..."
-              : "Confirmar recomendación"}
-          </Button>
+            Confirmar recomendación
+          </AppButton>
         </DialogActions>
       </Dialog>
     </Box>
