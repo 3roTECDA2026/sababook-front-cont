@@ -3,7 +3,6 @@ import { useState } from 'react';
 import {
   Alert,
   Box,
-  Button,
   CircularProgress,
   MenuItem,
   TextField,
@@ -18,6 +17,7 @@ import TeacherPanelRankings from '@/components/teacherPanel/TeacherPanelRankings
 import TeacherPanelStats from '@/components/teacherPanel/TeacherPanelStats';
 import { useTeacherPanel } from '@/hooks/useTeacherPanel';
 import { etiquetaCursoPanel } from '@/utils/course';
+import { AppButton } from '@/components/atoms/AppButton';
 
 const OPCIONES_DIAS = [15, 30, 60, 90];
 
@@ -33,9 +33,9 @@ export default function TeacherPanelPage() {
         <Alert
           severity="error"
           action={
-            <Button color="inherit" size="small" onClick={reintentar}>
+            <AppButton variant="text" size="small" onClick={reintentar}>
               Reintentar
-            </Button>
+            </AppButton>
           }
         >
           {error}

@@ -1,13 +1,11 @@
 // src/components/RatingAndCommentForm.tsx
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Rating, IconButton, DialogActions, Alert } from '@mui/material';
+import { Box, Typography, TextField, Rating, IconButton, DialogActions, Alert } from '@mui/material';
 
 // Iconos de MUI
 import StarIcon from '@mui/icons-material/Star';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-
-// Importar el tema global
-import theme from '@/theme/theme';
+import { AppButton } from '@/components/atoms/AppButton';
 
 export interface RatingSubmitData {
   rating: number;
@@ -35,13 +33,6 @@ export default function RatingAndCommentForm({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const maxCommentLength = 500;
-
-  const buttonColor = theme.palette.button?.main || '#f25600';
-  const buttonColorRgb = buttonColor
-    .replace('#', '')
-    .match(/.{2}/g)
-    ?.map((x) => parseInt(x, 16))
-    .join(', ');
 
   // Función para manejar el envío del formulario
   const handleSubmit = async () => {
@@ -168,7 +159,7 @@ export default function RatingAndCommentForm({
           }}
           size="large"
           // Estrellas personalizadas con el color del botón del tema global
-          icon={<StarIcon fontSize="inherit" sx={{ color: buttonColor }} />}
+          icon={<StarIcon fontSize="inherit" sx={{ color: '#f25600' }} />}
           emptyIcon={<StarIcon fontSize="inherit" style={{ opacity: 0.2 }} />}
           sx={{
             fontSize: '2.5rem',
@@ -233,25 +224,20 @@ export default function RatingAndCommentForm({
       {/* Usamos DialogActions para simular el área de botones en la parte inferior */}
       <Box sx={{ maxWidth: 700, mx: 'auto', mb: 2 }}>
         <DialogActions sx={{ p: 0, justifyContent: 'center' }}>
-          <Button
+          <AppButton
             onClick={handleSubmit}
-            variant="contained"
+            variant="primary"
             size="large"
             disabled={isSubmitting}
+            loading={isSubmitting}
+            fullWidth
             sx={{
-              width: '100%',
               py: 1.5,
-              fontWeight: 'bold',
-              backgroundColor: buttonColor,
-              '&:hover': {
-                backgroundColor: buttonColor,
-                opacity: 0.9,
-              },
-              boxShadow: `0 4px 10px rgba(${buttonColorRgb}, 0.4)`,
+              fontSize: '1rem',
             }}
           >
-            {isSubmitting ? 'Enviando...' : 'Enviar Calificación'}
-          </Button>
+            Enviar Calificación
+          </AppButton>
         </DialogActions>
       </Box>
     </Box>

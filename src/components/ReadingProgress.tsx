@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, LinearProgress, Typography, TextField, Button } from '@mui/material';
+import { Box, LinearProgress, Typography, TextField } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 
 interface ReadingProgressProps {
   currentPage: number;
@@ -85,17 +86,12 @@ const ReadingProgress: React.FC<ReadingProgressProps> = ({
           inputProps={{ min: 1 }}
           sx={{ width: '130px' }}
         />
-        <Button
+        <AppButton
           type="submit"
-          variant="contained"
-          sx={{
-            bgcolor: '#FF6633',
-            '&:hover': { bgcolor: '#cc4800' },
-            fontWeight: 'bold',
-          }}
+          variant="primary"
         >
           Actualizar
-        </Button>
+        </AppButton>
       </Box>
     </Box>
   );
