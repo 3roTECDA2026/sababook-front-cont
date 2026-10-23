@@ -1,6 +1,7 @@
 // src/components/ForumForm.tsx
 import React, { useState, useEffect, FormEvent } from 'react';
-import { Box, TextField, Button, Paper, Typography } from '@mui/material';
+import { Box, TextField, Paper, Typography } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 import type { Forum } from '@/types';
 
 interface ForumFormData {
@@ -77,12 +78,12 @@ const ForumForm = ({ forumToEdit, title, onSave, onCancel }: ForumFormProps) => 
         />
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button onClick={onCancel} variant="outlined">
+          <AppButton onClick={onCancel} variant="outlined">
             Cancelar
-          </Button>
-          <Button type="submit" variant="contained" sx={{ backgroundColor: 'button.main' }}>
+          </AppButton>
+          <AppButton type="submit" variant="primary">
             Guardar Cambios
-          </Button>
+          </AppButton>
         </Box>
       </form>
     </Paper>
