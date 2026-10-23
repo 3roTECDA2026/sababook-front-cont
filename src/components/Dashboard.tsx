@@ -11,8 +11,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Button,
 } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 import type { AlertColor } from '@mui/material';
 
 import HeaderDashboard from './layout/HeaderDashboard';
@@ -864,26 +864,22 @@ const Dashboard = () => {
         </DialogContent>
 
         <DialogActions>
-          <Button
+          <AppButton
             onClick={handleCloseDeleteConfirm}
-            color="primary"
+            variant="outlined"
             disabled={isApiLoading}
           >
             Cancelar
-          </Button>
+          </AppButton>
 
-          <Button
+          <AppButton
             onClick={handleConfirmDeleteBook}
-            color="error"
-            variant="contained"
+            variant="destructive"
+            loading={isApiLoading}
             disabled={isApiLoading}
           >
-            {isApiLoading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              'Sí, Eliminar'
-            )}
-          </Button>
+            Sí, Eliminar
+          </AppButton>
         </DialogActions>
       </Dialog>
 
@@ -906,26 +902,22 @@ const Dashboard = () => {
         </DialogContent>
 
         <DialogActions>
-          <Button
+          <AppButton
             onClick={handleCloseDeleteForumConfirm}
-            color="primary"
+            variant="outlined"
             disabled={isApiLoading}
           >
             Cancelar
-          </Button>
+          </AppButton>
 
-          <Button
+          <AppButton
             onClick={handleConfirmDeleteForum}
-            color="error"
-            variant="contained"
+            variant="destructive"
+            loading={isApiLoading}
             disabled={isApiLoading}
           >
-            {isApiLoading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              'Sí, Eliminar Foro'
-            )}
-          </Button>
+            Sí, Eliminar Foro
+          </AppButton>
         </DialogActions>
       </Dialog>
 
@@ -946,26 +938,22 @@ const Dashboard = () => {
         </DialogContent>
 
         <DialogActions>
-          <Button
+          <AppButton
             onClick={handleCloseDeleteGoalConfirm}
-            color="primary"
+            variant="outlined"
             disabled={isApiLoading}
           >
             Cancelar
-          </Button>
+          </AppButton>
 
-          <Button
+          <AppButton
             onClick={handleConfirmDeleteGoal}
-            color="error"
-            variant="contained"
+            variant="destructive"
+            loading={isApiLoading}
             disabled={isApiLoading}
           >
-            {isApiLoading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              'Sí, Eliminar Meta'
-            )}
-          </Button>
+            Sí, Eliminar Meta
+          </AppButton>
         </DialogActions>
       </Dialog>
 
