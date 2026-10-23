@@ -9,7 +9,6 @@ import {
   Typography,
   Avatar,
   Chip,
-  Button,
   CircularProgress,
   Alert,
   Divider,
@@ -18,6 +17,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 import {
   Radio as RadioIcon,
   Forum as ForumIcon,
@@ -326,16 +326,15 @@ export const FeedMuro: React.FC = () => {
       {/* Botón Cargar más */}
       {hayMasPaginas && (
         <Box textAlign="center" mt={4}>
-          <Button
-            variant="contained"
-            color="primary"
+          <AppButton
+            variant="primary"
             onClick={handleCargarMas}
             disabled={cargandoMas}
-            startIcon={cargandoMas ? <CircularProgress size={18} color="inherit" /> : null}
-            sx={{ px: 4, py: 1, borderRadius: 2 }}
+            loading={cargandoMas}
+            sx={{ px: 4, py: 1 }}
           >
-            {cargandoMas ? 'Cargando más...' : 'Cargar más actividades'}
-          </Button>
+            Cargar más actividades
+          </AppButton>
         </Box>
       )}
     </Box>

@@ -1,5 +1,5 @@
 // src/components/ForumCommentList.tsx
-import { Box, Typography, Paper, CircularProgress, Button, TextField } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, TextField } from '@mui/material';
 import type { Theme } from '@mui/material';
 import { useForumComments } from '@/hooks/useForumComments';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,6 +8,7 @@ import { API_BASE_URL } from '@/environments/api';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DeleteButton } from '@/components/ui/ActionButton';
 import type { ForumComment } from '@/types';
+import { AppButton } from '@/components/atoms/AppButton';
 
 type CommentDisplay = ForumComment & {
   nombre?: string;
@@ -193,29 +194,17 @@ const ForumCommentList = ({ foroId, theme, usuarioId: usuarioIdProp }: ForumComm
               },
             }}
           />
-          <Button
+          <AppButton
             type="submit"
-            variant="contained"
+            variant="primary"
             fullWidth
+            rounded
             disabled={sending || !contenido.trim()}
-            sx={{
-              // estilos copiados del StyledButton
-              backgroundColor:
-                !sending && contenido.trim() ? theme.palette.button?.main || '#f25600' : '#bbb', // gris cuando está deshabilitado
-              color: '#FFFFFF',
-              padding: '12px 0',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              borderRadius: '30px',
-
-              // hover
-              '&:hover': {
-                backgroundColor: !sending && contenido.trim() ? '#cc4800' : '#aaa', // gris más fuerte si está deshabilitado
-              },
-            }}
+            loading={sending}
+            sx={{ py: 1.5, fontSize: '1rem' }}
           >
-            {sending ? 'Enviando...' : 'Comentar'}
-          </Button>
+            Comentar
+          </AppButton>
           {sendError && (
             <Typography color="error" mt={1}>
               {sendError}

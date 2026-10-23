@@ -1,5 +1,6 @@
-import { Box, Typography, TextField, Button, Alert, Card, CardContent, CircularProgress, Chip } from '@mui/material';
+import { Box, Typography, TextField, Alert, Card, CardContent, CircularProgress, Chip } from '@mui/material';
 import { useModeration } from '@/hooks/useModeration';
+import { AppButton } from '@/components/atoms/AppButton';
 
 const ModerationAdmin = () => {
   const {
@@ -55,15 +56,15 @@ const ModerationAdmin = () => {
               fullWidth
               required
             />
-            <Button
-              variant="contained"
-              color="primary"
+            <AppButton
+              variant="primary"
               type="submit"
               disabled={saving || !apiKey.trim()}
+              loading={saving}
               sx={{ alignSelf: 'flex-start' }}
             >
-              {saving ? <CircularProgress size={24} color="inherit" /> : 'Guardar Clave'}
-            </Button>
+              Guardar Clave
+            </AppButton>
           </Box>
         </CardContent>
       </Card>
@@ -105,24 +106,23 @@ const ModerationAdmin = () => {
                         {i.usuario ? ` · Alumno: ${i.usuario.nombre} (${i.usuario.email})` : ''}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          variant="contained"
-                          color="primary"
+                        <AppButton
+                          variant="primary"
                           size="small"
                           disabled={resolvingId === i.incidencia_id}
+                          loading={resolvingId === i.incidencia_id}
                           onClick={() => handleDecision(i.incidencia_id, 'aceptada')}
                         >
                           Aceptar bloqueo
-                        </Button>
-                        <Button
+                        </AppButton>
+                        <AppButton
                           variant="outlined"
-                          color="secondary"
                           size="small"
                           disabled={resolvingId === i.incidencia_id}
                           onClick={() => handleDecision(i.incidencia_id, 'rechazada')}
                         >
                           Rechazar (falso positivo)
-                        </Button>
+                        </AppButton>
                       </Box>
                     </CardContent>
                   </Card>
