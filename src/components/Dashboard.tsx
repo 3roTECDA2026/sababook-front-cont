@@ -5,12 +5,6 @@ import {
   Modal,
   Snackbar,
   Alert,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Button,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material';
@@ -344,7 +338,7 @@ const Dashboard = () => {
       // el back igual valida y responde 409 si corresponde
     }
 
-    const foundBook = books.find((b) => (b.id ?? b.libro_id) === bookId) ?? null;
+    const foundBook = books.find((b) => b.libro_id === bookId) ?? null;
     setBookToDelete(foundBook);
     setOpenDeleteConfirm(true); // Abre el modal
   };
@@ -355,8 +349,7 @@ const Dashboard = () => {
   };
 
   const handleConfirmDeleteBook = async () => {
-    setOpenDeleteConfirm(false);
-    const bookId = bookToDelete?.id ?? bookToDelete?.libro_id;
+    const bookId = bookToDelete?.libro_id;
     if (!bookId) return;
 
     setIsApiLoading(true);
@@ -384,6 +377,7 @@ const Dashboard = () => {
         message: 'Libro eliminado correctamente.',
         severity: 'success',
       });
+      setOpenDeleteConfirm(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
@@ -407,7 +401,7 @@ const Dashboard = () => {
 
   // Eliminar meta
   const handleOpenDeleteGoalConfirm = (goalId: number) => {
-    const foundGoal = goals.find((g) => (g.id ?? g.meta_id) === goalId) ?? null;
+    const foundGoal = goals.find((g) => (g.meta_id ?? g.id) === goalId) ?? null;
     setGoalToDelete(foundGoal);
     setOpenDeleteGoalConfirm(true);
   };
@@ -418,8 +412,7 @@ const Dashboard = () => {
   };
 
   const handleConfirmDeleteGoal = async () => {
-    setOpenDeleteGoalConfirm(false);
-    const goalId = goalToDelete?.id ?? goalToDelete?.meta_id;
+    const goalId = goalToDelete?.meta_id ?? goalToDelete?.id;
     if (!goalId) return;
 
     setIsApiLoading(true);
@@ -448,6 +441,7 @@ const Dashboard = () => {
         message: 'Meta de lectura eliminada correctamente.',
         severity: 'success',
       });
+      setOpenDeleteGoalConfirm(false);
     } catch (err) {
       setGoalsError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -531,7 +525,7 @@ const Dashboard = () => {
 
   // Eliminar foro
   const handleOpenDeleteForumConfirm = (forumId: number) => {
-    const foundForum = forums.find((f) => (f.id ?? f.foro_id) === forumId) ?? null;
+    const foundForum = forums.find((f) => f.foro_id === forumId) ?? null;
     setForumToDelete(foundForum);
     setOpenDeleteForumConfirm(true);
   };
@@ -542,8 +536,7 @@ const Dashboard = () => {
   };
 
   const handleConfirmDeleteForum = async () => {
-    setOpenDeleteForumConfirm(false);
-    const forumId = forumToDelete?.id ?? forumToDelete?.foro_id;
+    const forumId = forumToDelete?.foro_id;
     if (!forumId) return;
 
     setIsApiLoading(true);
@@ -573,6 +566,7 @@ const Dashboard = () => {
         message: 'Foro eliminado correctamente.',
         severity: 'success',
       });
+      setOpenDeleteForumConfirm(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
@@ -583,7 +577,7 @@ const Dashboard = () => {
       });
     } finally {
       setIsApiLoading(false);
-      setForumToDeleteId(null);
+      setForumToDelete(null);
     }
   };
 
@@ -857,6 +851,7 @@ const Dashboard = () => {
         onClose={handleCloseDeleteConfirm}
         onConfirm={handleConfirmDeleteBook}
         title="Confirmar Eliminación"
+        loading={isApiLoading}
         message={
           bookToDelete
             ? `¿Estás seguro de que querés eliminar el libro "${bookToDelete.titulo}"? Esta acción no se puede deshacer.`
@@ -870,6 +865,7 @@ const Dashboard = () => {
         onClose={handleCloseDeleteForumConfirm}
         onConfirm={handleConfirmDeleteForum}
         title="Confirmar Eliminación del Foro"
+        loading={isApiLoading}
         message={
           forumToDelete
             ? `¿Estás seguro de que querés eliminar el foro "${forumToDelete.titulo}"? Esta acción no se puede deshacer.`
@@ -883,9 +879,10 @@ const Dashboard = () => {
         onClose={handleCloseDeleteGoalConfirm}
         onConfirm={handleConfirmDeleteGoal}
         title="Confirmar Eliminación de la Meta"
+        loading={isApiLoading}
         message={
           goalToDelete
-            ? `¿Estás seguro de que querés eliminar la meta de lectura "${goalToDelete.descripcion || goalToDelete.meta_id || goalToDelete.id}"? Esta acción no se puede deshacer.`
+            ? `¿Estás seguro de que querés eliminar la meta de lectura "${goalToDelete.periodo_nombre || (goalToDelete.usuario_nombre ? `de ${goalToDelete.usuario_nombre}` : '') || goalToDelete.meta_id || goalToDelete.id}"? Esta acción no se puede deshacer.`
             : ''
         }
       />
