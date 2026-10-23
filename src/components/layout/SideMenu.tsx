@@ -68,7 +68,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
-      { text: 'Favoritos', icon: <FavoriteIcon />, path: '/favoritos' },
+      { text: 'Mi Biblioteca', icon: <FavoriteIcon />, path: '/favoritos' },
       { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
@@ -83,7 +83,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio Sábato', icon: <RadioIcon />, path: '/radio' },
-      { text: 'Favoritos', icon: <FavoriteIcon />, path: '/favoritos' },
+      { text: 'Mi Biblioteca', icon: <FavoriteIcon />, path: '/favoritos' },
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
     ];

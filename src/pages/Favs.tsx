@@ -66,7 +66,7 @@ export default function Favs() {
       />
 
       {/* Drawer lateral */}
-      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} active="Favoritos" />
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} active="Mi Biblioteca" />
 
       <Tabs
         value={selectedStatus}
