@@ -13,7 +13,7 @@ export interface ReadingStreakState {
   recargarRacha: () => Promise<void>;
 }
 
-export const useReadingStreak = (): ReadingStreakState => {
+export const useReadingStreak = (enabled: boolean = true): ReadingStreakState => {
   const [rachaActual, setRachaActual] = useState<number>(0);
   const [recordRacha, setRecordRacha] = useState<number>(0);
   const [ultimaFechaLectura, setUltimaFechaLectura] = useState<string | null>(null);
@@ -22,6 +22,11 @@ export const useReadingStreak = (): ReadingStreakState => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchRacha = useCallback(async () => {
+    if (!enabled) {
+      setCargando(false);
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (!token) {
       setCargando(false);
@@ -52,7 +57,7 @@ export const useReadingStreak = (): ReadingStreakState => {
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [enabled]);
 
   const registrarLectura = useCallback(async () => {
     const token = localStorage.getItem('token');

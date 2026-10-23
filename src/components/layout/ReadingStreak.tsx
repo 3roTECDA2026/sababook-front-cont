@@ -1,14 +1,16 @@
 import React from 'react';
-import { Box, Typography, Paper, Tooltip } from '@mui/material';
+import { Box, Typography, Paper, Tooltip, CircularProgress } from '@mui/material';
 
 interface ReadingStreakProps {
   rachaActual?: number;
   recordRacha?: number;
+  cargando?: boolean;
 }
 
 export const ReadingStreak: React.FC<ReadingStreakProps> = ({ 
   rachaActual = 0, 
-  recordRacha = 0 
+  recordRacha = 0,
+  cargando = false,
 }) => {
   const diasSemana = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -31,18 +33,26 @@ export const ReadingStreak: React.FC<ReadingStreakProps> = ({
         <Typography variant="h6" role="img" aria-label="fuego">🔥</Typography>
       </Box>
 
-      <Box display="flex" alignItems="baseline" gap={1} mb={0.5}>
-        <Typography variant="h3" fontWeight="900" color="warning.main">
-          {rachaActual}
-        </Typography>
-        <Typography variant="caption" fontWeight="medium" color="text.secondary">
-          días consecutivos
-        </Typography>
-      </Box>
+      {cargando ? (
+        <Box display="flex" alignItems="center" justifyContent="center" py={2}>
+          <CircularProgress size={24} color="warning" />
+        </Box>
+      ) : (
+        <>
+          <Box display="flex" alignItems="baseline" gap={1} mb={0.5}>
+            <Typography variant="h3" fontWeight="900" color="warning.main">
+              {rachaActual}
+            </Typography>
+            <Typography variant="caption" fontWeight="medium" color="text.secondary">
+              días consecutivos
+            </Typography>
+          </Box>
 
-      <Typography variant="caption" color="text.disabled" display="block" mb={2}>
-        Récord histórico: <strong style={{ color: '#666' }}>{recordRacha} días</strong>
-      </Typography>
+          <Typography variant="caption" color="text.disabled" display="block" mb={2}>
+            Récord histórico: <strong style={{ color: '#666' }}>{recordRacha} días</strong>
+          </Typography>
+        </>
+      )}
 
       <Box 
         display="flex" 

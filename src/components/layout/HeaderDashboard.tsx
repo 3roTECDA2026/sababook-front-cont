@@ -60,7 +60,11 @@ const HeaderDashboard = ({
   recordRacha: recordProp,
   mostrarRacha = true,
 }: HeaderDashboardProps) => {
-  const { rachaActual: rachaReal, recordRacha: recordReal } = useReadingStreak();
+  const {
+    rachaActual: rachaReal,
+    recordRacha: recordReal,
+    cargando,
+  } = useReadingStreak(mostrarRacha && rachaProp === undefined);
   const rachaActual = rachaProp !== undefined ? rachaProp : rachaReal;
   const recordRacha = recordProp !== undefined ? recordProp : recordReal;
   const currentTitle = titleMap[activeView] || 'Título Desconocido';
@@ -117,7 +121,11 @@ const HeaderDashboard = ({
 
         {/* RACHA DE LECTURA */}
         {mostrarRacha && (
-          <ReadingStreak rachaActual={rachaActual} recordRacha={recordRacha} />
+          <ReadingStreak
+            rachaActual={rachaActual}
+            recordRacha={recordRacha}
+            cargando={cargando}
+          />
         )}
       </Box>
     </Box>
