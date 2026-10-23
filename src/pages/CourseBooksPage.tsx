@@ -45,8 +45,9 @@ import {
   asignarLibroACurso,
   actualizarPuntajeLibro,
   quitarLibroDeCurso,
+  getAsignacionesAnteriores,
 } from '@/services/courseService';
-import type { Book, CourseBook, CourseSummary } from '@/types';
+import type { Book, CourseBook, CourseSummary, PreviousAssignment } from '@/types';
 
 const StyledTableContainer = styled(Paper)(({ theme }) => ({
   borderRadius: '16px',
@@ -92,11 +93,11 @@ interface SnackbarState {
 const etiquetaCurso = (curso: CourseSummary) =>
   `${curso.anio}°${curso.division} · ${curso.anio_lectivo} · ${curso.materia.nombre}`;
 
-// Devuelve el puntaje como entero >= 0, o null si no es válido
+// Devuelve el puntaje como entero entre 1 y 100 (misma regla que el back), o null si no es válido
 const parsearPuntaje = (valor: string): number | null => {
   if (valor.trim() === '') return null;
   const numero = Number(valor);
-  return Number.isInteger(numero) && numero >= 0 ? numero : null;
+  return Number.isInteger(numero) && numero >= 1 && numero <= 100 ? numero : null;
 };
 
 const mensajeDeError = (error: unknown) =>
@@ -122,6 +123,11 @@ export default function CourseBooksPage() {
   const [dialogoAsignarAbierto, setDialogoAsignarAbierto] = useState<boolean>(false);
   const [libroElegido, setLibroElegido] = useState<Book | null>(null);
   const [puntajeNuevo, setPuntajeNuevo] = useState<string>('');
+
+  // Alerta de asignaciones en años anteriores (null = diálogo cerrado)
+  const [asignacionesAnteriores, setAsignacionesAnteriores] = useState<PreviousAssignment[] | null>(
+    null
+  );
 
   // Edición de puntaje y borrado
   const [libroAEditar, setLibroAEditar] = useState<CourseBook | null>(null);
@@ -194,18 +200,17 @@ export default function CourseBooksPage() {
     }
   };
 
-  const confirmarAsignacion = async () => {
+  // Asigna el libro elegido al curso (después de pasar por la alerta, si hubo)
+  const realizarAsignacion = async () => {
     if (cursoId === null || !libroElegido) return;
 
     const puntaje = parsearPuntaje(puntajeNuevo);
-    if (puntaje === null) {
-      mostrarMensaje('El puntaje debe ser un número entero mayor o igual a 0.', 'warning');
-      return;
-    }
+    if (puntaje === null) return;
 
     setGuardando(true);
     try {
       await asignarLibroACurso(cursoId, libroElegido.libro_id, puntaje);
+      setAsignacionesAnteriores(null);
       setDialogoAsignarAbierto(false);
       mostrarMensaje('Libro asignado correctamente.', 'success');
       await cargarLibros(cursoId);
@@ -214,6 +219,33 @@ export default function CourseBooksPage() {
     } finally {
       setGuardando(false);
     }
+  };
+
+  // Valida el puntaje y, antes de asignar, revisa si el libro ya se usó
+  // en años anteriores: si es así, muestra la alerta para confirmar
+  const confirmarAsignacion = async () => {
+    if (cursoId === null || !libroElegido) return;
+
+    const puntaje = parsearPuntaje(puntajeNuevo);
+    if (puntaje === null) {
+      mostrarMensaje('El puntaje debe ser un número entero entre 1 y 100.', 'warning');
+      return;
+    }
+
+    setGuardando(true);
+    try {
+      const anteriores = await getAsignacionesAnteriores(cursoId, libroElegido.libro_id);
+      if (anteriores.length > 0) {
+        setAsignacionesAnteriores(anteriores);
+        setGuardando(false);
+        return;
+      }
+    } catch {
+      // Si no se pudo consultar, no se bloquea la asignación: la alerta es informativa
+    }
+    setGuardando(false);
+
+    await realizarAsignacion();
   };
 
   const abrirDialogoEditar = (libro: CourseBook) => {
@@ -226,7 +258,7 @@ export default function CourseBooksPage() {
 
     const puntaje = parsearPuntaje(puntajeEditado);
     if (puntaje === null) {
-      mostrarMensaje('El puntaje debe ser un número entero mayor o igual a 0.', 'warning');
+      mostrarMensaje('El puntaje debe ser un número entero entre 1 y 100.', 'warning');
       return;
     }
 
@@ -427,7 +459,7 @@ export default function CourseBooksPage() {
               type="number"
               value={puntajeNuevo}
               onChange={(e) => setPuntajeNuevo(e.target.value)}
-              slotProps={{ htmlInput: { min: 0, step: 1 } }}
+              slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
             />
           </Box>
         </DialogContent>
@@ -446,6 +478,50 @@ export default function CourseBooksPage() {
             sx={estiloBotonPrincipal}
           >
             {guardando ? <CircularProgress size={22} color="inherit" /> : 'Asignar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Alerta: el libro ya se asignó en años anteriores (no bloquea) */}
+      <Dialog
+        open={asignacionesAnteriores !== null}
+        onClose={() => !guardando && setAsignacionesAnteriores(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Este libro ya se asignó antes</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" mb={1}>
+            "{libroElegido?.titulo}" ya se asignó en años anteriores a:
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 3 }}>
+            {asignacionesAnteriores?.map((anterior) => (
+              <li key={anterior.curso.curso_id}>
+                <Typography variant="body2">
+                  {`${anterior.anio_lectivo} · ${anterior.curso.anio}°${anterior.curso.division}`}
+                </Typography>
+              </li>
+            ))}
+          </Box>
+          <Typography variant="body2" color="text.secondary" mt={2}>
+            ¿Querés asignarlo igual?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setAsignacionesAnteriores(null)}
+            disabled={guardando}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={realizarAsignacion}
+            disabled={guardando}
+            sx={estiloBotonPrincipal}
+          >
+            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Asignar igual'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -470,7 +546,7 @@ export default function CourseBooksPage() {
             fullWidth
             value={puntajeEditado}
             onChange={(e) => setPuntajeEditado(e.target.value)}
-            slotProps={{ htmlInput: { min: 0, step: 1 } }}
+            slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

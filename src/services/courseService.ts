@@ -1,6 +1,6 @@
 // src/services/courseService.ts
 import { API_BASE_URL } from '@/environments/api';
-import type { CourseSummary, CourseBook, TeacherPanel, AssignmentHistoryEntry } from '@/types';
+import type { CourseSummary, CourseBook, TeacherPanel, AssignmentHistoryEntry, PreviousAssignment } from '@/types';
 
 
 // Hace la petición con el token y devuelve el mensaje de error real del back si falla
@@ -92,4 +92,17 @@ export async function getHistorialAsignaciones(
 
   const query = params.toString();
   return await solicitud<AssignmentHistoryEntry[]>(`/courses/history${query ? `?${query}` : ''}`);
+}
+
+/**
+ * Cursos de años anteriores a los que ya se asignó el libro,
+ * para avisar antes de asignarlo de nuevo (SAB-066)
+ */
+export async function getAsignacionesAnteriores(
+  cursoId: number,
+  libroId: number
+): Promise<PreviousAssignment[]> {
+  return await solicitud<PreviousAssignment[]>(
+    `/courses/${cursoId}/books/${libroId}/previous-assignments`
+  );
 }
