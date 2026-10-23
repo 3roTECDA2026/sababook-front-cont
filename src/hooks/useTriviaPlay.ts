@@ -1,7 +1,7 @@
 // src/hooks/useTriviaPlay.ts
 import { useCallback, useEffect, useState } from 'react';
 import type { AlertColor } from '@mui/material';
-import moment from 'moment';
+import { isDeadlineExpired } from '@/utils/formatDate';
 import { API_BASE_URL } from '@/environments/api';
 import { useAuth } from '@/hooks/useAuth';
 import type { Evaluacion, PlayAnswer, PlayCheckResponse, PlayQuestion, TriviaModo } from '@/types';
@@ -14,7 +14,7 @@ export type TriviaPlayPhase = 'entry' | 'play' | 'result';
  * las envía para su corrección.
  */
 export const useTriviaPlay = (bookId: number) => {
-  const { token, user } = useAuth();
+  const { token, user, isStudent, isAdmin } = useAuth();
 
   const [notice, setNotice] = useState<{ message: string; severity: AlertColor } | null>(null);
   const [triviaQuestions, setTriviaQuestions] = useState<PlayQuestion[]>([]);
@@ -41,15 +41,24 @@ export const useTriviaPlay = (bookId: number) => {
     ])
       .then(([questions, evaluations]: [PlayQuestion[], Evaluacion[]]) => {
         if (!mounted) return;
-        setTriviaQuestions(questions);
-        const active = evaluations.find((evaluation) => {
+        setTriviaQuestions(Array.isArray(questions) ? questions : []);
+        const lista = Array.isArray(evaluations) ? evaluations : [];
+        const active = lista.find((evaluation) => {
+          if (isStudent && evaluation.habilitada === false) return false;
           if (!evaluation.deadline) return true;
-          return moment(`${evaluation.deadline}T23:59:59`).isSameOrAfter(moment());
+          return !isDeadlineExpired(evaluation.deadline);
         });
         setActiveEvaluation(active ?? null);
       })
       .catch((err) => {
         console.error('Error cargando trivia del libro:', err);
+        if (!mounted) return;
+        setTriviaQuestions([]);
+        setActiveEvaluation(null);
+        setNotice({
+          message: 'No se pudo cargar el contenido de trivia de este libro.',
+          severity: 'error',
+        });
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -82,8 +91,7 @@ export const useTriviaPlay = (bookId: number) => {
   }, [activeEvaluation, token]);
 
   const hasContent = triviaQuestions.length > 0 || !!activeEvaluation;
-  const userRole = Number(user?.rol ?? user?.rol_id);
-  const canPlay = userRole === 1 || userRole === 3;
+  const canPlay = isStudent || isAdmin;
   const current = playQuestions[currentIndex];
 
   const startPlay = async (mode: TriviaModo) => {
@@ -93,6 +101,14 @@ export const useTriviaPlay = (bookId: number) => {
         `${API_BASE_URL}/api/v1/trivia/jugar/evaluacion/${activeEvaluation.evaluationId}`,
         { headers: token ? { Authorization: `Bearer ${token}` } : undefined },
       );
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setNotice({
+          message: body?.error || 'No se pudo cargar la evaluación.',
+          severity: 'error',
+        });
+        return;
+      }
       questions = await res.json();
     } else {
       questions = triviaQuestions;

@@ -5,19 +5,25 @@ import LogoImage from '@/assets/logo.png';
 import { useNavigate, useLocation } from "react-router-dom";
 import ReadingStreak from './ReadingStreak';
 
-// 1. Creamos la interfaz para definir los tipos de las props
 interface AppHeaderProps {
-  onMenuClick: () => void; // Indicamos que es una función que no retorna nada
-  title?: string;          // Con el '?' indicamos que es opcional
-  subtitle?: string;       // También opcional
+  onMenuClick: () => void;
+  title?: string;
+  subtitle?: string;
+  onBack?: () => void;
 }
 
-// 2. Le asignamos el tipo AppHeaderProps a los parámetros desestructurados
-export default function AppHeader({ onMenuClick, title, subtitle }: AppHeaderProps) {
+export default function AppHeader({ onMenuClick, title, subtitle, onBack }: AppHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const showBackArrow = location.pathname !== "/home";
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    navigate(-1);
+  };
 
   return (
     <Box
@@ -26,10 +32,9 @@ export default function AppHeader({ onMenuClick, title, subtitle }: AppHeaderPro
       justifyContent="space-between"
       mb={3}
     >
-      {/* BLOQUE IZQUIERDO: Menú + Título */}
       <Box display="flex" alignItems="center">
         {showBackArrow && (
-          <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
+          <IconButton onClick={handleBack} sx={{ mr: 1 }}>
             <ArrowBackIosNewIcon />
           </IconButton>
         )}

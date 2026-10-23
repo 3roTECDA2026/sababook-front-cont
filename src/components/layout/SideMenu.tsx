@@ -27,7 +27,9 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import RadioIcon from '@mui/icons-material/Radio';
 import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import InsightsIcon from '@mui/icons-material/Insights';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MenuItem {
   text: string;
@@ -44,12 +46,7 @@ interface SideMenuProps {
 export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuProps) {
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
   const navigate = useNavigate();
-  const roleName = localStorage.getItem('roleName')?.trim().toLocaleLowerCase();
-  const isAdmin =
-    localStorage.getItem('rol') === '3' ||
-    roleName === 'administrador' ||
-    roleName === 'admin';
-  const userRolId = localStorage.getItem('rol');
+  const { isAdmin, isTeacher, logout } = useAuth();
 
   let menuItems: MenuItem[];
 
@@ -62,19 +59,21 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio', icon: <RadioIcon />, path: '/radio' },
       { text: 'Libros por curso', icon: <MenuBookIcon />, path: '/cursos/libros' },
+      { text: 'Panel docente', icon: <InsightsIcon />, path: '/panel-docente' },
       { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     ];
-  } else if (userRolId == '2') {
+  } else if (isTeacher) {
     // Menú para docentes
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
-      { text: 'Favoritos', icon: <FavoriteIcon />, path: '/favoritos' },
+      { text: 'Mi Biblioteca', icon: <FavoriteIcon />, path: '/favoritos' },
       { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
       { text: 'Libros por curso', icon: <MenuBookIcon />, path: '/cursos/libros' },
+      { text: 'Panel docente', icon: <InsightsIcon />, path: '/panel-docente' },
       { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
     ];
   } else {
@@ -84,7 +83,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio Sábato', icon: <RadioIcon />, path: '/radio' },
-      { text: 'Favoritos', icon: <FavoriteIcon />, path: '/favoritos' },
+      { text: 'Mi Biblioteca', icon: <FavoriteIcon />, path: '/favoritos' },
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
     ];

@@ -19,6 +19,7 @@ import BookCommentsAdmin from './pages/BookCommentsAdmin';
 import ForumCommentsAdmin from './pages/ForumCommentsAdmin';
 import CafesLiterarios from './pages/CafesLiterarios';
 import CourseBooksPage from './pages/CourseBooksPage';
+import TeacherPanelPage from './pages/TeacherPanelPage';
 
 // Importaciones de Nuevos Módulos (Radio Sábato y Feed Muro)
 import { RadioPlayer } from './components/RadioPlayer';
@@ -26,6 +27,7 @@ import { FeedMuro } from './components/FeedMuro';
 
 // Importación de Ruta Protegida
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { RoleGuard } from './components/RoleGuard';
 
 function App() {
   return (
@@ -138,15 +140,23 @@ function App() {
         }
       />
 
-      <Route path="/dashboard/forum-comments/:foroId" element={<ForumCommentsAdmin />} />
+      {/* Ruta de administración de comentarios de foros (Protegida) */}
+      <Route
+        path="/dashboard/forum-comments/:foroId"
+        element={
+          <RoleGuard allowedRoles={['ADMINISTRADOR']}>
+            <ForumCommentsAdmin />
+          </RoleGuard>
+        }
+      />
 
-      {/* Ruta para generar trivia (Docentes) */}
+      {/* Ruta para generar trivia (Docentes y Administradores) */}
       <Route
         path="/trivia"
         element={
-          <ProtectedRoute>
+          <RoleGuard allowedRoles={['DOCENTE', 'ADMINISTRADOR']}>
             <TriviaPage />
-          </ProtectedRoute>
+          </RoleGuard>
         }
       />
 
@@ -154,9 +164,9 @@ function App() {
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute>
+          <RoleGuard allowedRoles={['ADMINISTRADOR']}>
             <DashboardPage />
-          </ProtectedRoute>
+          </RoleGuard>
         }
       />
 
@@ -164,9 +174,9 @@ function App() {
       <Route
         path="/dashboard/book-comments/:bookId"
         element={
-          <ProtectedRoute>
+          <RoleGuard allowedRoles={['ADMINISTRADOR']}>
             <BookCommentsAdmin />
-          </ProtectedRoute>
+          </RoleGuard>
         }
       />
 
@@ -192,9 +202,19 @@ function App() {
       <Route
         path="/cursos/libros"
         element={
-          <ProtectedRoute>
+          <RoleGuard allowedRoles={['DOCENTE', 'ADMINISTRADOR']}>
             <CourseBooksPage />
-          </ProtectedRoute>
+          </RoleGuard>
+        }
+      />
+
+      {/* Panel de control con métricas de lectura de los cursos (Docente y Administrador) */}
+      <Route
+        path="/panel-docente"
+        element={
+          <RoleGuard allowedRoles={['DOCENTE', 'ADMINISTRADOR']}>
+            <TeacherPanelPage />
+          </RoleGuard>
         }
       />
 

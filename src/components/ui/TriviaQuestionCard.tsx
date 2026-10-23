@@ -1,14 +1,12 @@
 // src/components/ui/TriviaQuestionCard.tsx
 import { Box, Typography, Chip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { DeleteButton } from '@/components/ui/ActionButton';
+import EditIcon from '@mui/icons-material/Edit';
+import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
 import EventNoteIcon from '@mui/icons-material/EventNote';
-import moment from 'moment';
-import 'moment/locale/es';
+import { formatDate } from '@/utils/formatDate';
 import type { TriviaQuestion, TriviaFormato } from '@/types';
 import styles from '@/styles/trivia.module.css';
-
-moment.locale('es');
 
 const FORMAT_LABELS: Record<TriviaFormato, string> = {
   multiple: 'Opción múltiple',
@@ -20,10 +18,11 @@ const FORMAT_LABELS: Record<TriviaFormato, string> = {
 interface TriviaQuestionCardProps {
   question: TriviaQuestion;
   index: number;
+  onEdit?: (question: TriviaQuestion) => void;
   onDelete?: (id: number) => void;
 }
 
-const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardProps) => {
+const TriviaQuestionCard = ({ question, index, onEdit, onDelete }: TriviaQuestionCardProps) => {
   const renderCloze = () => {
     const parts = (question.text ?? '').split('{blank}');
     const answers = question.answers ?? [];
@@ -49,11 +48,18 @@ const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardPro
         <Typography variant="body2" className={styles.qCardText}>
           {index + 1}. {question.format === 'completar' ? 'Completá el texto' : question.question}
         </Typography>
-        {onDelete && (
-          <DeleteButton size="small" onClick={() => onDelete(question.id)} aria-label="Eliminar pregunta">
-            <DeleteIcon fontSize="small" />
-          </DeleteButton>
-        )}
+        <Box display="flex" alignItems="center" gap={0.5}>
+          {onEdit && (
+            <ActionButton size="small" onClick={() => onEdit(question)} aria-label="Editar pregunta">
+              <EditIcon fontSize="small" />
+            </ActionButton>
+          )}
+          {onDelete && (
+            <DeleteButton size="small" onClick={() => onDelete(question.id)} aria-label="Eliminar pregunta">
+              <DeleteIcon fontSize="small" />
+            </DeleteButton>
+          )}
+        </Box>
       </Box>
 
       <Box display="flex" alignItems="center" gap={1} mt={1}>
@@ -63,7 +69,7 @@ const TriviaQuestionCard = ({ question, index, onDelete }: TriviaQuestionCardPro
             icon={<EventNoteIcon />}
             label={
               question.deadline
-                ? `Evaluación · límite ${moment(question.deadline).format('DD/MM/YYYY')}`
+                ? `Evaluación · límite ${formatDate(question.deadline)}`
                 : 'Evaluación'
             }
             size="small"

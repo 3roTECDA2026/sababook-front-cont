@@ -8,3 +8,4 @@ export * from './goal';
 export * from './trivia';
 export * from './pagination';
 export * from './course';
+export * from './teacherPanel';

@@ -9,6 +9,8 @@ export interface Book {
   calificacion_promedio: number;
   activo?: boolean;
   estado_lectura?: 'general' | 'quiero-leer' | 'leyendo' | 'leido';
+  pagina_actual?: number;
+  paginas_totales?: number;
 }
 
 export interface BookFilters {
@@ -17,6 +19,8 @@ export interface BookFilters {
   autor?: string;
   genero?: string;
   nivel_educativo?: string;
+  anio?: string | number;
+  curso_id?: string | number;
 }
 
 export interface FeaturedBook {

@@ -1,6 +1,7 @@
 // src/services/courseService.ts
 import { API_BASE_URL } from '@/environments/api';
-import type { CourseSummary, CourseBook } from '@/types';
+import type { CourseSummary, CourseBook, TeacherPanel, AssignmentHistoryEntry, PreviousAssignment } from '@/types';
+
 
 // Hace la petición con el token y devuelve el mensaje de error real del back si falla
 async function solicitud<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -29,15 +30,15 @@ async function solicitud<T>(endpoint: string, options: RequestInit = {}): Promis
  * Cursos visibles para el usuario: todos para el administrador,
  * solo los propios para el docente (soloPropios = true)
  */
-export async function getCursos(soloPropios = false): Promise<CourseSummary[]> {
-  return await solicitud<CourseSummary[]>(soloPropios ? '/courses?mine=true' : '/courses');
+export async function getCursos(soloPropios = false, signal?: AbortSignal): Promise<CourseSummary[]> {
+  return await solicitud<CourseSummary[]>(soloPropios ? '/courses?mine=true' : '/courses', { signal });
 }
 
 /**
  * Libros asignados a un curso
  */
-export async function getLibrosDelCurso(cursoId: number): Promise<CourseBook[]> {
-  return await solicitud<CourseBook[]>(`/courses/${cursoId}/books`);
+export async function getLibrosDelCurso(cursoId: number, signal?: AbortSignal): Promise<CourseBook[]> {
+  return await solicitud<CourseBook[]>(`/courses/${cursoId}/books`, { signal });
 }
 
 /**
@@ -67,4 +68,41 @@ export async function quitarLibroDeCurso(cursoId: number, libroId: number) {
   return await solicitud(`/courses/${cursoId}/books/${libroId}`, {
     method: 'DELETE',
   });
+}
+
+/**
+ * Métricas de lectura de los cursos del docente (o de uno solo, con cursoId)
+ */
+export async function getPanelDocente(cursoId: number | null, dias: number): Promise<TeacherPanel> {
+  const params = new URLSearchParams({ dias: String(dias) });
+  if (cursoId !== null) params.set('curso_id', String(cursoId));
+  return await solicitud<TeacherPanel>(`/teacher-panel?${params}`);
+}
+
+/**
+ * Historial de asignaciones de libros, con filtros opcionales por año lectivo, curso y libro
+ */
+export async function getHistorialAsignaciones(
+  filtros: { anio_lectivo?: number; curso_id?: number; libro_id?: number } = {}
+): Promise<AssignmentHistoryEntry[]> {
+  const params = new URLSearchParams();
+  if (filtros.anio_lectivo) params.append('anio_lectivo', String(filtros.anio_lectivo));
+  if (filtros.curso_id) params.append('curso_id', String(filtros.curso_id));
+  if (filtros.libro_id) params.append('libro_id', String(filtros.libro_id));
+
+  const query = params.toString();
+  return await solicitud<AssignmentHistoryEntry[]>(`/courses/history${query ? `?${query}` : ''}`);
+}
+
+/**
+ * Cursos de años anteriores a los que ya se asignó el libro,
+ * para avisar antes de asignarlo de nuevo (SAB-066)
+ */
+export async function getAsignacionesAnteriores(
+  cursoId: number,
+  libroId: number
+): Promise<PreviousAssignment[]> {
+  return await solicitud<PreviousAssignment[]>(
+    `/courses/${cursoId}/books/${libroId}/previous-assignments`
+  );
 }

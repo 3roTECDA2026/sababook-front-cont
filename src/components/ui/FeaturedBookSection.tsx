@@ -16,20 +16,38 @@ export type LibroDestacado = Partial<FeaturedBook> & {
 
 interface FeaturedBookSectionProps {
   featuredBooks: LibroDestacado[];
+
   handleFavoriteToggle: (
     libroId: number
   ) => boolean | Promise<boolean>;
+
   isBookFavorite: (libroId: number) => boolean;
+
   handleVerMas: (
     libroId: number | null | undefined
   ) => void;
+
   getReadingStatus: (
     libroId: number
   ) => ReadingStatus;
+
   setReadingStatus: (
     libroId: number,
     status: ReadingStatus
   ) => void;
+
+  // Se mantienen estas propiedades opcionales
+  // para evitar errores si Home.tsx todavía las envía.
+  // Ya no se utilizan para mostrar botones aquí.
+  canRemoveRecommendation?: (
+    libroId: number
+  ) => boolean;
+
+  onRemoveRecommendation?: (
+    libroId: number
+  ) => Promise<void>;
+
+  removingBookId?: number | null;
 }
 
 export default function FeaturedBookSection({
@@ -40,10 +58,14 @@ export default function FeaturedBookSection({
   getReadingStatus,
   setReadingStatus,
 }: FeaturedBookSectionProps) {
-  if (featuredBooks.length === 0) return null;
+  if (featuredBooks.length === 0) {
+    return null;
+  }
 
   return (
     <Box sx={{ mt: 3, mb: 4 }}>
+      {/* TÍTULO DE LA SECCIÓN */}
+
       <Typography
         variant="h4"
         fontWeight="bold"
@@ -53,7 +75,7 @@ export default function FeaturedBookSection({
         Nuestros recomendados
       </Typography>
 
-      {/* CONTENEDOR PRINCIPAL */}
+      {/* CONTENEDOR DE LIBROS RECOMENDADOS */}
 
       <Box
         sx={{
@@ -62,7 +84,9 @@ export default function FeaturedBookSection({
           borderRadius: "16px",
           boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
           padding: { xs: 2, md: 3 },
+
           display: "grid",
+
           gridTemplateColumns: {
             xs: "1fr",
             md:
@@ -70,6 +94,7 @@ export default function FeaturedBookSection({
                 ? "repeat(2, minmax(0, 1fr))"
                 : "1fr",
           },
+
           gap: 3,
           alignItems: "start",
         }}
@@ -93,6 +118,7 @@ export default function FeaturedBookSection({
                 justifyContent: "center",
                 alignItems: "flex-start",
                 minWidth: 0,
+
                 "& > *": {
                   maxWidth: "100%",
                 },
@@ -108,18 +134,16 @@ export default function FeaturedBookSection({
                   book.calificacion_promedio ??
                   book.rating
                 }
-                isFavorite={isBookFavorite(
-                  book.libro_id
-                )}
+                isFavorite={
+                  isBookFavorite(book.libro_id)
+                }
                 onFavoriteToggle={() =>
-                  handleFavoriteToggle(
-                    book.libro_id
-                  )
+                  handleFavoriteToggle(book.libro_id)
                 }
                 libro_id={book.libro_id}
-                readingStatus={getReadingStatus(
-                  book.libro_id
-                )}
+                readingStatus={
+                  getReadingStatus(book.libro_id)
+                }
                 onReadingStatusChange={(status) =>
                   setReadingStatus(
                     book.libro_id,
@@ -132,7 +156,7 @@ export default function FeaturedBookSection({
               />
             </Box>
 
-            {/* EXPLICACIÓN DEBAJO DEL LIBRO */}
+            {/* COMENTARIO DE LA RECOMENDACIÓN */}
 
             {book.explicacion?.trim() && (
               <Box
@@ -185,6 +209,14 @@ export default function FeaturedBookSection({
                 </Typography>
               </Box>
             )}
+
+            {/*
+              EL BOTÓN "DEJAR DE RECOMENDAR"
+              SE ELIMINÓ DE ESTA SECCIÓN.
+
+              Ahora se gestiona exclusivamente
+              desde BookDetailsPage.tsx.
+            */}
           </Box>
         ))}
       </Box>

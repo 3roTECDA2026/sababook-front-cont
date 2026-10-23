@@ -1,6 +1,20 @@
 // src/components/UserProfileForm.tsx
-import { Box, Typography, TextField, Button, Avatar, IconButton } from '@mui/material';
 import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Avatar,
+  IconButton,
+  Paper,
+  Divider,
+  InputAdornment,
+  Tooltip,
+} from '@mui/material';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import EditIcon from '@mui/icons-material/Edit';
 
 // --- Constantes para generar los avatares predeterminados ---
 // El estilo de DiceBear a utilizar (por ejemplo, 'adventurer', 'bottts', 'micah')
@@ -55,101 +69,220 @@ export default function UserProfileForm({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     onSave(formData);
   };
 
   return (
-    <Box sx={{ maxWidth: '400px', margin: '0 auto', p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Editar Perfil de **{userName}**
-      </Typography>
-
-      {/* SECCIÓN DE SELECCIÓN DE AVATAR */}
-      <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-        Selecciona un Avatar:
-      </Typography>
+    <Paper
+      elevation={0}
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{
+        maxWidth: '480px',
+        margin: '0 auto',
+        p: { xs: 3, sm: 4 },
+        borderRadius: '20px',
+        border: '1px solid #f0ece9',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.06)',
+        backgroundColor: '#ffffff',
+      }}
+    >
+      {/* ENCABEZADO DEL PERFIL */}
       <Box
         sx={{
           display: 'flex',
-          flexWrap: 'wrap',
-          gap: 1,
-          justifyContent: 'center',
-          mb: 3,
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          mb: 2.5,
         }}
       >
-        {/* Asegúrate de que DEFAULT_AVATARS esté declarado
-          antes de usarlo aquí.
-        */}
-        {DEFAULT_AVATARS.map((url) => (
-          <IconButton
-            key={url}
-            onClick={() => handleAvatarSelect(url)}
+        <Box sx={{ position: 'relative', display: 'inline-block', mb: 1.5 }}>
+          <Avatar
+            src={formData.avatar_url}
+            alt={formData.nombre || userName || 'Avatar'}
             sx={{
-              border: url === formData.avatar_url ? '3px solid #f25600' : '3px solid transparent',
-              padding: 0,
-              borderRadius: '50%', // Para que el borde siga la forma del Avatar
+              width: 100,
+              height: 100,
+              border: '3px solid #f25600',
+              boxShadow: '0 4px 14px rgba(242, 86, 0, 0.25)',
+              transition: 'transform 0.2s ease',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              bgcolor: '#f25600',
+              color: '#ffffff',
+              borderRadius: '50%',
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+              border: '2px solid #ffffff',
             }}
           >
-            <Avatar
-              src={url}
-              alt={`Avatar para ${url.split('seed=')[1]}`} // Alt text más descriptivo
-              sx={{ width: 56, height: 56 }}
-            />
-          </IconButton>
-        ))}
+            <EditIcon sx={{ fontSize: 15 }} />
+          </Box>
+        </Box>
+
+        <Typography variant="h5" component="h2" fontWeight={700} color="primary.main">
+          Editar Perfil
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Modificando los datos de{' '}
+          <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
+            {userName || 'tu cuenta'}
+          </Box>
+        </Typography>
+      </Box>
+
+      <Divider sx={{ my: 2.5, borderColor: '#f0ece9' }} />
+
+      {/* SECCIÓN DE SELECCIÓN DE AVATAR */}
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 600,
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+            fontSize: '0.75rem',
+            textAlign: 'center',
+            mb: 1.5,
+          }}
+        >
+          Selecciona un Avatar
+        </Typography>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 1.5,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          {DEFAULT_AVATARS.map((url, index) => {
+            const isSelected = url === formData.avatar_url;
+            return (
+              <Tooltip key={url} title={`Avatar ${index + 1}`} arrow>
+                <IconButton
+                  onClick={() => handleAvatarSelect(url)}
+                  sx={{
+                    padding: '2px',
+                    border: isSelected ? '3px solid #f25600' : '3px solid transparent',
+                    borderRadius: '50%',
+                    transform: isSelected ? 'scale(1.08)' : 'scale(1)',
+                    transition: 'all 0.2s ease-in-out',
+                    boxShadow: isSelected ? '0 4px 10px rgba(242, 86, 0, 0.3)' : 'none',
+                    '&:hover': {
+                      transform: 'scale(1.12)',
+                      borderColor: isSelected ? '#f25600' : 'rgba(242, 86, 0, 0.4)',
+                    },
+                  }}
+                >
+                  <Avatar
+                    src={url}
+                    alt={`Avatar ${index + 1}`}
+                    sx={{ width: 50, height: 50 }}
+                  />
+                </IconButton>
+              </Tooltip>
+            );
+          })}
+        </Box>
       </Box>
 
       {/* CAMPOS DEL FORMULARIO */}
-      <TextField
-        label="Nombre Completo"
-        value={formData.nombre}
-        onChange={(e) => handleInputChange('nombre', e.target.value)}
-        fullWidth
-        margin="normal"
-      />
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+        <TextField
+          label="Nombre Completo"
+          value={formData.nombre}
+          onChange={(e) => handleInputChange('nombre', e.target.value)}
+          fullWidth
+          variant="outlined"
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <PersonOutlineIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
 
-      <TextField
-        label="Correo Electrónico"
-        value={formData.email}
-        onChange={(e) => handleInputChange('email', e.target.value)}
-        fullWidth
-        margin="normal"
-        type="email"
-      />
+        <TextField
+          label="Correo Electrónico"
+          value={formData.email}
+          onChange={(e) => handleInputChange('email', e.target.value)}
+          fullWidth
+          type="email"
+          variant="outlined"
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <MailOutlineIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      </Box>
 
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+      {/* ACCIONES */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, mt: 3 }}>
         <Button
           variant="outlined"
           onClick={onCancel}
           fullWidth
           sx={{
-            borderColor: '#f25600',
-            color: '#fff',
+            borderRadius: '24px',
+            py: 1.2,
+            fontWeight: 700,
+            borderColor: '#f25600 !important',
+            backgroundColor: 'transparent !important',
+            color: '#f25600 !important',
+            border: '1.5px solid #f25600 !important',
             '&:hover': {
-              borderColor: '#f25600', // Mantener el color del borde en hover
-              color: '#f25600', // Texto naranja para que se lea sobre el fondo claro
-              backgroundColor: 'rgba(242, 86, 0, 0.04)', // Efecto de hover ligero
+              backgroundColor: 'rgba(242, 86, 0, 0.08) !important',
+              borderColor: '#cc4800 !important',
             },
           }}
         >
           Cancelar
         </Button>
         <Button
+          type="submit"
           variant="contained"
-          onClick={handleSubmit}
           fullWidth
           sx={{
-            backgroundColor: '#f25600',
-            color: 'white',
+            borderRadius: '24px',
+            py: 1.2,
+            fontWeight: 700,
+            backgroundColor: '#f25600 !important',
+            color: '#ffffff !important',
+            boxShadow: 'none',
             '&:hover': {
-              backgroundColor: '#cc4800',
+              backgroundColor: '#cc4800 !important',
+              boxShadow: '0 4px 12px rgba(242, 86, 0, 0.35)',
             },
           }}
         >
           Guardar Cambios
         </Button>
       </Box>
-    </Box>
+    </Paper>
   );
 }

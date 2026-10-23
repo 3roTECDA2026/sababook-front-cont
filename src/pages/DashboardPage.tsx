@@ -9,6 +9,7 @@ import SideMenu from '@/components/layout/SideMenu';
 const DashboardPage = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
+<<<<<<< HEAD
   const roleName = localStorage.getItem('roleName')?.trim().toLocaleLowerCase();
   const isAdmin =
     localStorage.getItem('rol') === '3' ||
@@ -19,6 +20,8 @@ const DashboardPage = () => {
     return <Navigate to="/home" replace />;
   }
 
+=======
+>>>>>>> origin/develop
   return (
     <Box
       sx={{

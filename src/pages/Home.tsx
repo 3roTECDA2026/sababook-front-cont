@@ -1,6 +1,25 @@
 
-import { Box, Typography, Button } from "@mui/material";
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import {
+  Box,
+  Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Alert,
+} from "@mui/material";
+
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+
+import { useNavigate } from "react-router-dom";
 
 import AppHeader from "@/components/layout/AppHeader";
 import BookCard from "@/components/ui/BookCard";
@@ -12,7 +31,7 @@ import SideMenu from "@/components/layout/SideMenu";
 
 import { normalizarTexto } from "@/utils/normalize";
 import { buscarLibrosPaginado } from "@/services/apiService";
-import { API_BASE_URL } from "@/environments/api";
+import { recomendacionService } from "@/services/recomendacionService";
 import { usePagination } from "@/hooks/usePagination";
 import InfiniteScroll from "@/components/ui/InfiniteScroll";
 
@@ -46,16 +65,20 @@ interface LibroRecomendadoAPI {
   libro?: LibroRecomendadoAPI;
 }
 
-interface RecomendacionAPI {
+interface RecomendacionNuevaAPI {
+  recomendacion_id: number;
+  libro_id: number;
+  usuario_id: number;
+  explicacion?: string | null;
+  libro: LibroRecomendadoAPI;
+}
+
+interface UsuarioConRol {
+  rol?: string;
+  role?: string;
+  usuario_id?: number;
+  userId?: number;
   id?: number;
-  lista_id?: number;
-  tipo?: string;
-  descripcion?: string;
-  createdAt?: string;
-  created_at?: string;
-  fecha_creacion?: string;
-  libros?: LibroRecomendadoAPI[];
-  lista_libro?: LibroRecomendadoAPI[];
 }
 
 // --------------------------------------------------
@@ -63,6 +86,8 @@ interface RecomendacionAPI {
 // --------------------------------------------------
 
 export default function Home() {
+  const navigate = useNavigate();
+
   // --------------------------------------------------
   // ESTADOS DE INTERFAZ
   // --------------------------------------------------
@@ -83,12 +108,72 @@ export default function Home() {
   const { user } = useAuth();
 
   // --------------------------------------------------
+  // USUARIO Y PERMISOS
+  // --------------------------------------------------
+
+  const authUser = user as
+    | (typeof user & UsuarioConRol)
+    | null;
+
+  const rol = String(
+    authUser?.rol ?? authUser?.role ?? ""
+  ).toUpperCase();
+
+  const puedeRecomendar =
+    rol === "ADMINISTRADOR" || rol === "DOCENTE";
+
+  const usuarioId = Number(
+    authUser?.usuario_id ??
+      authUser?.userId ??
+      authUser?.id
+  );
+
+  // --------------------------------------------------
+  // ESTADOS DE RECOMENDACIONES
+  // --------------------------------------------------
+
+  const [recomendaciones, setRecomendaciones] =
+    useState<RecomendacionNuevaAPI[]>([]);
+
+  const [errorRecomendaciones, setErrorRecomendaciones] =
+    useState<string | null>(null);
+
+  const [
+    errorAccionRecomendacion,
+    setErrorAccionRecomendacion,
+  ] = useState<string | null>(null);
+
+  const [libroParaRecomendar, setLibroParaRecomendar] =
+    useState<number | null>(null);
+
+  const [
+    comentarioRecomendacion,
+    setComentarioRecomendacion,
+  ] = useState<string>("");
+
+  const [
+    guardandoRecomendacion,
+    setGuardandoRecomendacion,
+  ] = useState<boolean>(false);
+
+  const [
+    quitandoRecomendacionId,
+    setQuitandoRecomendacionId,
+  ] = useState<number | null>(null);
+
+  // --------------------------------------------------
   // PAGINACIÓN Y CARGA DE LIBROS
   // --------------------------------------------------
 
   const fetchBooks = useCallback(
-    (page: number, limit: number, signal?: AbortSignal) => {
-      const filtros: BookFilters = { ...currentFilters };
+    (
+      page: number,
+      limit: number,
+      signal?: AbortSignal
+    ) => {
+      const filtros: BookFilters = {
+        ...currentFilters,
+      };
 
       const q = normalizarTexto(currentQuery);
 
@@ -130,7 +215,7 @@ export default function Home() {
   });
 
   // --------------------------------------------------
-  // FAVORITOS Y ESTADO DE LECTURA
+  // FAVORITOS Y ESTADOS DE LECTURA
   // --------------------------------------------------
 
   const {
@@ -148,7 +233,10 @@ export default function Home() {
   ): Promise<boolean> => {
     const isFavorite = isBookFavorite(libro_id);
 
-    return toggleFavorite(libro_id, isFavorite);
+    return toggleFavorite(
+      libro_id,
+      isFavorite
+    );
   };
 
   // --------------------------------------------------
@@ -160,7 +248,8 @@ export default function Home() {
   ): LibroDestacado | null => {
     const rawBook = item.libro ?? item;
 
-    const idLibro = rawBook.libro_id ?? rawBook.id;
+    const idLibro =
+      rawBook.libro_id ?? rawBook.id;
 
     if (idLibro == null) {
       return null;
@@ -195,7 +284,8 @@ export default function Home() {
         rawBook.rating ??
         0,
 
-      descripcion: rawBook.descripcion ?? "",
+      descripcion:
+        rawBook.descripcion ?? "",
 
       explicacion:
         item.explicacion ??
@@ -205,142 +295,248 @@ export default function Home() {
   };
 
   // --------------------------------------------------
-  // OBTENER ÚLTIMA RECOMENDACIÓN DESDE LA API
+  // OBTENER TODAS LAS RECOMENDACIONES
   // --------------------------------------------------
 
-  const obtenerUltimaRecomendacion = useCallback(async () => {
-    try {
-      const token = localStorage.getItem("token");
+  const cargarRecomendaciones = useCallback(
+    async () => {
+      try {
+        const registros =
+          await recomendacionService.obtenerTodas<RecomendacionNuevaAPI>();
 
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
+        setRecomendaciones(registros);
 
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
+        // Evitar mostrar el mismo libro varias veces.
+        const vistos = new Set<number>();
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/lists`,
-        { headers }
-      );
+        const libros: LibroDestacado[] = [];
 
-      if (!response.ok) {
-        throw new Error(
-          `Error al cargar recomendaciones: ${response.status}`
-        );
-      }
-
-      const respuesta = await response.json();
-
-      const listas: RecomendacionAPI[] = Array.isArray(respuesta)
-        ? respuesta
-        : Array.isArray(respuesta?.data)
-          ? respuesta.data
-          : Array.isArray(respuesta?.listas)
-            ? respuesta.listas
-            : [];
-
-      // Seleccionar recomendaciones que contienen libros.
-
-      const recomendaciones = listas.filter((lista) => {
-        const libros = lista.libros ?? lista.lista_libro;
-
-        return (
-          (lista.tipo === "RECOMENDACION" ||
-            lista.tipo === "RECOMENDADA") &&
-          Array.isArray(libros) &&
-          libros.length > 0
-        );
-      });
-
-      if (recomendaciones.length === 0) {
-        setLibrosRecomendados([]);
-        return;
-      }
-
-      // Obtener fecha de cada recomendación.
-
-      const obtenerFecha = (
-        lista: RecomendacionAPI
-      ): number | null => {
-        const valor =
-          lista.createdAt ??
-          lista.created_at ??
-          lista.fecha_creacion;
-
-        if (!valor) {
-          return null;
-        }
-
-        const fecha = new Date(valor).getTime();
-
-        return Number.isFinite(fecha) ? fecha : null;
-      };
-
-      // Ordenar por fecha y por ID de lista.
-
-      const recomendacionesOrdenadas = [
-        ...recomendaciones,
-      ].sort((a, b) => {
-        const fechaA = obtenerFecha(a);
-        const fechaB = obtenerFecha(b);
-
-        if (fechaA !== null && fechaB !== null) {
-          if (fechaA !== fechaB) {
-            return fechaB - fechaA;
+        for (const recomendacion of registros) {
+          if (
+            vistos.has(recomendacion.libro_id) ||
+            !recomendacion.libro
+          ) {
+            continue;
           }
-        } else if (fechaA !== null) {
-          return -1;
-        } else if (fechaB !== null) {
-          return 1;
+
+          const libro =
+            normalizarLibroRecomendado({
+              ...recomendacion.libro,
+              explicacion:
+                recomendacion.explicacion,
+            });
+
+          if (libro) {
+            vistos.add(
+              recomendacion.libro_id
+            );
+
+            libros.push(libro);
+          }
         }
 
-        const idA = a.lista_id ?? a.id ?? 0;
-        const idB = b.lista_id ?? b.id ?? 0;
+        setLibrosRecomendados(libros);
 
-        return idB - idA;
-      });
-
-      const recomendacion = recomendacionesOrdenadas[0];
-
-      const librosAPI =
-        recomendacion.libros ??
-        recomendacion.lista_libro ??
-        [];
-
-      // Mostrar hasta dos libros de la misma lista.
-
-      const libros = librosAPI
-        .slice(0, 2)
-        .map(normalizarLibroRecomendado)
-        .filter(
-          (libro): libro is LibroDestacado =>
-            libro !== null
+        setErrorRecomendaciones(null);
+      } catch (error) {
+        console.error(
+          "Error cargando recomendaciones:",
+          error
         );
 
-      setLibrosRecomendados(libros);
-    } catch (error) {
-      console.error(
-        "Error al cargar la recomendación principal:",
-        error
-      );
-    }
-  }, []);
+        setErrorRecomendaciones(
+          error instanceof Error
+            ? error.message
+            : "Error al cargar recomendaciones."
+        );
+      }
+    },
+    []
+  );
 
   // --------------------------------------------------
-  // CARGAR RECOMENDACIONES AL ENTRAR AL HOME
+  // CARGAR RECOMENDACIONES AL ENTRAR
   // --------------------------------------------------
 
   useEffect(() => {
-    void obtenerUltimaRecomendacion();
-  }, [obtenerUltimaRecomendacion]);
+    void cargarRecomendaciones();
+  }, [cargarRecomendaciones]);
+
+  // --------------------------------------------------
+  // ENVIAR RECOMENDACIÓN AL BACKEND
+  // --------------------------------------------------
+
+  const enviarRecomendacion = useCallback(
+    async (
+      libroId: number,
+      metodo: "POST" | "DELETE",
+      explicacion = ""
+    ): Promise<void> => {
+      const token =
+        localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error(
+          "Iniciá sesión para recomendar libros."
+        );
+      }
+
+      if (!puedeRecomendar) {
+        throw new Error(
+          "No tenés permisos para administrar recomendaciones."
+        );
+      }
+
+      if (metodo === "POST") {
+        await recomendacionService.crear(
+          libroId,
+          explicacion,
+          token
+        );
+      } else {
+        await recomendacionService.eliminar(
+          libroId,
+          token
+        );
+      }
+
+      await cargarRecomendaciones();
+    },
+    [
+      puedeRecomendar,
+      cargarRecomendaciones,
+    ]
+  );
+
+  // --------------------------------------------------
+  // ABRIR DIÁLOGO PARA RECOMENDAR
+  // --------------------------------------------------
+
+  const handleRecommendToggle = useCallback(
+    async (
+      libroId: number,
+      isRecommended: boolean
+    ): Promise<void> => {
+      if (isRecommended) {
+        // La eliminación se hace desde
+        // "Nuestros recomendados".
+        return;
+      }
+
+      setErrorAccionRecomendacion(null);
+
+      setComentarioRecomendacion("");
+
+      setLibroParaRecomendar(libroId);
+    },
+    []
+  );
+
+  // --------------------------------------------------
+  // GUARDAR RECOMENDACIÓN CON COMENTARIO
+  // --------------------------------------------------
+
+  const guardarRecomendacionConComentario =
+    async () => {
+      if (
+        libroParaRecomendar === null ||
+        guardandoRecomendacion
+      ) {
+        return;
+      }
+
+      const explicacion =
+        comentarioRecomendacion.trim();
+
+      if (!explicacion) {
+        setErrorAccionRecomendacion(
+          "Escribí un comentario para recomendar el libro."
+        );
+        return;
+      }
+
+      try {
+        setGuardandoRecomendacion(true);
+
+        setErrorAccionRecomendacion(null);
+
+        await enviarRecomendacion(
+          libroParaRecomendar,
+          "POST",
+          explicacion
+        );
+
+        setLibroParaRecomendar(null);
+
+        setComentarioRecomendacion("");
+      } catch (error) {
+        setErrorAccionRecomendacion(
+          error instanceof Error
+            ? error.message
+            : "No se pudo guardar la recomendación."
+        );
+      } finally {
+        setGuardandoRecomendacion(false);
+      }
+    };
+
+  // --------------------------------------------------
+  // COMPROBAR SI PUEDE QUITAR RECOMENDACIÓN
+  // --------------------------------------------------
+
+  const puedeQuitarRecomendacion = (
+    libroId: number
+  ): boolean => {
+    if (!puedeRecomendar) {
+      return false;
+    }
+
+    return recomendaciones.some(
+      (recomendacion) =>
+        recomendacion.libro_id === libroId &&
+        (
+          rol === "ADMINISTRADOR" ||
+          recomendacion.usuario_id === usuarioId
+        )
+    );
+  };
+
+  // --------------------------------------------------
+  // QUITAR RECOMENDACIÓN
+  // --------------------------------------------------
+
+  const quitarRecomendacion = async (
+    libroId: number
+  ) => {
+    try {
+      setQuitandoRecomendacionId(
+        libroId
+      );
+
+      setErrorAccionRecomendacion(null);
+
+      await enviarRecomendacion(
+        libroId,
+        "DELETE"
+      );
+    } catch (error) {
+      setErrorAccionRecomendacion(
+        error instanceof Error
+          ? error.message
+          : "No se pudo quitar la recomendación."
+      );
+    } finally {
+      setQuitandoRecomendacionId(null);
+    }
+  };
 
   // --------------------------------------------------
   // BÚSQUEDA
   // --------------------------------------------------
 
-  const handleSearch = (query: string) => {
+  const handleSearch = (
+    query: string
+  ) => {
     setCurrentQuery(query);
   };
 
@@ -348,10 +544,7 @@ export default function Home() {
   // FILTROS
   // --------------------------------------------------
 
-  const handleFilterChange = (
-    _resultados: Book[],
-    filtros: BookFilters
-  ) => {
+  const handleFilterChange = (filtros: BookFilters) => {
     setCurrentFilters(filtros);
   };
 
@@ -372,8 +565,12 @@ export default function Home() {
       {/* CABECERA */}
 
       <AppHeader
-        onMenuClick={() => setMenuOpen(true)}
-        title={`Hola, ${user?.nombre || "Usuario"}`}
+        onMenuClick={() =>
+          setMenuOpen(true)
+        }
+        title={`Hola, ${
+          user?.nombre || "Usuario"
+        }`}
         subtitle={new Date().toLocaleDateString(
           "es-ES",
           {
@@ -389,7 +586,9 @@ export default function Home() {
 
       <SideMenu
         open={menuOpen}
-        onClose={() => setMenuOpen(false)}
+        onClose={() =>
+          setMenuOpen(false)
+        }
         active="Inicio"
       />
 
@@ -405,39 +604,84 @@ export default function Home() {
       {/* FILTROS */}
 
       <FilterChips
-        onFilterChange={handleFilterChange}
+        onFilterChange={
+          handleFilterChange
+        }
         onClearSearch={() => {
           setCurrentQuery("");
 
           if (
             searchBarRef.current &&
-            typeof searchBarRef.current.clear === "function"
+            typeof searchBarRef.current
+              .clear === "function"
           ) {
             searchBarRef.current.clear();
           }
         }}
       />
 
-      {/* NUESTRO RECOMENDADO */}
+      {/* NUESTROS RECOMENDADOS */}
 
-      {Object.keys(currentFilters).length === 0 &&
+      {Object.keys(
+        currentFilters
+      ).length === 0 &&
         !currentQuery &&
         librosRecomendados.length > 0 && (
           <FeaturedBookSection
-            featuredBooks={librosRecomendados}
+            featuredBooks={
+              librosRecomendados
+            }
             handleFavoriteToggle={
               handleFavoriteToggle
             }
-            isBookFavorite={isBookFavorite}
-            getReadingStatus={getReadingStatus}
-            setReadingStatus={setReadingStatus}
-            handleVerMas={() => {}}
+            isBookFavorite={
+              isBookFavorite
+            }
+            getReadingStatus={
+              getReadingStatus
+            }
+            setReadingStatus={
+              setReadingStatus
+            }
+            handleVerMas={(
+              libroId
+            ) => {
+              if (
+                libroId != null
+              ) {
+                navigate(
+                  `/bookdetails/${libroId}`
+                );
+              }
+            }}
+            canRemoveRecommendation={
+              puedeQuitarRecomendacion
+            }
+            onRemoveRecommendation={
+              quitarRecomendacion
+            }
+            removingBookId={
+              quitandoRecomendacionId
+            }
           />
         )}
 
+      {/* ERROR AL CARGAR RECOMENDACIONES */}
+
+      {errorRecomendaciones && (
+        <Alert
+          severity="error"
+          sx={{ my: 2 }}
+        >
+          {errorRecomendaciones}
+        </Alert>
+      )}
+
       {/* TÍTULO LISTADO DE LIBROS */}
 
-      {Object.keys(currentFilters).length === 0 &&
+      {Object.keys(
+        currentFilters
+      ).length === 0 &&
         !currentQuery && (
           <Box
             mt={4}
@@ -449,13 +693,15 @@ export default function Home() {
                 xs: "column",
                 sm: "row",
               },
-              justifyContent: "space-between",
+              justifyContent:
+                "space-between",
               alignItems: {
                 xs: "stretch",
                 sm: "center",
               },
               gap: 2,
-              backgroundColor: "background.paper",
+              backgroundColor:
+                "background.paper",
               borderRadius: 3,
               border: "1px solid",
               borderColor: "divider",
@@ -476,7 +722,9 @@ export default function Home() {
       {/* TÍTULO RESULTADOS DE BÚSQUEDA */}
 
       {(currentQuery ||
-        Object.keys(currentFilters).length > 0) && (
+        Object.keys(
+          currentFilters
+        ).length > 0) && (
         <Box
           display="flex"
           justifyContent="space-between"
@@ -491,6 +739,8 @@ export default function Home() {
           >
             {currentQuery
               ? "Resultados de búsqueda"
+              : currentFilters.curso_id || currentFilters.anio
+              ? "Libros por año y curso"
               : "Libros filtrados"}
           </Typography>
         </Box>
@@ -508,7 +758,8 @@ export default function Home() {
             <Typography
               color="text.secondary"
               sx={{
-                textAlign: "center",
+                textAlign:
+                  "center",
                 py: 3,
               }}
             >
@@ -521,26 +772,82 @@ export default function Home() {
           sx={{
             display: "flex",
             flexWrap: "wrap",
-            justifyContent: "center",
+            justifyContent:
+              "center",
             gap: 4,
           }}
         >
           {books.map((book) => (
             <BookCard
               key={book.libro_id}
-              image={book.portada_url}
-              autor={book.autor}
-              gender={book.genero}
-              title={book.titulo}
-              rating={book.calificacion_promedio}
-              isFavorite={isBookFavorite(book.libro_id)}
-              libro_id={book.libro_id}
-              onFavoriteToggle={() =>
-                handleFavoriteToggle(book.libro_id)
+              image={
+                book.portada_url
               }
-              readingStatus={getReadingStatus(book.libro_id)}
-              onReadingStatusChange={(status) =>
-                setReadingStatus(book.libro_id, status)
+              autor={book.autor}
+              gender={
+                book.genero
+              }
+              title={
+                book.titulo
+              }
+              rating={
+                book.calificacion_promedio
+              }
+              isFavorite={
+                isBookFavorite(
+                  book.libro_id
+                )
+              }
+              libro_id={
+                book.libro_id
+              }
+              onFavoriteToggle={() =>
+                handleFavoriteToggle(
+                  book.libro_id
+                )
+              }
+              readingStatus={
+                getReadingStatus(
+                  book.libro_id
+                )
+              }
+              onReadingStatusChange={(
+                status
+              ) =>
+                setReadingStatus(
+                  book.libro_id,
+                  status
+                )
+              }
+
+              // El botón Recomendar aparece
+              // solo para docentes y administradores,
+              // si el libro aún no está recomendado.
+              showRecommendControl={
+                puedeRecomendar &&
+                !recomendaciones.some(
+                  (r) =>
+                    r.libro_id ===
+                    book.libro_id
+                )
+              }
+
+              isRecommended={
+                recomendaciones.some(
+                  (r) =>
+                    r.libro_id ===
+                      book.libro_id &&
+                    (
+                      rol ===
+                        "ADMINISTRADOR" ||
+                      r.usuario_id ===
+                        usuarioId
+                    )
+                )
+              }
+
+              onRecommendToggle={
+                handleRecommendToggle
               }
             />
           ))}
@@ -549,29 +856,36 @@ export default function Home() {
 
       {/* SIN RESULTADOS */}
 
-      {!loading && !error && books.length === 0 && (
-        <Typography
-          variant="h6"
-          color="text.secondary"
-          sx={{
-            textAlign: "center",
-            py: 4,
-          }}
-        >
-          El libro que usted está buscando no se encuentra disponible
-        </Typography>
-      )}
+      {!loading &&
+        !error &&
+        books.length === 0 && (
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            sx={{
+              textAlign:
+                "center",
+              py: 4,
+            }}
+          >
+            El libro que usted está buscando no se encuentra disponible
+          </Typography>
+        )}
 
       {/* ERROR DE CARGA */}
 
       {error && (
         <Box
           sx={{
-            textAlign: "center",
+            textAlign:
+              "center",
             py: 3,
           }}
         >
-          <Typography color="error" mb={1}>
+          <Typography
+            color="error"
+            mb={1}
+          >
             {error}
           </Typography>
 
@@ -583,6 +897,161 @@ export default function Home() {
           </Button>
         </Box>
       )}
+
+      {/* ERROR AL ADMINISTRAR RECOMENDACIONES */}
+
+      {errorAccionRecomendacion &&
+        libroParaRecomendar === null && (
+          <Alert
+            severity="error"
+            onClose={() =>
+              setErrorAccionRecomendacion(
+                null
+              )
+            }
+            sx={{ mt: 2 }}
+          >
+            {errorAccionRecomendacion}
+          </Alert>
+        )}
+
+      {/* DIÁLOGO PARA RECOMENDAR CON COMENTARIO */}
+
+      <Dialog
+        open={
+          libroParaRecomendar !== null
+        }
+        onClose={() => {
+          if (
+            !guardandoRecomendacion
+          ) {
+            setLibroParaRecomendar(
+              null
+            );
+
+            setComentarioRecomendacion(
+              ""
+            );
+
+            setErrorAccionRecomendacion(
+              null
+            );
+          }
+        }}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: "bold",
+          }}
+        >
+          Recomendar libro
+        </DialogTitle>
+
+        <DialogContent>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              mb: 2,
+              mt: 1,
+            }}
+          >
+            Contanos por qué recomendás
+            este libro. Tu comentario
+            aparecerá en la sección
+            «Nuestros recomendados».
+          </Typography>
+
+          <TextField
+            label="Comentario de la recomendación"
+            placeholder="Recomiendo este libro porque..."
+            multiline
+            minRows={4}
+            fullWidth
+            required
+            value={
+              comentarioRecomendacion
+            }
+            onChange={(event) => {
+              setComentarioRecomendacion(
+                event.target.value
+              );
+
+              setErrorAccionRecomendacion(
+                null
+              );
+            }}
+            disabled={
+              guardandoRecomendacion
+            }
+            slotProps={{
+              htmlInput: {
+                maxLength: 1000,
+              },
+            }}
+            helperText={`${
+              comentarioRecomendacion.length
+            }/1000 caracteres`}
+          />
+
+          {errorAccionRecomendacion && (
+            <Alert
+              severity="error"
+              sx={{ mt: 2 }}
+            >
+              {errorAccionRecomendacion}
+            </Alert>
+          )}
+        </DialogContent>
+
+        <DialogActions
+          sx={{ p: 2 }}
+        >
+          <Button
+            disabled={
+              guardandoRecomendacion
+            }
+            onClick={() => {
+              setLibroParaRecomendar(
+                null
+              );
+
+              setComentarioRecomendacion(
+                ""
+              );
+
+              setErrorAccionRecomendacion(
+                null
+              );
+            }}
+          >
+            Cancelar
+          </Button>
+
+          <Button
+            variant="contained"
+            disabled={
+              guardandoRecomendacion ||
+              !comentarioRecomendacion.trim()
+            }
+            onClick={() => {
+              void guardarRecomendacionConComentario();
+            }}
+            sx={{
+              bgcolor: "#f25600",
+              "&:hover": {
+                bgcolor: "#d64500",
+              },
+            }}
+          >
+            {guardandoRecomendacion
+              ? "Guardando..."
+              : "Confirmar recomendación"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
