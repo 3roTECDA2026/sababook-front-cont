@@ -1,5 +1,5 @@
 // src/pages/TriviaPage.tsx
-import { useEffect, useMemo, useState, SyntheticEvent } from 'react';
+import { useEffect, useState, SyntheticEvent } from 'react';
 import {
   Alert,
   AlertColor,
@@ -23,18 +23,12 @@ import EvaluationResponsesDialog from '@/components/ui/EvaluationResponsesDialog
 import FilterChips from '@/components/ui/FilterChips';
 import type { FilterCategoryId } from '@/components/ui/FilterChips';
 import SearchBar from '@/components/ui/SearchBar';
-import { useAuth } from '@/hooks/useAuth';
-import { useBookData } from '@/hooks/useBookData';
 import { useEvaluations } from '@/hooks/useEvaluations';
-import { getCursos } from '@/services/courseService';
-import { obtenerLibrosFiltradosPorCursoOAnio } from '@/services/apiService';
-import type { Book, BookFilters, TriviaModo } from '@/types';
+import { useTriviaBooks } from '@/hooks/useTriviaBooks';
+import type { Book, TriviaModo } from '@/types';
 import styles from '@/styles/trivia.module.css';
 
 const ADMIN_FILTER_CATEGORIES: FilterCategoryId[] = ['year', 'course'];
-
-const normalizeText = (text: string) =>
-  text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 interface TriviaSelection {
   book: Book;
@@ -53,14 +47,16 @@ interface SnackbarState {
 const TriviaPage = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [selection, setSelection] = useState<TriviaSelection | null>(null);
-  const { books, loading } = useBookData();
-  const { isAdmin, isTeacher, loading: authLoading } = useAuth();
-
-  const [filters, setFilters] = useState<BookFilters>({});
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filteredBooks, setFilteredBooks] = useState<Book[] | null>(null);
-  const [filteredLoading, setFilteredLoading] = useState<boolean>(false);
-  const [booksError, setBooksError] = useState<string | null>(null);
+  const {
+    isAdmin,
+    filters,
+    setFilters,
+    searchQuery,
+    setSearchQuery,
+    books: visibleBooks,
+    loading: booksLoading,
+    error: booksError,
+  } = useTriviaBooks();
   const {
     loading: evaluationsLoading,
     fetchEvaluations,
@@ -171,75 +167,6 @@ const TriviaPage = () => {
     if (!evaluationsError) return;
     setSnackbar({ open: true, message: evaluationsError, severity: 'error' });
   }, [evaluationsError]);
-
-  // El admin filtra por año y curso; el docente solo ve los libros de sus cursos.
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!isAdmin && !isTeacher) {
-      setFilteredBooks(null);
-      return;
-    }
-
-    let active = true;
-
-    const loadBooks = async () => {
-      setFilteredLoading(true);
-      setBooksError(null);
-
-      try {
-        if (isAdmin) {
-          const hasFilters = filters.anio !== undefined || filters.curso_id !== undefined;
-          if (!hasFilters) {
-            if (active) setFilteredBooks(null);
-            return;
-          }
-
-          const data = await obtenerLibrosFiltradosPorCursoOAnio(filters);
-          if (active) setFilteredBooks(data);
-          return;
-        }
-
-        const courses = await getCursos(true);
-        const bookLists = await Promise.all(
-          courses.map((course) =>
-            obtenerLibrosFiltradosPorCursoOAnio({ curso_id: course.curso_id })
-          )
-        );
-
-        const uniqueBooks = new Map<number, Book>();
-        bookLists.flat().forEach((book) => uniqueBooks.set(book.libro_id, book));
-
-        if (active) setFilteredBooks(Array.from(uniqueBooks.values()));
-      } catch (error) {
-        if (!active) return;
-        setFilteredBooks([]);
-        setBooksError(
-          error instanceof Error ? error.message : 'No se pudieron cargar los libros.'
-        );
-      } finally {
-        if (active) setFilteredLoading(false);
-      }
-    };
-
-    loadBooks();
-
-    return () => {
-      active = false;
-    };
-  }, [authLoading, isAdmin, isTeacher, filters]);
-
-  const sourceBooks = filteredBooks ?? (isTeacher ? [] : books);
-
-  const visibleBooks = useMemo(() => {
-    const query = normalizeText(searchQuery);
-    if (!query) return sourceBooks;
-    return sourceBooks.filter((book) =>
-      normalizeText(`${book.titulo} ${book.autor} ${book.genero}`).includes(query)
-    );
-  }, [sourceBooks, searchQuery]);
-
-  const booksLoading = loading || filteredLoading;
 
   return (
     <div className={styles.page}>
