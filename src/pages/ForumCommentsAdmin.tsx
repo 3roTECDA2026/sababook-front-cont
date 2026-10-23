@@ -18,7 +18,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  Button,
   Snackbar,
   Alert,
   TextField,
@@ -35,6 +34,7 @@ import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
 import { useForumComments } from '@/hooks/useForumComments';
 import { useForumCommentsAdmin } from '@/hooks/useForumCommentsAdmin';
 import type { ForumComment, Forum } from '@/types';
+import { AppButton } from '@/components/atoms/AppButton';
 
 const StyledTableContainer = styled(Paper)(({ theme }) => ({
   borderRadius: '16px',
@@ -205,14 +205,13 @@ const ForumCommentsAdmin = () => {
           🚨 {errorForum}
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <Button
-            variant="contained"
+          <AppButton
+            variant="primary"
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/dashboard')}
-            sx={{ backgroundColor: '#f25600', '&:hover': { backgroundColor: '#cc4800' } }}
           >
             Volver al Dashboard
-          </Button>
+          </AppButton>
         </Box>
       </Box>
     );
@@ -343,18 +342,18 @@ const ForumCommentsAdmin = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteDialog} color="primary" disabled={isDeleting}>
+          <AppButton onClick={handleCloseDeleteDialog} variant="outlined" disabled={isDeleting}>
             Cancelar
-          </Button>
-          <Button
+          </AppButton>
+          <AppButton
             onClick={handleConfirmDelete}
-            color="error"
-            variant="contained"
+            variant="destructive"
             autoFocus
             disabled={isDeleting}
+            loading={isDeleting}
           >
-            {isDeleting ? <CircularProgress size={24} color="inherit" /> : 'Sí, Eliminar'}
-          </Button>
+            Sí, Eliminar
+          </AppButton>
         </DialogActions>
       </Dialog>
 
