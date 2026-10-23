@@ -1,18 +1,7 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { Box, Button, TextField, Typography, styled } from '@mui/material';
+import { Box, TextField, Typography } from '@mui/material';
 import { useNotification } from '@/contexts/NotificationContext';
-
-const StyledButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-  color: '#FFFFFF',
-  padding: '12px 0',
-  fontSize: '1rem',
-  fontWeight: 'bold',
-  borderRadius: '30px',
-}));
+import { AppButton } from '@/components/atoms/AppButton';
 
 interface RegisterFormData {
   name: string;
@@ -101,12 +90,23 @@ const Register = ({ onRegisterSubmit, onBackToLogin }: RegisterProps) => {
           margin="normal"
           required
         />
-        <StyledButton type="submit" fullWidth sx={{ mt: 2 }}>
+        <AppButton
+          variant="primary"
+          rounded
+          type="submit"
+          fullWidth
+          sx={{ py: 1.5, fontSize: '1rem', mt: 2 }}
+        >
           Registrarse
-        </StyledButton>
-        <Button onClick={onBackToLogin} fullWidth sx={{ mt: 1 }}>
+        </AppButton>
+        <AppButton
+          variant="text"
+          onClick={onBackToLogin}
+          fullWidth
+          sx={{ mt: 1 }}
+        >
           Volver al Login
-        </Button>
+        </AppButton>
       </form>
     </Box>
   );

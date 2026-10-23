@@ -4,7 +4,6 @@ import {
   Box,
   Typography,
   TextField,
-  Button,
   Select,
   MenuItem,
   FormControl,
@@ -15,6 +14,7 @@ import {
   Paper,
   Grid,
 } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 import type { SelectChangeEvent } from '@mui/material';
 import type { Book } from '@/types';
 
@@ -55,31 +55,6 @@ const FormContainer = styled(Paper)(({ theme }) => ({
   boxShadow: '0 8px 30px rgba(0, 0, 0, 0.1)',
   maxWidth: '900px',
   // Quitamos el margin: '40px auto' ya que el modal lo centrará
-}));
-
-const PrimaryButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  color: '#FFFFFF',
-  padding: '10px 25px',
-  borderRadius: '8px',
-  fontWeight: 'bold',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-}));
-
-const SecondaryButton = styled(Button)(({ theme }) => ({
-  backgroundColor: 'transparent',
-  color: theme.palette.text.secondary,
-  border: '1px solid #ccc',
-  padding: '10px 25px',
-  borderRadius: '8px',
-  fontWeight: 'bold',
-  marginRight: theme.spacing(2),
-  '&:hover': {
-    backgroundColor: theme.palette.grey[200],
-    borderColor: theme.palette.grey[500],
-  },
 }));
 
 const StyledTextarea = styled(TextareaAutosize)(({ theme }) => ({
@@ -335,12 +310,12 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
           </Grid>
         </Grid>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-          <Button onClick={onCancel} variant="outlined">
+          <AppButton onClick={onCancel} variant="outlined">
             Cancelar
-          </Button>
-          <Button type="submit" variant="contained" sx={{ backgroundColor: 'button.main' }}>
+          </AppButton>
+          <AppButton type="submit" variant="primary">
             Guardar Cambios
-          </Button>
+          </AppButton>
         </Box>
       </FormContainer>
     </form>
