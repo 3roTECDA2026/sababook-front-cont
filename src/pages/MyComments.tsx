@@ -8,9 +8,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Button,
   Avatar,
 } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -227,17 +227,16 @@ export default function MyComments() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>
+          <AppButton onClick={handleCloseDialog} variant="outlined">
             Cancelar
-          </Button>
-          <Button
+          </AppButton>
+          <AppButton
             onClick={handleConfirmDelete}
             autoFocus
-            variant="contained"
-            color="error"
+            variant="destructive"
           >
             Eliminar
-          </Button>
+          </AppButton>
         </DialogActions>
       </Dialog>
     </Box>
