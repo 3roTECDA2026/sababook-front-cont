@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
-  Button,
   Card,
   CardContent,
   Stack,
@@ -15,6 +14,7 @@ import {
   Tooltip,
   Slider,
 } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -306,20 +306,6 @@ export const RadioPlayer: React.FC = () => {
     }
   };
 
-  const buttonStyle = {
-    backgroundColor: ORANGE,
-    color: '#fff',
-    borderRadius: '8px',
-    px: 2.5,
-    py: 1.2,
-    fontWeight: 600,
-    textTransform: 'none' as const,
-    '&:hover': {
-      backgroundColor: '#e65100',
-      color: '#fff',
-    },
-  };
-
   return (
     <Box
       sx={{
@@ -398,27 +384,25 @@ export const RadioPlayer: React.FC = () => {
         spacing={2}
         sx={{ mb: 4 }}
       >
-        <Button
-          variant="contained"
+        <AppButton
+          variant="primary"
           startIcon={<RefreshIcon />}
           onClick={() => void cargarEpisodios()}
           disabled={cargando || sincronizando}
-          sx={buttonStyle}
         >
           Actualizar episodios
-        </Button>
+        </AppButton>
 
-        <Button
-          variant="contained"
+        <AppButton
+          variant="primary"
           startIcon={<SyncIcon />}
           onClick={() => void sincronizar()}
           disabled={cargando || sincronizando}
-          sx={buttonStyle}
         >
           {sincronizando
             ? 'Sincronizando...'
             : 'Sincronizar radio'}
-        </Button>
+        </AppButton>
       </Stack>
 
       {error && (
@@ -562,36 +546,17 @@ export const RadioPlayer: React.FC = () => {
                         />
                       </Box>
 
-                      <Button
-                        variant="contained"
+                      <AppButton
+                        variant="primary"
                         startIcon={<OpenInNewIcon />}
                         component="a"
                         href={getDriveUrl(episodio.audio_url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        sx={{
-                          alignSelf: 'flex-start',
-                          backgroundColor: ORANGE,
-                          color: '#ffffff !important',
-                          borderRadius: '8px',
-                          px: 2.5,
-                          py: 1.2,
-                          fontWeight: 600,
-                          textTransform: 'none',
-                          boxShadow: 'none',
-                          '&:hover': {
-                            backgroundColor: '#e65100',
-                            color: '#ffffff',
-                            boxShadow:
-                              '0 3px 10px rgba(255,90,0,0.2)',
-                          },
-                          '& .MuiButton-startIcon': {
-                            color: '#ffffff',
-                          },
-                        }}
+                        sx={{ alignSelf: 'flex-start' }}
                       >
                         Abrir episodio en Google Drive
-                      </Button>
+                      </AppButton>
 
                       <Typography
                         variant="caption"

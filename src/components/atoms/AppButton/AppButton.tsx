@@ -11,6 +11,10 @@ export interface AppButtonProps extends Omit<ButtonProps, 'variant' | 'color'> {
   loading?: boolean;
   rounded?: boolean;
   children?: ReactNode;
+  component?: React.ElementType;
+  to?: string;
+  target?: string;
+  rel?: string;
 }
 
 export default function AppButton({
