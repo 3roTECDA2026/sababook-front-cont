@@ -2,6 +2,7 @@
 import { Box, Button, styled, Typography } from '@mui/material';
 import NavButton from '@/components/ui/NavButton';
 import ReadingStreak from './ReadingStreak';
+import { useReadingStreak } from '@/hooks/useReadingStreak';
 
 export type DashboardView =
   | 'users'
@@ -55,10 +56,13 @@ const HeaderDashboard = ({
   activeView = 'users',
   onNavigate = () => console.log('Navegación Desactivada'),
   onAddClick = () => console.log('Agregar Desactivado'),
-  rachaActual = 3,
-  recordRacha = 7,
+  rachaActual: rachaProp,
+  recordRacha: recordProp,
   mostrarRacha = true,
 }: HeaderDashboardProps) => {
+  const { rachaActual: rachaReal, recordRacha: recordReal } = useReadingStreak();
+  const rachaActual = rachaProp !== undefined ? rachaProp : rachaReal;
+  const recordRacha = recordProp !== undefined ? recordProp : recordReal;
   const currentTitle = titleMap[activeView] || 'Título Desconocido';
 
   return (

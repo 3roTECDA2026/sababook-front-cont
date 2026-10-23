@@ -7,8 +7,8 @@ interface ReadingStreakProps {
 }
 
 export const ReadingStreak: React.FC<ReadingStreakProps> = ({ 
-  rachaActual = 3, 
-  recordRacha = 7 
+  rachaActual = 0, 
+  recordRacha = 0 
 }) => {
   const diasSemana = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
