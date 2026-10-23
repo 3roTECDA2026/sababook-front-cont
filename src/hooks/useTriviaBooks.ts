@@ -3,14 +3,23 @@ import { useAuth } from './useAuth';
 import { useBookData } from './useBookData';
 import { getCursos } from '@/services/courseService';
 import { obtenerLibrosFiltradosPorCursoOAnio } from '@/services/apiService';
-import type { Book, BookFilters } from '@/types';
+import { normalizarTexto } from '@/utils/normalize';
+import type { Book, BookFilters, CourseSummary } from '@/types';
 
-const normalizeText = (text: string) =>
-  text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const obtenerCursosVigentes = (courses: CourseSummary[]) => {
+  if (courses.length === 0) return [];
+
+  const anioLectivoVigente = courses.reduce(
+    (max, course) => (course.anio_lectivo > max ? course.anio_lectivo : max),
+    Number.NEGATIVE_INFINITY
+  );
+
+  return courses.filter((course) => course.anio_lectivo === anioLectivoVigente);
+};
 
 export function useTriviaBooks() {
   const { isAdmin, isTeacher, loading: authLoading } = useAuth();
-  const { books, loading: catalogLoading } = useBookData();
+  const { books, loading: catalogLoading } = useBookData(!authLoading && !isTeacher);
 
   const [filters, setFilters] = useState<BookFilters>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -46,17 +55,30 @@ export function useTriviaBooks() {
           return;
         }
 
-        const courses = await getCursos(true);
-        const bookLists = await Promise.all(
+        const courses = obtenerCursosVigentes(await getCursos(true));
+        const bookLists = await Promise.allSettled(
           courses.map((course) =>
             obtenerLibrosFiltradosPorCursoOAnio({ curso_id: course.curso_id })
           )
         );
 
         const uniqueBooks = new Map<number, Book>();
-        bookLists.flat().forEach((book) => uniqueBooks.set(book.libro_id, book));
+        let failedCourses = 0;
 
-        if (active) setFilteredBooks(Array.from(uniqueBooks.values()));
+        bookLists.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            result.value.forEach((book) => uniqueBooks.set(book.libro_id, book));
+          } else {
+            failedCourses += 1;
+          }
+        });
+
+        if (!active) return;
+        setFilteredBooks(Array.from(uniqueBooks.values()));
+
+        if (failedCourses > 0) {
+          setError('No se pudieron cargar los libros de algunos de tus cursos.');
+        }
       } catch (err) {
         if (!active) return;
         setFilteredBooks([]);
@@ -73,13 +95,13 @@ export function useTriviaBooks() {
     };
   }, [authLoading, isAdmin, isTeacher, filters]);
 
-  const sourceBooks = filteredBooks ?? (isTeacher ? [] : books);
+  const sourceBooks = authLoading ? [] : filteredBooks ?? (isTeacher ? [] : books);
 
   const visibleBooks = useMemo(() => {
-    const query = normalizeText(searchQuery);
+    const query = normalizarTexto(searchQuery);
     if (!query) return sourceBooks;
     return sourceBooks.filter((book) =>
-      normalizeText(`${book.titulo} ${book.autor} ${book.genero}`).includes(query)
+      normalizarTexto(`${book.titulo} ${book.autor} ${book.genero ?? ''}`).includes(query)
     );
   }, [sourceBooks, searchQuery]);
 
@@ -90,7 +112,7 @@ export function useTriviaBooks() {
     searchQuery,
     setSearchQuery,
     books: visibleBooks,
-    loading: catalogLoading || filteredLoading,
+    loading: authLoading || catalogLoading || filteredLoading || (isTeacher && filteredBooks === null),
     error,
   };
 }

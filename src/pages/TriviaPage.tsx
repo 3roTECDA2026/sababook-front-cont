@@ -232,7 +232,7 @@ const TriviaPage = () => {
             </Alert>
           )}
 
-          {!booksLoading && visibleBooks.length === 0 ? (
+          {!booksLoading && !booksError && visibleBooks.length === 0 ? (
             <Typography variant="body2" className={styles.emptyText}>
               {searchQuery
                 ? 'No se encontraron libros con esa búsqueda.'
@@ -254,7 +254,7 @@ const TriviaPage = () => {
                       </span>
                       <span className={styles.bookMetaRight}>
                         <span className={styles.bookMeta}>{book.autor}</span>
-                        <span className={styles.bookMeta}>{book.genero}</span>
+                        <span className={styles.bookMeta}>{book.genero ?? ''}</span>
                       </span>
                     </button>
 
