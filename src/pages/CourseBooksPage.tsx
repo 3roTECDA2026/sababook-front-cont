@@ -5,7 +5,6 @@ import {
   Autocomplete,
   Avatar,
   Box,
-  Button,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -28,6 +27,7 @@ import {
   styled,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -348,14 +348,13 @@ export default function CourseBooksPage() {
                   ))}
                 </TextField>
 
-                <Button
-                  variant="contained"
+                <AppButton
+                  variant="primary"
                   startIcon={<AddIcon />}
                   onClick={abrirDialogoAsignar}
-                  sx={estiloBotonPrincipal}
                 >
                   Asignar libro
-                </Button>
+                </AppButton>
               </Box>
 
               <StyledTableContainer>
@@ -464,21 +463,21 @@ export default function CourseBooksPage() {
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
+          <AppButton
             variant="outlined"
             onClick={() => setDialogoAsignarAbierto(false)}
             disabled={guardando}
           >
             Cancelar
-          </Button>
-          <Button
-            variant="contained"
+          </AppButton>
+          <AppButton
+            variant="primary"
             onClick={confirmarAsignacion}
             disabled={guardando || !libroElegido}
-            sx={estiloBotonPrincipal}
+            loading={guardando}
           >
-            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Asignar'}
-          </Button>
+            Asignar
+          </AppButton>
         </DialogActions>
       </Dialog>
 
@@ -508,21 +507,21 @@ export default function CourseBooksPage() {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
+          <AppButton
             variant="outlined"
             onClick={() => setAsignacionesAnteriores(null)}
             disabled={guardando}
           >
             Cancelar
-          </Button>
-          <Button
-            variant="contained"
+          </AppButton>
+          <AppButton
+            variant="primary"
             onClick={realizarAsignacion}
             disabled={guardando}
-            sx={estiloBotonPrincipal}
+            loading={guardando}
           >
-            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Asignar igual'}
-          </Button>
+            Asignar igual
+          </AppButton>
         </DialogActions>
       </Dialog>
 
@@ -550,17 +549,21 @@ export default function CourseBooksPage() {
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="outlined" onClick={() => setLibroAEditar(null)} disabled={guardando}>
+          <AppButton
+            variant="outlined"
+            onClick={() => setLibroAEditar(null)}
+            disabled={guardando}
+          >
             Cancelar
-          </Button>
-          <Button
-            variant="contained"
+          </AppButton>
+          <AppButton
+            variant="primary"
             onClick={confirmarEdicion}
             disabled={guardando}
-            sx={estiloBotonPrincipal}
+            loading={guardando}
           >
-            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Guardar'}
-          </Button>
+            Guardar
+          </AppButton>
         </DialogActions>
       </Dialog>
 
