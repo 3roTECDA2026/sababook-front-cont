@@ -1,22 +1,7 @@
 
 import type { ReactNode } from 'react';
-import { Button, styled } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
-
-const StyledNavButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-  color: '#FFFFFF',
-  padding: '12px 30px',
-  fontSize: '1rem',
-  fontWeight: 'bold',
-  borderRadius: '20px',
-  textTransform: 'none',
-  minWidth: '150px',
-  margin: theme.spacing(1),
-}));
+import { AppButton } from '@/components/atoms/AppButton';
 
 interface NavButtonProps {
   children: ReactNode;
@@ -33,14 +18,24 @@ const NavButton = ({
   sx,
 }: NavButtonProps) => {
   return (
-    <StyledNavButton
-      variant="contained"
+    <AppButton
+      variant="primary"
+      rounded
       onClick={onClick}
       disabled={disabled}
-      sx={sx}
+      sx={[
+        {
+          px: 3.5,
+          py: 1.5,
+          fontSize: '1rem',
+          minWidth: '150px',
+          m: 1,
+        },
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
     >
       {children}
-    </StyledNavButton>
+    </AppButton>
   );
 };
 

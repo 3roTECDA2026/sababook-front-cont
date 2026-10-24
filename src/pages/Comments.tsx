@@ -1,7 +1,8 @@
 // src/pages/Comments.tsx
-import { Box, Button, createTheme, DialogActions, Rating, TextField, Typography } from '@mui/material';
+import { Box, createTheme, DialogActions, Rating, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import { useNotification } from '@/contexts/NotificationContext';
+import { AppButton } from '@/components/atoms/AppButton';
 
 // Iconos de MUI
 import StarIcon from '@mui/icons-material/Star';
@@ -123,17 +124,16 @@ const CommentInputFormMUI = ({ onCommentSubmit, onCancel }: CommentInputFormMUIP
 
       {/* Botones de Acción */}
       <DialogActions sx={{ p: 0 }}>
-        <Button onClick={onCancel}>
+        <AppButton onClick={onCancel} variant="outlined">
           Cancelar
-        </Button>
-        <Button
+        </AppButton>
+        <AppButton
           onClick={handleSubmit}
-          variant="contained"
-          color="primary"
+          variant="primary"
           disabled={!commentText.trim() || ratingValue === 0}
         >
           Publicar
-        </Button>
+        </AppButton>
       </DialogActions>
     </Box>
   );
@@ -207,31 +207,19 @@ function BookDetailsPageMUI() {
             {' '}
             {/* Contenedor para el botón y el texto de puntuación */}
             {/* 1. Botón "Comentar" (tal cual el mockup de Figma) */}
-            <Button
+            <AppButton
               onClick={() => setIsCommenting(true)}
               fullWidth
-              variant="contained"
-              color="primary"
+              variant="primary"
+              rounded
               size="large"
               sx={{
-                backgroundColor: '#f25600 !important',
-                borderRadius: '25px !important',
-                color: 'white !important',
-                fontWeight: 'bold !important',
-                padding: '12px 24px !important',
-                boxShadow: '0 4px 10px rgba(242, 86, 0, 0.4) !important',
-                transition: 'transform 0.2s !important',
-                '&:hover': {
-                  backgroundColor: '#d64500 !important',
-                  transform: 'scale(1.02) !important',
-                },
-                '&:active': {
-                  transform: 'scale(0.98) !important',
-                },
+                py: 1.5,
+                fontSize: '1.1rem',
               }}
             >
               Comentar
-            </Button>
+            </AppButton>
             {/* 2. Texto "¿Cómo puntuamos?" a la derecha */}
             <Typography
               variant="caption"

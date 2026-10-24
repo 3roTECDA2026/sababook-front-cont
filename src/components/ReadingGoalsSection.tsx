@@ -6,13 +6,13 @@ import {
   CardContent,
   Typography,
   LinearProgress,
-  Button,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
 } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 import { getActiveReadingGoal, createReadingGoal } from '@/services/apiService';
 import { useAuth } from '@/hooks/useAuth';
 import type { ReadingGoal } from '@/types';
@@ -137,21 +137,19 @@ const ReadingGoalsSection = () => {
                 }}
               >
                 <Typography fontWeight="bold">¡Meta alcanzada exitosamente! 🎉</Typography>
-                <Button
-                  variant="contained"
+                <AppButton
+                  variant="primary"
                   size="small"
+                  rounded
                   onClick={() => setOpenModal(true)}
                   sx={{
                     mt: 1.5,
                     backgroundColor: '#2e7d32',
                     '&:hover': { backgroundColor: '#1b5e20' },
-                    borderRadius: '20px',
-                    fontWeight: 'bold',
-                    textTransform: 'none',
                   }}
                 >
                   Crear nueva meta
-                </Button>
+                </AppButton>
               </Box>
             )}
           </Box>
@@ -160,13 +158,13 @@ const ReadingGoalsSection = () => {
             <Typography variant="body2" color="text.secondary" mb={2}>
               No tenés ninguna meta activa para este período.
             </Typography>
-            <Button
-              variant="contained"
+            <AppButton
+              variant="primary"
+              rounded
               onClick={() => setOpenModal(true)}
-              sx={{ backgroundColor: '#f25600', '&:hover': { backgroundColor: '#cc4800' }, borderRadius: '20px', fontWeight: 'bold' }}
             >
               Establecer Meta
-            </Button>
+            </AppButton>
           </Box>
         )}
       </CardContent>
@@ -207,12 +205,12 @@ const ReadingGoalsSection = () => {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenModal(false)} color="inherit">
+          <AppButton onClick={() => setOpenModal(false)} variant="outlined">
             Cancelar
-          </Button>
-          <Button onClick={handleCreateGoal} variant="contained" sx={{ backgroundColor: '#f25600', '&:hover': { backgroundColor: '#cc4800' } }}>
+          </AppButton>
+          <AppButton onClick={handleCreateGoal} variant="primary">
             Guardar
-          </Button>
+          </AppButton>
         </DialogActions>
       </Dialog>
     </Card>

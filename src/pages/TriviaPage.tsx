@@ -4,7 +4,6 @@ import {
   Alert,
   AlertColor,
   Typography,
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -23,6 +22,7 @@ import { useBookData } from '@/hooks/useBookData';
 import { useEvaluations } from '@/hooks/useEvaluations';
 import type { Book, TriviaModo } from '@/types';
 import styles from '@/styles/trivia.module.css';
+import { AppButton } from '@/components/atoms/AppButton';
 
 interface TriviaSelection {
   book: Book;
@@ -202,23 +202,21 @@ const TriviaPage = () => {
 
                     <div className={styles.bookCardActions}>
                       {generatingId !== book.libro_id ? (
-                        <Button
-                          variant="contained"
+                        <AppButton
+                          variant="primary"
                           size="small"
-                          className={styles.buttonOrange}
                           onClick={(e) => {
                             e.stopPropagation();
                             setGeneratingId(book.libro_id);
                           }}
                         >
                           Generar
-                        </Button>
+                        </AppButton>
                       ) : (
                         <>
-                          <Button
-                            variant="contained"
+                          <AppButton
+                            variant="primary"
                             size="small"
-                            className={styles.buttonOrange}
                             startIcon={<QuizIcon />}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -226,11 +224,10 @@ const TriviaPage = () => {
                             }}
                           >
                             Trivia
-                          </Button>
-                          <Button
-                            variant="contained"
+                          </AppButton>
+                          <AppButton
+                            variant="primary"
                             size="small"
-                            className={styles.buttonOrange}
                             startIcon={<EventNoteIcon />}
                             disabled={evaluationsLoading}
                             onClick={(e) => {
@@ -239,11 +236,11 @@ const TriviaPage = () => {
                             }}
                           >
                             Evaluación
-                          </Button>
+                          </AppButton>
                         </>
                       )}
 
-                      <Button
+                      <AppButton
                         variant="text"
                         size="small"
                         onClick={(e) => {
@@ -252,7 +249,7 @@ const TriviaPage = () => {
                         }}
                       >
                         Respuestas
-                      </Button>
+                      </AppButton>
                     </div>
                   </div>
                 </li>
@@ -287,14 +284,13 @@ const TriviaPage = () => {
               severity={evaluacionHabilitada ? 'success' : 'warning'}
               sx={{ mb: 2, alignItems: 'center' }}
               action={
-                <Button
-                  variant="contained"
+                <AppButton
+                  variant="primary"
                   size="small"
-                  className={styles.buttonOrange}
                   onClick={() => toggleEvaluationHabilitada(selection.evaluationId as number)}
                 >
                   {evaluacionHabilitada ? 'Deshabilitar' : 'Habilitar evaluación'}
-                </Button>
+                </AppButton>
               }
             >
               {evaluacionHabilitada
@@ -335,12 +331,12 @@ const TriviaPage = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEvaluationDialogOpen(false)} color="inherit">
+          <AppButton onClick={() => setEvaluationDialogOpen(false)} variant="outlined">
             Cancelar
-          </Button>
-          <Button variant="contained" className={styles.buttonOrange} onClick={enterEvaluationMode}>
+          </AppButton>
+          <AppButton variant="primary" onClick={enterEvaluationMode}>
             Crear evaluación
-          </Button>
+          </AppButton>
         </DialogActions>
       </Dialog>
 

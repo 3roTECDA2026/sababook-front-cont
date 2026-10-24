@@ -5,7 +5,6 @@ import {
   AlertColor,
   Box,
   Typography,
-  Button,
   Modal,
   Snackbar,
   TextField,
@@ -19,6 +18,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
 import type { TriviaQuestion, TriviaModo, TriviaFormato, TriviaPar } from '@/types';
 import styles from '@/styles/trivia.module.css';
+import { AppButton } from '@/components/atoms/AppButton';
 
 const MULTIPLE_COUNT = 4;
 const TRUE_FALSE_OPTIONS = ['Verdadero', 'Falso'];
@@ -357,9 +357,15 @@ const TriviaQuestionForm = ({
               </Box>
             ))}
 
-            <Button size="small" startIcon={<AddIcon />} onClick={addPair} sx={{ mt: 1 }}>
+            <AppButton
+              size="small"
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={addPair}
+              sx={{ mt: 1 }}
+            >
               Agregar par
-            </Button>
+            </AppButton>
           </Box>
         )}
 
@@ -393,17 +399,16 @@ const TriviaQuestionForm = ({
         )}
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mt={3} gap={2}>
-          <Button onClick={onClose} variant="text" color="inherit">
+          <AppButton onClick={onClose} variant="text">
             {isEditing ? 'Cancelar' : 'Listo'}
-          </Button>
-          <Button
-            variant="contained"
+          </AppButton>
+          <AppButton
+            variant="primary"
             startIcon={isEditing ? <SaveIcon /> : <AddIcon />}
             onClick={handleSubmit}
-            className={styles.buttonOrange}
           >
             {isEditing ? 'Guardar cambios' : 'Agregar pregunta'}
-          </Button>
+          </AppButton>
         </Box>
 
         {!isEditing && addedCount > 0 && (

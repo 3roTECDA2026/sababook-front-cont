@@ -1,7 +1,8 @@
 
-import { Box, Button, styled, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import NavButton from '@/components/ui/NavButton';
 import ReadingStreak from './ReadingStreak';
+import { AppButton } from '@/components/atoms/AppButton';
 
 export type DashboardView =
   | 'users'
@@ -18,15 +19,6 @@ const titleMap: Partial<Record<DashboardView, string>> = {
   goals: 'Metas de Lectura',
   moderation: 'Moderación IA',
 };
-
-const StyledAddButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  color: '#FFFFFF',
-  fontWeight: 'bold',
-  borderRadius: '8px',
-  padding: '10px 20px',
-  textTransform: 'none',
-}));
 
 const getAddButtonText = (activeView: DashboardView): string => {
   switch (activeView) {
@@ -104,9 +96,9 @@ const HeaderDashboard = ({
           {/* BOTÓN AGREGAR */}
           {activeView !== 'moderation' && (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <StyledAddButton onClick={onAddClick}>
+              <AppButton variant="primary" onClick={onAddClick} sx={{ px: 2.5, py: 1.2 }}>
                 {getAddButtonText(activeView)}
-              </StyledAddButton>
+              </AppButton>
             </Box>
           )}
         </Box>

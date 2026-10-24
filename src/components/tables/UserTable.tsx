@@ -15,7 +15,6 @@ import {
   Modal,
   Snackbar,
   Alert,
-  Button,
   FormControl,
   InputLabel,
   MenuItem,
@@ -27,6 +26,7 @@ import type { AlertColor } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
+import { AppButton } from '@/components/atoms/AppButton';
 
 import {
   ActionButton,
@@ -403,18 +403,14 @@ export default function UserTable({
           </Select>
         </FormControl>
 
-        <Button
-          variant="contained"
+        <AppButton
+          variant="primary"
           startIcon={<DownloadIcon />}
           onClick={handleDownload}
           disabled={filteredUsers.length === 0}
-          sx={{
-            backgroundColor: 'button.main',
-            textTransform: 'none',
-          }}
         >
           Descargar CSV
-        </Button>
+        </AppButton>
       </Box>
 
       {/* TABLA DE USUARIOS */}

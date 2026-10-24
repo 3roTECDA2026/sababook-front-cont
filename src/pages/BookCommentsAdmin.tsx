@@ -18,7 +18,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  Button,
   Snackbar,
   Alert,
   Rating,
@@ -28,6 +27,7 @@ import {
 } from '@mui/material';
 import type { AlertColor } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { AppButton } from '@/components/atoms/AppButton';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
@@ -239,14 +239,13 @@ const BookCommentsAdmin = () => {
           🚨 {error}
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <Button
-            variant="contained"
+          <AppButton
+            variant="primary"
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/dashboard')}
-            sx={{ backgroundColor: '#f25600', '&:hover': { backgroundColor: '#cc4800' } }}
           >
             Volver al Dashboard
-          </Button>
+          </AppButton>
         </Box>
       </Box>
     );
@@ -396,18 +395,18 @@ const BookCommentsAdmin = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteDialog} color="primary" disabled={isDeleting}>
+          <AppButton onClick={handleCloseDeleteDialog} variant="outlined" disabled={isDeleting}>
             Cancelar
-          </Button>
-          <Button
+          </AppButton>
+          <AppButton
             onClick={handleConfirmDelete}
-            color="error"
-            variant="contained"
+            variant="destructive"
             autoFocus
             disabled={isDeleting}
+            loading={isDeleting}
           >
-            {isDeleting ? <CircularProgress size={24} color="inherit" /> : 'Sí, Eliminar'}
-          </Button>
+            Sí, Eliminar
+          </AppButton>
         </DialogActions>
       </Dialog>
 

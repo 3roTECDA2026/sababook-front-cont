@@ -4,7 +4,6 @@ import {
   Box,
   Typography,
   TextField,
-  Button,
   Avatar,
   IconButton,
   Paper,
@@ -15,6 +14,7 @@ import {
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import EditIcon from '@mui/icons-material/Edit';
+import { AppButton } from '@/components/atoms/AppButton';
 
 // --- Constantes para generar los avatares predeterminados ---
 // El estilo de DiceBear a utilizar (por ejemplo, 'adventurer', 'bottts', 'micah')
@@ -243,45 +243,24 @@ export default function UserProfileForm({
 
       {/* ACCIONES */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, mt: 3 }}>
-        <Button
+        <AppButton
           variant="outlined"
           onClick={onCancel}
           fullWidth
-          sx={{
-            borderRadius: '24px',
-            py: 1.2,
-            fontWeight: 700,
-            borderColor: '#f25600 !important',
-            backgroundColor: 'transparent !important',
-            color: '#f25600 !important',
-            border: '1.5px solid #f25600 !important',
-            '&:hover': {
-              backgroundColor: 'rgba(242, 86, 0, 0.08) !important',
-              borderColor: '#cc4800 !important',
-            },
-          }}
+          rounded
+          sx={{ py: 1.2 }}
         >
           Cancelar
-        </Button>
-        <Button
+        </AppButton>
+        <AppButton
           type="submit"
-          variant="contained"
+          variant="primary"
           fullWidth
-          sx={{
-            borderRadius: '24px',
-            py: 1.2,
-            fontWeight: 700,
-            backgroundColor: '#f25600 !important',
-            color: '#ffffff !important',
-            boxShadow: 'none',
-            '&:hover': {
-              backgroundColor: '#cc4800 !important',
-              boxShadow: '0 4px 12px rgba(242, 86, 0, 0.35)',
-            },
-          }}
+          rounded
+          sx={{ py: 1.2 }}
         >
           Guardar Cambios
-        </Button>
+        </AppButton>
       </Box>
     </Paper>
   );

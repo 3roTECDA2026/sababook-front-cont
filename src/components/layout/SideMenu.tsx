@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Button,
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
@@ -30,6 +29,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import InsightsIcon from '@mui/icons-material/Insights';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { AppButton } from '@/components/atoms/AppButton';
 
 interface MenuItem {
   text: string;
@@ -190,12 +190,12 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)} color="primary">
+          <AppButton onClick={() => setConfirmOpen(false)} variant="outlined">
             Cancelar
-          </Button>
-          <Button onClick={handleLogout} color="primary" autoFocus>
+          </AppButton>
+          <AppButton onClick={handleLogout} variant="primary" autoFocus>
             Confirmar
-          </Button>
+          </AppButton>
         </DialogActions>
       </Dialog>
     </>

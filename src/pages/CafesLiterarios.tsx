@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   CardMedia,
-  Button,
   Chip,
   Avatar,
   CircularProgress,
@@ -20,6 +19,7 @@ import {
   Stack,
   Divider,
 } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 import LocalCafeIcon from '@mui/icons-material/LocalCafe';
 import EventIcon from '@mui/icons-material/Event';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -212,19 +212,13 @@ export default function CafesLiterarios() {
         </Typography>
 
         {esDocenteOAdmin && (
-          <Button
-            variant="contained"
+          <AppButton
+            variant="primary"
             startIcon={<AddIcon />}
             onClick={handleOpenModal}
-            sx={{
-              bgcolor: theme.palette.button.main,
-              color: '#fff',
-              '&:hover': { bgcolor: '#cc4800' },
-              borderRadius: 2,
-            }}
           >
             Nuevo Café
-          </Button>
+          </AppButton>
         )}
       </Box>
 
@@ -388,19 +382,13 @@ export default function CafesLiterarios() {
 
                     {/* Botón de acceso al Foro de Debate */}
                     {cafe.foro_id && (
-                      <Button
+                      <AppButton
                         variant="outlined"
                         startIcon={<ForumIcon />}
                         onClick={() => navigate(`/foro/detalle/${cafe.foro_id}`)}
-                        sx={{
-                          borderColor: theme.palette.button.main,
-                          color: theme.palette.button.main,
-                          borderRadius: 2,
-                          textTransform: 'none',
-                        }}
                       >
                         Foro de Debate
-                      </Button>
+                      </AppButton>
                     )}
                   </Box>
 
@@ -411,27 +399,35 @@ export default function CafesLiterarios() {
                     </Typography>
 
                     <Box display="flex" alignItems="center" gap={2} my={1}>
-                      <Button
+                      <AppButton
                         size="small"
-                        variant="contained"
-                        color="success"
+                        variant="primary"
                         startIcon={<ThumbUpIcon />}
                         onClick={() => handleVoto(cafe.cafe_id, true)}
-                        sx={{ textTransform: 'none' }}
+                        sx={{
+                          backgroundColor: '#2e7d32',
+                          '&:hover': { backgroundColor: '#1b5e20' },
+                        }}
                       >
                         Me gustó ({cafe.votos_positivos || 0})
-                      </Button>
+                      </AppButton>
 
-                      <Button
+                      <AppButton
                         size="small"
                         variant="outlined"
-                        color="error"
                         startIcon={<ThumbDownIcon />}
                         onClick={() => handleVoto(cafe.cafe_id, false)}
-                        sx={{ textTransform: 'none' }}
+                        sx={{
+                          color: '#d32f2f',
+                          borderColor: '#d32f2f',
+                          '&:hover': {
+                            borderColor: '#b71c1c',
+                            backgroundColor: 'rgba(211, 47, 47, 0.04)',
+                          },
+                        }}
                       >
                         No me gustó ({cafe.votos_negativos || 0})
-                      </Button>
+                      </AppButton>
                     </Box>
 
                     {totalVotos > 0 && (
@@ -514,17 +510,17 @@ export default function CafesLiterarios() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenModal(false)} color="inherit">
+          <AppButton onClick={() => setOpenModal(false)} variant="outlined">
             Cancelar
-          </Button>
-          <Button
+          </AppButton>
+          <AppButton
             onClick={handleCrearCafe}
-            variant="contained"
+            variant="primary"
             disabled={creando}
-            sx={{ bgcolor: theme.palette.button.main, color: '#fff' }}
+            loading={creando}
           >
-            {creando ? 'Publicando...' : 'Publicar Café Literario'}
-          </Button>
+            Publicar Café Literario
+          </AppButton>
         </DialogActions>
       </Dialog>
     </Box>

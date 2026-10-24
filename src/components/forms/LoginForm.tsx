@@ -1,8 +1,9 @@
 // src/components/forms/LoginForm.tsx
 
 import React, { useState, FormEvent } from 'react';
-import { Alert, Box, Button, TextField, Typography, styled, useTheme } from '@mui/material';
+import { Alert, Box, TextField, Typography, styled, useTheme } from '@mui/material';
 import type { TipoErrorLogin } from '@/contexts/AuthContextDefinition';
+import { AppButton } from '@/components/atoms/AppButton';
 
 // Estilos del contenedor del formulario (simplemente para dar un padding)
 const FormContainer = styled(Box)({
@@ -10,20 +11,6 @@ const FormContainer = styled(Box)({
   maxWidth: '350px',
   padding: '20px',
 });
-
-// Estilos para el botón de Ingresar (usando el mismo estilo del tema)
-const StyledIngresarButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-  color: '#FFFFFF',
-  padding: '12px 0',
-  fontSize: '1rem',
-  fontWeight: 'bold',
-  borderRadius: '20px', // Mantenemos el border-radius de 20px
-  marginTop: theme.spacing(3), // Espacio superior
-}));
 
 export interface LoginCredentials {
   email: string;
@@ -120,9 +107,19 @@ const LoginForm = ({ onLoginSubmit, error, errorType }: LoginFormProps) => {
         )}
 
         {/* Botón de Ingresar */}
-        <StyledIngresarButton variant="contained" type="submit" fullWidth>
+        <AppButton
+          variant="primary"
+          rounded
+          type="submit"
+          fullWidth
+          sx={{
+            py: 1.5,
+            fontSize: '1rem',
+            mt: 3,
+          }}
+        >
           Ingresar
-        </StyledIngresarButton>
+        </AppButton>
       </FormContainer>
     </form>
   );

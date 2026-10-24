@@ -5,7 +5,6 @@ import {
   CardContent,
   Typography,
   Rating,
-  Button,
   Box,
   IconButton,
   Menu,
@@ -17,6 +16,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -368,37 +368,31 @@ export default function BookCard({
           >
             {/* Recomendar / quitar recomendación */}
             {showRecommendControl && onRecommendToggle && (
-              <Button
-                variant={isRecommended ? 'outlined' : 'contained'}
-                color={isRecommended ? 'error' : 'success'}
+              <AppButton
+                variant={isRecommended ? 'outlined' : 'primary'}
                 size="small"
                 disabled={
                   bookIdentifier == null || recommendLoading
                 }
+                loading={recommendLoading}
                 startIcon={
-                  recommendLoading ? (
-                    <CircularProgress size={16} color="inherit" />
-                  ) : isRecommended ? (
+                  isRecommended ? (
                     <RemoveCircleOutlineIcon />
                   ) : (
                     <RecommendIcon />
                   )
                 }
                 onClick={handleRecommend}
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
-                }}
               >
                 {isRecommended
                   ? 'Quitar recomendación'
                   : 'Recomendar'}
-              </Button>
+              </AppButton>
             )}
 
             {/* Ver más */}
-            <Button
-              variant="contained"
+            <AppButton
+              variant="primary"
               onClick={() => {
                 if (onVerMas) {
                   onVerMas();
@@ -410,17 +404,11 @@ export default function BookCard({
                 }
               }}
               sx={{
-                bgcolor: '#f25600',
-                textTransform: 'none',
                 fontSize: featured ? '0.9rem' : '0.8rem',
-                borderRadius: 2,
-                '&:hover': {
-                  bgcolor: '#d64500',
-                },
               }}
             >
               Ver más
-            </Button>
+            </AppButton>
           </Box>
         </CardContent>
       </Card>

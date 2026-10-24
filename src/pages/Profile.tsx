@@ -1,6 +1,6 @@
 // src/pages/Profile.tsx
 import React, { useState, useEffect } from 'react';
-import { Box, Button, styled, Avatar, Typography } from '@mui/material';
+import { Box, Avatar, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 import AppHeader from '@/components/layout/AppHeader';
@@ -8,18 +8,7 @@ import SideMenu from '@/components/layout/SideMenu';
 import UserProfileForm from '@/components/forms/UserProfileForm';
 import ReadingGoalsSection from '@/components/ReadingGoalsSection';
 import { useAuth } from '@/hooks/useAuth';
-
-const StyledButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-  color: '#FFFFFF',
-  padding: '12px 0',
-  fontSize: '1rem',
-  fontWeight: 'bold',
-  borderRadius: '30px',
-}));
+import { AppButton } from '@/components/atoms/AppButton';
 
 type ViewState = 'menu' | 'form';
 
@@ -142,17 +131,15 @@ const Profile = () => {
             gap: 2,
           }}
         >
-          <StyledButton variant="contained" onClick={handleModifyProfileClick} fullWidth>
-            Modificar Perfil
-          </StyledButton>
-
-          {/*  <StyledButton
-            variant="contained"
-            onClick={handleMyCommentsClick} 
+          <AppButton
+            variant="primary"
+            rounded
+            onClick={handleModifyProfileClick}
             fullWidth
+            sx={{ py: 1.5, fontSize: '1rem' }}
           >
-            Mis Comentarios
-          </StyledButton>*/}
+            Modificar Perfil
+          </AppButton>
         </Box>
       </>
     );

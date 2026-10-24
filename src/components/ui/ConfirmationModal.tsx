@@ -1,6 +1,7 @@
 // src/components/ConfirmationModal.tsx
-import { Modal, Box, Typography, Button } from '@mui/material';
+import { Modal, Box, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 
 const style: SxProps<Theme> = {
   position: 'absolute',
@@ -21,6 +22,7 @@ interface ConfirmationModalProps {
   onConfirm: () => void;
   title: string;
   message: string;
+  loading?: boolean;
 }
 
 export default function ConfirmationModal({
@@ -29,11 +31,12 @@ export default function ConfirmationModal({
   onConfirm,
   title,
   message,
+  loading = false,
 }: ConfirmationModalProps) {
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={loading ? undefined : onClose}
       aria-labelledby="confirmation-modal-title"
       aria-describedby="confirmation-modal-description"
     >
@@ -45,12 +48,17 @@ export default function ConfirmationModal({
           {message}
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-          <Button onClick={onClose} variant="outlined">
+          <AppButton onClick={onClose} variant="outlined" disabled={loading}>
             Cancelar
-          </Button>
-          <Button onClick={onConfirm} variant="contained" color="error" autoFocus>
+          </AppButton>
+          <AppButton
+            onClick={onConfirm}
+            variant="destructive"
+            loading={loading}
+            autoFocus
+          >
             Aceptar
-          </Button>
+          </AppButton>
         </Box>
       </Box>
     </Modal>

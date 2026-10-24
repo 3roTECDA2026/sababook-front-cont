@@ -1,10 +1,11 @@
 // src/pages/BookPreview.tsx
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, IconButton } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { API_BASE_URL } from '@/environments/api';
 import MenuIcon from '@mui/icons-material/Menu';
 import type { Book } from '@/types';
+import { AppButton } from '@/components/atoms/AppButton';
 
 type BookWithAliases = Book & {
   id?: number;
@@ -169,31 +170,19 @@ const BookPreview = ({ book: propBook, onCommentClick }: BookPreviewProps) => {
       </Box>
 
       {/* Botón centrado */}
-      <Box sx={{ mb: 4 }}>
-        <Button
-          variant="contained"
-          color="primary"
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+        <AppButton
+          variant="primary"
+          rounded
           onClick={handleCommentClick}
           sx={{
-            width: "80%",
-            display: "block",
-            mx: "auto",
-            py: 0.5,
-            px: 1,
-            fontSize: "0.8rem",
-            borderRadius: 4,
-            fontWeight: "bold",
-            backgroundColor: "button.main",
-            color: "#fff",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              backgroundColor: "primary.main",
-              boxShadow: "0px 4px 20px rgba(0,0,0,0.3)",
-            },
+            width: '80%',
+            py: 0.8,
+            fontSize: '0.9rem',
           }}
         >
           Comentar
-        </Button>
+        </AppButton>
       </Box>
 
       {/* Descripción centrada */}

@@ -1,11 +1,12 @@
 // src/components/FilterChips.tsx
 import { useState, useEffect, useMemo, MouseEvent } from 'react';
-import { Stack, Chip, Menu, MenuItem, Box, Button } from '@mui/material';
+import { Stack, Chip, Menu, MenuItem, Box } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import { getCursos } from '@/services/courseService';
 import type { BookFilters, CourseSummary } from '@/types';
+import { AppButton } from '@/components/atoms/AppButton';
 
 interface FilterOption {
   label: string;
@@ -270,12 +271,12 @@ export default function FilterChips({ onFilterChange, onClearSearch }: FilterChi
             );
           })}
 
-          <Button
+          <AppButton
+            variant="text"
             size="small"
             startIcon={<FilterAltOffIcon fontSize="small" />}
             onClick={handleLimpiarTodo}
             sx={{
-              textTransform: 'none',
               fontSize: '0.8rem',
               color: 'text.secondary',
               '&:hover': {
@@ -285,7 +286,7 @@ export default function FilterChips({ onFilterChange, onClearSearch }: FilterChi
             }}
           >
             Limpiar filtros
-          </Button>
+          </AppButton>
         </Stack>
       )}
 

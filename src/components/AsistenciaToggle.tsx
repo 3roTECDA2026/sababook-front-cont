@@ -1,10 +1,10 @@
 // src/components/AsistenciaToggle.tsx
 import React, { useState } from 'react';
-import { Box, Button, Typography, CircularProgress } from '@mui/material';
+import { Box, Typography, CircularProgress } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircleTwoTone';
-import theme from '../theme/theme';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import { AppButton } from '@/components/atoms/AppButton';
 
 interface AsistenciaToggleProps {
   asistencia?: string | null;
@@ -36,33 +36,25 @@ export default function AsistenciaToggle({
     <>
       <Box display="flex" alignItems="center" gap={1.5} flexWrap="wrap">
         {confirmado ? (
-          <Button
+          <AppButton
             size="small"
             variant="text"
-            color="error"
             startIcon={<CancelIcon />}
             disabled={cargando}
             onClick={() => setOpenConfirm(true)}
-            sx={{ textTransform: 'none' }}
           >
             Cancelar
-          </Button>
+          </AppButton>
         ) : (
-          <Button
-            variant="contained"
+          <AppButton
+            variant="primary"
             disabled={cargando}
+            loading={cargando}
             startIcon={<CheckCircleIcon />}
             onClick={confirmar}
-            sx={{
-              bgcolor: theme.palette.button.main,
-              '&:hover': { bgcolor: '#cc4800' },
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 'bold',
-            }}
           >
             Confirmar asistencia
-          </Button>
+          </AppButton>
         )}
 
         <Box>

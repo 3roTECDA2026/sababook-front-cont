@@ -5,7 +5,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
   Typography,
   Box,
   List,
@@ -22,6 +21,7 @@ import { formatDateTime } from '@/utils/formatDate';
 import { useEvaluationAttempts } from '@/hooks/useEvaluationAttempts';
 import type { TriviaAttempt, PlayAnswer, PlayQuestion } from '@/types';
 import styles from '@/styles/trivia.module.css';
+import { AppButton } from '@/components/atoms/AppButton';
 
 interface EvaluationResponsesDialogProps {
   open: boolean;
@@ -95,14 +95,15 @@ const EvaluationResponsesDialog = ({ open, onClose, evaluationId }: EvaluationRe
           </Typography>
         ) : selected ? (
           <Box>
-            <Button
+            <AppButton
               startIcon={<ArrowBackIcon />}
               size="small"
+              variant="text"
               onClick={() => setSelected(null)}
-              sx={{ mb: 2, textTransform: 'none' }}
+              sx={{ mb: 2 }}
             >
               Volver al listado
-            </Button>
+            </AppButton>
 
             <Box mb={2}>
               <Chip
@@ -182,9 +183,9 @@ const EvaluationResponsesDialog = ({ open, onClose, evaluationId }: EvaluationRe
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose} color="inherit">
+        <AppButton onClick={handleClose} variant="outlined">
           Cerrar
-        </Button>
+        </AppButton>
       </DialogActions>
     </Dialog>
   );

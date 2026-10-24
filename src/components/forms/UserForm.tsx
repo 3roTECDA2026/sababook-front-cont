@@ -3,13 +3,13 @@ import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import {
   Box,
   TextField,
-  Button,
   Typography,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
 } from '@mui/material';
+import { AppButton } from '@/components/atoms/AppButton';
 import type { SelectChangeEvent } from '@mui/material';
 import type { User } from '@/types';
 
@@ -155,12 +155,12 @@ export default function UserForm({ userToEdit, onSave, onCancel }: UserFormProps
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-          <Button onClick={onCancel} variant="outlined">
+          <AppButton onClick={onCancel} variant="outlined">
             Cancelar
-          </Button>
-          <Button type="submit" variant="contained" sx={{ backgroundColor: 'button.main' }}>
+          </AppButton>
+          <AppButton type="submit" variant="primary">
             Guardar Cambios
-          </Button>
+          </AppButton>
         </Box>
       </Box>
     </form>
