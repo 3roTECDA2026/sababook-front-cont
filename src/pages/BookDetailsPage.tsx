@@ -390,28 +390,11 @@ const BookDetailsPage = () => {
                 : 'Todavía no lo marcaste como leído.'}
             </Typography>
 
-            <Button
-              variant={leido ? 'outlined' : 'contained'}
+             <Button
               startIcon={leido && !guardandoLectura ? <CheckCircleIcon /> : undefined}
               disabled={guardandoLectura}
               onClick={handleToggleLeido}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: '8px',
-                px: 2.5,
-                ...(leido
-                  ? {
-                      color: ORANGE_COLOR,
-                      borderColor: ORANGE_COLOR,
-                      '&:hover': { borderColor: '#cc4800', backgroundColor: 'rgba(255, 102, 51, 0.06)' },
-                    }
-                  : {
-                      backgroundColor: ORANGE_COLOR,
-                      color: '#fff',
-                      '&:hover': { backgroundColor: '#cc4800' },
-                    }),
-              }}
+              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', px: 2.5 }}
             >
               {guardandoLectura ? (
                 <CircularProgress size={17} sx={{ color: 'inherit' }} />

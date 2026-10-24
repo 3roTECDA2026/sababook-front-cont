@@ -74,11 +74,9 @@ const ActionButton = styled(IconButton)(({ theme }) => ({
 }));
 
 const estiloBotonPrincipal = {
-  backgroundColor: '#f25600',
   textTransform: 'none',
   fontWeight: 'bold',
   borderRadius: '8px',
-  '&:hover': { backgroundColor: '#cc4800' },
 };
 
 type Pestana = 'libros' | 'historial';
