@@ -3,6 +3,7 @@ import { useEffect, useState, SyntheticEvent } from 'react';
 import {
   Alert,
   AlertColor,
+  Box,
   Typography,
   Button,
   Dialog,
@@ -19,10 +20,15 @@ import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import BookTriviaSection from '@/components/ui/BookTriviaSection';
 import EvaluationResponsesDialog from '@/components/ui/EvaluationResponsesDialog';
-import { useBookData } from '@/hooks/useBookData';
+import FilterChips from '@/components/ui/FilterChips';
+import type { FilterCategoryId } from '@/components/ui/FilterChips';
+import SearchBar from '@/components/ui/SearchBar';
 import { useEvaluations } from '@/hooks/useEvaluations';
+import { useTriviaBooks } from '@/hooks/useTriviaBooks';
 import type { Book, TriviaModo } from '@/types';
 import styles from '@/styles/trivia.module.css';
+
+const ADMIN_FILTER_CATEGORIES: FilterCategoryId[] = ['year', 'course'];
 
 interface TriviaSelection {
   book: Book;
@@ -41,7 +47,16 @@ interface SnackbarState {
 const TriviaPage = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [selection, setSelection] = useState<TriviaSelection | null>(null);
-  const { books, loading } = useBookData();
+  const {
+    isAdmin,
+    filters,
+    setFilters,
+    searchQuery,
+    setSearchQuery,
+    books: visibleBooks,
+    loading: booksLoading,
+    error: booksError,
+  } = useTriviaBooks();
   const {
     loading: evaluationsLoading,
     fetchEvaluations,
@@ -172,17 +187,60 @@ const TriviaPage = () => {
 
       {!selection && (
         <>
-          <Typography variant="h6" className={styles.sectionTitle}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              alignItems: 'flex-start',
+              flexWrap: 'wrap',
+              mb: 1,
+            }}
+          >
+            {isAdmin && (
+              <Box sx={{ flex: '1 1 420px', minWidth: 0 }}>
+                <FilterChips
+                  categories={ADMIN_FILTER_CATEGORIES}
+                  onFilterChange={setFilters}
+                  sx={{ mb: 0 }}
+                />
+              </Box>
+            )}
+
+            <Box
+              sx={{
+                flex: { xs: '1 1 100%', sm: '0 1 320px' },
+                minWidth: { xs: '100%', sm: 240 },
+              }}
+            >
+              <SearchBar onSearch={setSearchQuery} sx={{ mb: 0 }} />
+            </Box>
+          </Box>
+
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            {isAdmin
+              ? 'Filtrá por año y curso para acotar los libros. También podés buscar por título, autor o género.'
+              : 'Buscá por título, autor o género entre los libros de tus cursos asignados.'}
+          </Typography>
+
+          <Typography variant="h6" className={styles.sectionTitle} sx={{ mt: 1, mb: 3 }}>
             Seleccioná un libro para cargar sus preguntas
           </Typography>
 
-          {!loading && books.length === 0 ? (
+          {booksError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {booksError}
+            </Alert>
+          )}
+
+          {!booksLoading && !booksError && visibleBooks.length === 0 ? (
             <Typography variant="body2" className={styles.emptyText}>
-              No hay libros disponibles.
+              {searchQuery
+                ? 'No se encontraron libros con esa búsqueda.'
+                : 'No hay libros disponibles.'}
             </Typography>
           ) : (
             <ul className={styles.bookList}>
-              {books.map((book) => (
+              {visibleBooks.map((book) => (
                 <li key={book.libro_id} className={styles.bookRow}>
                   <div className={styles.bookCard}>
                     <button
@@ -196,7 +254,7 @@ const TriviaPage = () => {
                       </span>
                       <span className={styles.bookMetaRight}>
                         <span className={styles.bookMeta}>{book.autor}</span>
-                        <span className={styles.bookMeta}>{book.genero}</span>
+                        <span className={styles.bookMeta}>{book.genero ?? ''}</span>
                       </span>
                     </button>
 

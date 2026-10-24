@@ -18,14 +18,23 @@ const DEFAULT_FEATURED_BOOK: FeaturedBook = {
 /**
  * Hook personalizado para cargar los datos iniciales de libros y el libro destacado.
  */
-export function useBookData() {
+export function useBookData(enabled = true) {
   const [books, setBooks] = useState<Book[]>([]);
   const [featuredBook, setFeaturedBook] = useState<Partial<FeaturedBook>>({});
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(enabled);
 
   useEffect(() => {
+    if (!enabled) {
+      setBooks([]);
+      setFeaturedBook({});
+      setLoading(false);
+      return;
+    }
+
     const controller = new AbortController();
     const { signal } = controller;
+
+    setLoading(true);
 
     fetch(`${API_BASE_URL}/api/v1/books`, { signal })
       .then((res) => res.json())
@@ -59,7 +68,7 @@ export function useBookData() {
       });
 
     return () => controller.abort();
-  }, []);
+  }, [enabled]);
 
   return { books, setBooks, featuredBook, setFeaturedBook, loading };
 }

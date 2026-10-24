@@ -1,6 +1,7 @@
 // src/components/FilterChips.tsx
 import { useState, useEffect, useMemo, MouseEvent } from 'react';
 import { Stack, Chip, Menu, MenuItem, Box, Button } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
@@ -12,8 +13,10 @@ interface FilterOption {
   value: string | number;
 }
 
+export type FilterCategoryId = 'year' | 'course' | 'genre' | 'level';
+
 interface FilterCategory {
-  id: 'year' | 'course' | 'genre' | 'level';
+  id: FilterCategoryId;
   name: string;
   icon?: React.ReactElement;
   getOptions: (cursos: CourseSummary[], selectedFilters: BookFilters) => FilterOption[];
@@ -78,9 +81,16 @@ const FILTERS_CONFIG: FilterCategory[] = [
 interface FilterChipsProps {
   onFilterChange?: (filtros: BookFilters) => void;
   onClearSearch?: () => void;
+  categories?: FilterCategoryId[];
+  sx?: SxProps<Theme>;
 }
 
-export default function FilterChips({ onFilterChange, onClearSearch }: FilterChipsProps) {
+export default function FilterChips({
+  onFilterChange,
+  onClearSearch,
+  categories,
+  sx,
+}: FilterChipsProps) {
   const [cursos, setCursos] = useState<CourseSummary[]>([]);
   const [cargandoCursos, setCargandoCursos] = useState(true);
   const [errorCursos, setErrorCursos] = useState(false);
@@ -89,6 +99,11 @@ export default function FilterChips({ onFilterChange, onClearSearch }: FilterChi
   const [selectedFilters, setSelectedFilters] = useState<BookFilters>({});
 
   const openMenu = Boolean(anchorEl);
+
+  const filtrosVisibles = useMemo(
+    () => (categories ? FILTERS_CONFIG.filter((f) => categories.includes(f.id)) : FILTERS_CONFIG),
+    [categories]
+  );
 
   useEffect(() => {
     let montado = true;
@@ -210,10 +225,10 @@ export default function FilterChips({ onFilterChange, onClearSearch }: FilterChi
   const currentOptions = activeCategory ? activeCategory.getOptions(cursosVigentes, selectedFilters) : [];
 
   return (
-    <Box sx={{ mb: 2 }}>
+    <Box sx={[{ mb: 2 }, ...(sx ? [sx] : [])] as SxProps<Theme>}>
       {/* Botones selectores de filtros */}
       <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 0.5 }}>
-        {FILTERS_CONFIG.map((filter) => {
+        {filtrosVisibles.map((filter) => {
           const isActive =
             (filter.id === 'year' && selectedFilters.anio !== undefined) ||
             (filter.id === 'course' && selectedFilters.curso_id !== undefined) ||
