@@ -90,8 +90,8 @@ export default function UserTable({
   const [confirmModalOpen, setConfirmModalOpen] =
     useState<boolean>(false);
 
-  const [userToDeleteId, setUserToDeleteId] =
-    useState<number | null>(null);
+  const [userToDelete, setUserToDelete] =
+    useState<User | null>(null);
 
   const [snackbar, setSnackbar] =
     useState<SnackbarState>({
@@ -259,24 +259,24 @@ export default function UserTable({
   // ELIMINAR USUARIO
   // --------------------------------------------------
 
-  const handleDelete = (userId: number) => {
-    setUserToDeleteId(userId);
+  const handleDelete = (user: User) => {
+    setUserToDelete(user);
     setConfirmModalOpen(true);
   };
 
   const handleCloseConfirmModal = () => {
     setConfirmModalOpen(false);
-    setUserToDeleteId(null);
+    setUserToDelete(null);
   };
 
   const handleConfirmDelete = async () => {
-    if (userToDeleteId === null) return;
+    if (!userToDelete) return;
 
     try {
       const token = localStorage.getItem('token');
 
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/users/${userToDeleteId}`,
+        `${API_BASE_URL}/api/v1/users/${userToDelete.usuario_id}`,
         {
           method: 'DELETE',
           headers: {
@@ -521,7 +521,7 @@ export default function UserTable({
 
                       <DeleteButton
                         onClick={() =>
-                          handleDelete(user.usuario_id)
+                          handleDelete(user)
                         }
                         title="Eliminar"
                         size="small"
@@ -595,7 +595,7 @@ export default function UserTable({
         onClose={handleCloseConfirmModal}
         onConfirm={handleConfirmDelete}
         title="Confirmar Eliminación"
-        message={`¿Estás seguro de que quieres eliminar al usuario con ID ${userToDeleteId}? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de que quieres eliminar al usuario "${userToDelete?.nombre || userToDelete?.email || ''}"? Esta acción no se puede deshacer.`}
       />
     </>
   );

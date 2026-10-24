@@ -155,7 +155,7 @@ function aplicarFiltrosTexto(
  *
  * Conserva la lógica incorporada en develop.
  */
-async function obtenerLibrosFiltradosPorCursoOAnio(
+export async function obtenerLibrosFiltradosPorCursoOAnio(
   filtros: BookFilters,
   signal?: AbortSignal
 ): Promise<Book[]> {
