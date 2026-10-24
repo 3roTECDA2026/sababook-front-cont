@@ -150,6 +150,8 @@ export default function FeaturedBookSection({
                     status
                   )
                 }
+                showReadingStatusControl
+                includeGeneralStatus
                 onVerMas={() =>
                   handleVerMas(book.libro_id)
                 }
