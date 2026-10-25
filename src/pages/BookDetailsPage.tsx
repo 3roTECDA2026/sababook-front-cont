@@ -31,10 +31,6 @@ import BookOpinionList from '@/components/ui/BookOpinionList';
 import BookDescription from '@/components/ui/BookDescription';
 import TriviaPlaySection from '@/components/ui/TriviaPlaySection';
 
-
-const BLUE_COLOR = '#1976d2';
-
-
 interface Recomendacion {
   recomendacion_id: number;
   libro_id: number;
@@ -193,8 +189,8 @@ const BookDetailsPage = () => {
         if (!response.ok) {
           throw new Error(
             data.error ||
-            data.message ||
-            'No se pudo obtener el contador de libros leídos.'
+              data.message ||
+              'No se pudo obtener el contador de libros leídos.'
           );
         }
 
@@ -280,8 +276,8 @@ const BookDetailsPage = () => {
         if (!response.ok) {
           throw new Error(
             data.message ||
-            data.error ||
-            'No se pudo consultar el progreso de lectura.'
+              data.error ||
+              'No se pudo consultar el progreso de lectura.'
           );
         }
 
@@ -620,8 +616,8 @@ const BookDetailsPage = () => {
       if (!response.ok) {
         throw new Error(
           data.message ||
-          data.error ||
-          'No se pudo actualizar el progreso.'
+            data.error ||
+            'No se pudo actualizar el progreso.'
         );
       }
 
@@ -838,12 +834,20 @@ const BookDetailsPage = () => {
                 : 'Todavía no lo marcaste como leído.'}
             </Typography>
 
-             <Button
-              startIcon={leido && !guardandoLectura ? <CheckCircleIcon /> : undefined}
+            <Button
+              startIcon={
+                leido && !guardandoLectura
+                  ? <CheckCircleIcon />
+                  : undefined
+              }
               disabled={guardandoLectura}
               onClick={handleToggleLeido}
-              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', px: 2.5 }}
-
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: '8px',
+                px: 2.5,
+              }}
             >
               {guardandoLectura ? (
                 <CircularProgress
@@ -885,7 +889,8 @@ const BookDetailsPage = () => {
         <BookDescription book={book} />
 
         {/* ===================================== */}
-        {/* BOTÓN NARANJA: DEJAR DE RECOMENDAR */}
+        {/* DEJAR DE RECOMENDAR */}
+        {/* Colores definidos por el tema */}
         {/* ===================================== */}
 
         {!loadingRecomendaciones &&
@@ -900,27 +905,14 @@ const BookDetailsPage = () => {
             >
               <Button
                 variant="contained"
-                disabled={
-                  removingRecommendation
-                }
-                onClick={
-                  handleRemoveRecommendation
-                }
+                disabled={removingRecommendation}
+                onClick={handleRemoveRecommendation}
                 sx={{
-                  backgroundColor: theme.palette.primary.main,
-                  color: '#fff',
                   fontWeight: 600,
                   textTransform: 'none',
                   borderRadius: '8px',
                   px: 2.5,
                   py: 1,
-                  '&:hover': {
-                    backgroundColor: '#cc4800',
-                  },
-                  '&.Mui-disabled': {
-                    backgroundColor: '#ffb199',
-                    color: '#fff',
-                  },
                 }}
               >
                 {removingRecommendation ? (
@@ -928,7 +920,7 @@ const BookDetailsPage = () => {
                     <CircularProgress
                       size={17}
                       sx={{
-                        color: '#fff',
+                        color: 'inherit',
                         mr: 1,
                       }}
                     />
@@ -943,20 +935,15 @@ const BookDetailsPage = () => {
 
         {/* ===================================== */}
         {/* COMENTAR */}
+        {/* Colores definidos por el tema */}
         {/* ===================================== */}
 
-
-        {/* BOTÓN NARANJA: COMENTAR */}
-         <NavButton
-
+        <NavButton
           onClick={handleCommentClick}
           sx={{
             width: '100%',
             p: '12px 20px',
-
             borderRadius: '8px',
-            boxShadow: '0 4px 10px rgba(242, 86, 0, 0.4)',
-
           }}
         >
           Comentar
