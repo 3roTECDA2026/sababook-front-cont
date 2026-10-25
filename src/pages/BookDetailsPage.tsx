@@ -31,7 +31,9 @@ import BookOpinionList from '@/components/ui/BookOpinionList';
 import BookDescription from '@/components/ui/BookDescription';
 import TriviaPlaySection from '@/components/ui/TriviaPlaySection';
 
-const ORANGE_COLOR = '#FF6633';
+
+const BLUE_COLOR = '#1976d2';
+
 
 interface Recomendacion {
   recomendacion_id: number;
@@ -836,42 +838,12 @@ const BookDetailsPage = () => {
                 : 'Todavía no lo marcaste como leído.'}
             </Typography>
 
-            <Button
-              variant={
-                leido ? 'outlined' : 'contained'
-              }
-              startIcon={
-                leido && !guardandoLectura
-                  ? <CheckCircleIcon />
-                  : undefined
-              }
+             <Button
+              startIcon={leido && !guardandoLectura ? <CheckCircleIcon /> : undefined}
               disabled={guardandoLectura}
               onClick={handleToggleLeido}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: '8px',
-                px: 2.5,
-                ...(leido
-                  ? {
-                      color: ORANGE_COLOR,
-                      borderColor: ORANGE_COLOR,
-                      '&:hover': {
-                        borderColor: '#cc4800',
-                        backgroundColor:
-                          'rgba(255, 102, 51, 0.06)',
-                      },
-                    }
-                  : {
-                      backgroundColor:
-                        ORANGE_COLOR,
-                      color: '#fff',
-                      '&:hover': {
-                        backgroundColor:
-                          '#cc4800',
-                      },
-                    }),
-              }}
+              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', px: 2.5 }}
+
             >
               {guardandoLectura ? (
                 <CircularProgress
@@ -935,7 +907,7 @@ const BookDetailsPage = () => {
                   handleRemoveRecommendation
                 }
                 sx={{
-                  backgroundColor: ORANGE_COLOR,
+                  backgroundColor: theme.palette.primary.main,
                   color: '#fff',
                   fontWeight: 600,
                   textTransform: 'none',
@@ -973,23 +945,18 @@ const BookDetailsPage = () => {
         {/* COMENTAR */}
         {/* ===================================== */}
 
-        <NavButton
+
+        {/* BOTÓN NARANJA: COMENTAR */}
+         <NavButton
+
           onClick={handleCommentClick}
           sx={{
             width: '100%',
             p: '12px 20px',
-            bgcolor:
-              ORANGE_COLOR + ' !important',
-            color: 'white',
-            fontWeight: 'bold',
-            borderRadius:
-              '8px !important',
-            boxShadow:
-              '0 4px 10px rgba(255, 102, 51, 0.4)',
-            '&:hover': {
-              bgcolor:
-                '#cc4800 !important',
-            },
+
+            borderRadius: '8px',
+            boxShadow: '0 4px 10px rgba(242, 86, 0, 0.4)',
+
           }}
         >
           Comentar

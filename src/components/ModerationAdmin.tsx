@@ -32,7 +32,7 @@ const ModerationAdmin = () => {
 
           <Box sx={{ mb: 3 }}>
             <Chip
-              label={isConfigured ? `Activa (${maskedKey})` : 'Inactiva (Modo fallback local)'}
+              label={isConfigured ? `Activa (${maskedKey})` : 'Inactiva: los comentarios quedan en revisión manual'}
               color={isConfigured ? 'success' : 'warning'}
               variant="outlined"
             />
