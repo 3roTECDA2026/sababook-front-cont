@@ -70,6 +70,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
       { text: 'Mi Biblioteca', icon: <FavoriteIcon />, path: '/favoritos' },
       { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
+      { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
       { text: 'Libros por curso', icon: <MenuBookIcon />, path: '/cursos/libros' },
