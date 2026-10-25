@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardMedia,
@@ -14,8 +13,6 @@ import {
   ListItemText,
   Chip,
   CircularProgress,
-  Snackbar,
-  Alert,
 } from '@mui/material';
 
 import { useNavigate } from 'react-router-dom';
@@ -56,6 +53,8 @@ interface BookCardProps {
   progress?: number;
 
   // Recomendaciones: habilitadas desde el catálogo.
+  // La tarjeta solo avisa que se tocó el botón: el componente padre abre el diálogo
+  // para recomendar o pide confirmación para quitar, y muestra el resultado al terminar.
   showRecommendControl?: boolean;
   isRecommended?: boolean;
   onRecommendToggle?: (
@@ -91,13 +90,10 @@ export default function BookCard({
 
   const [recommendLoading, setRecommendLoading] = useState(false);
 
-  const [notification, setNotification] = useState<{
-    message: string;
-    severity: 'success' | 'error';
-  } | null>(null);
-
   const bookIdentifier = libro_id;
 
+  // No muestra avisos: el resultado lo informa el padre, que sabe
+  // cuándo terminó de verdad la acción (después de confirmar y guardar).
   const handleRecommend = async () => {
     if (
       bookIdentifier == null ||
@@ -109,337 +105,299 @@ export default function BookCard({
 
     try {
       setRecommendLoading(true);
-
       await onRecommendToggle(bookIdentifier, isRecommended);
-
-      setNotification({
-        message: isRecommended
-          ? 'Recomendación quitada correctamente.'
-          : 'Libro recomendado correctamente.',
-        severity: 'success',
-      });
     } catch (error) {
       console.error('Error al modificar recomendación:', error);
-
-      setNotification({
-        message:
-          error instanceof Error
-            ? error.message
-            : 'No se pudo modificar la recomendación.',
-        severity: 'error',
-      });
     } finally {
       setRecommendLoading(false);
     }
   };
 
   return (
-    <>
-      <Card
+    <Card
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        borderRadius: 3,
+        boxShadow: '0 3px 10px rgba(0,0,0,0.1)',
+        bgcolor: '#ffffff',
+        px: 3,
+        py: 1.5,
+        width: featured
+          ? { xs: '100%', sm: 500 }
+          : { xs: '100%', md: '48%' },
+        minWidth: featured ? { xs: '100%', sm: 400 } : 0,
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          transform: 'translateY(-3px)',
+          boxShadow: '0 6px 14px rgba(0,0,0,0.15)',
+        },
+        mb: 2,
+      }}
+    >
+      {/* Imagen del libro */}
+      <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          borderRadius: 3,
-          boxShadow: '0 3px 10px rgba(0,0,0,0.1)',
-          bgcolor: '#ffffff',
-          px: 3,
-          py: 1.5,
-          width: featured
-            ? { xs: '100%', sm: 500 }
-            : { xs: '100%', md: '48%' },
-          minWidth: featured ? { xs: '100%', sm: 400 } : 0,
-          transition: 'transform 0.2s, box-shadow 0.2s',
-          '&:hover': {
-            transform: 'translateY(-3px)',
-            boxShadow: '0 6px 14px rgba(0,0,0,0.15)',
-          },
-          mb: 2,
+          position: 'relative',
+          width: featured ? 145 : 110,
+          height: featured ? 200 : 155,
+          mr: 2,
+          flexShrink: 0,
         }}
       >
-        {/* Imagen del libro */}
-        <Box
+        <CardMedia
+          component="img"
+          image={image}
+          alt={title}
           sx={{
-            position: 'relative',
-            width: featured ? 145 : 110,
-            height: featured ? 200 : 155,
-            mr: 2,
-            flexShrink: 0,
+            width: '100%',
+            height: '100%',
+            borderRadius: 2,
+            objectFit: 'cover',
+          }}
+        />
+
+        {/* Botón de favoritos */}
+        <IconButton
+          aria-label={
+            isFavorite
+              ? 'Quitar de favoritos'
+              : 'Agregar a favoritos'
+          }
+          onClick={async (event) => {
+            const favoriteButton = event.currentTarget;
+            const result = await onFavoriteToggle?.();
+
+            if (!isFavorite && result !== false) {
+              setStatusMenuAnchor(favoriteButton);
+            }
+          }}
+          sx={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            p: 0.5,
+            bgcolor: 'rgba(255, 255, 255, 0.9)',
           }}
         >
-          <CardMedia
-            component="img"
-            image={image}
-            alt={title}
-            sx={{
-              width: '100%',
-              height: '100%',
-              borderRadius: 2,
-              objectFit: 'cover',
-            }}
+          {isFavorite ? (
+            <FavoriteIcon
+              fontSize="small"
+              sx={{ color: 'red' }}
+            />
+          ) : (
+            <FavoriteBorderIcon
+              fontSize="small"
+              sx={{ color: 'red' }}
+            />
+          )}
+        </IconButton>
+
+        {/* Estado de lectura */}
+        {isFavorite &&
+          onReadingStatusChange &&
+          showReadingStatusControl && (
+            <Chip
+              label={
+                readingStatus === 'general'
+                  ? 'Favorito'
+                  : statusLabels[readingStatus]
+              }
+              size="small"
+              onClick={(event) =>
+                setStatusMenuAnchor(event.currentTarget)
+              }
+              sx={{
+                position: 'absolute',
+                top: 42,
+                right: 4,
+                bgcolor: '#fff3e8',
+                color: '#9b4d20',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            />
+          )}
+
+        <Menu
+          anchorEl={statusMenuAnchor}
+          open={Boolean(statusMenuAnchor)}
+          onClose={() => setStatusMenuAnchor(null)}
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: 2,
+                mt: 1,
+                minWidth: 190,
+              },
+            },
+          }}
+        >
+          {readingOptions
+            .filter(
+              ({ value }) =>
+                includeGeneralStatus || value !== 'general'
+            )
+            .map(({ value, label, icon: Icon }) => (
+              <MenuItem
+                key={value}
+                selected={readingStatus === value}
+                onClick={() => {
+                  onReadingStatusChange?.(value);
+                  setStatusMenuAnchor(null);
+                }}
+              >
+                <ListItemIcon>
+                  <Icon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{label}</ListItemText>
+              </MenuItem>
+            ))}
+        </Menu>
+      </Box>
+
+      {/* Contenido */}
+      <CardContent
+        sx={{
+          flex: 1,
+          p: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          minWidth: 0,
+        }}
+      >
+        <Box
+          sx={{
+            px: HORIZONTAL_PADDING,
+            pb: 1,
+            pt: featured ? 4 : 6,
+          }}
+        >
+          <Typography
+            variant={featured ? 'h5' : 'subtitle1'}
+            fontWeight="bold"
+            sx={{ mb: 0.5 }}
+          >
+            {title}
+          </Typography>
+
+          {autor && (
+            <Typography
+              variant={featured ? 'body1' : 'body2'}
+              color="text.secondary"
+              sx={{ mb: 0.5 }}
+            >
+              <b>Autor:</b> {autor}
+            </Typography>
+          )}
+
+          {gender && (
+            <Typography
+              variant={featured ? 'body1' : 'body2'}
+              color="text.secondary"
+              sx={{ mb: 0.5 }}
+            >
+              <b>Género:</b> {gender}
+            </Typography>
+          )}
+
+          {description && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 0.5 }}
+            >
+              {description}
+            </Typography>
+          )}
+
+          <Rating
+            value={rating ?? 0}
+            precision={0.5}
+            readOnly
+            size={featured ? 'medium' : 'small'}
           />
 
-          {/* Botón de favoritos */}
-          <IconButton
-            aria-label={
-              isFavorite
-                ? 'Quitar de favoritos'
-                : 'Agregar a favoritos'
-            }
-            onClick={async (event) => {
-              const favoriteButton = event.currentTarget;
-              const result = await onFavoriteToggle?.();
+          {rating != null && rating > 0 && (
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              fontWeight="bold"
+              sx={{ mt: 0.2, mb: 1 }}
+            >
+              {rating.toFixed(1)}
+            </Typography>
+          )}
+        </Box>
 
-              if (!isFavorite && result !== false) {
-                setStatusMenuAnchor(favoriteButton);
+        {/* Acciones */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1,
+            mt: 'auto',
+            px: HORIZONTAL_PADDING,
+            pt: 1,
+            pb: 0,
+          }}
+        >
+          {/* Recomendar / quitar recomendación.
+              Quitar es una acción de eliminar: usa color="error", como pide la guía. */}
+          {showRecommendControl && onRecommendToggle && (
+            <Button
+              color={isRecommended ? 'error' : 'primary'}
+              size="small"
+              disabled={
+                bookIdentifier == null || recommendLoading
+              }
+              startIcon={
+                recommendLoading ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : isRecommended ? (
+                  <RemoveCircleOutlineIcon />
+                ) : (
+                  <RecommendIcon />
+                )
+              }
+              onClick={handleRecommend}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+              }}
+            >
+              {isRecommended
+                ? 'Quitar recomendación'
+                : 'Recomendar'}
+            </Button>
+          )}
+
+          {/* Ver más */}
+          <Button
+            onClick={() => {
+              if (onVerMas) {
+                onVerMas();
+                return;
+              }
+
+              if (bookIdentifier != null) {
+                navigate(`/bookdetails/${bookIdentifier}`);
               }
             }}
             sx={{
-              position: 'absolute',
-              top: 4,
-              right: 4,
-              p: 0.5,
-              bgcolor: 'rgba(255, 255, 255, 0.9)',
+              textTransform: 'none',
+              fontSize: featured ? '0.9rem' : '0.8rem',
+              borderRadius: 2,
             }}
           >
-            {isFavorite ? (
-              <FavoriteIcon
-                fontSize="small"
-                sx={{ color: 'red' }}
-              />
-            ) : (
-              <FavoriteBorderIcon
-                fontSize="small"
-                sx={{ color: 'red' }}
-              />
-            )}
-          </IconButton>
-
-          {/* Estado de lectura */}
-          {isFavorite &&
-            onReadingStatusChange &&
-            showReadingStatusControl && (
-              <Chip
-                label={
-                  readingStatus === 'general'
-                    ? 'Favorito'
-                    : statusLabels[readingStatus]
-                }
-                size="small"
-                onClick={(event) =>
-                  setStatusMenuAnchor(event.currentTarget)
-                }
-                sx={{
-                  position: 'absolute',
-                  top: 42,
-                  right: 4,
-                  bgcolor: '#fff3e8',
-                  color: '#9b4d20',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              />
-            )}
-
-          <Menu
-            anchorEl={statusMenuAnchor}
-            open={Boolean(statusMenuAnchor)}
-            onClose={() => setStatusMenuAnchor(null)}
-            slotProps={{
-              paper: {
-                sx: {
-                  borderRadius: 2,
-                  mt: 1,
-                  minWidth: 190,
-                },
-              },
-            }}
-          >
-            {readingOptions
-              .filter(
-                ({ value }) =>
-                  includeGeneralStatus || value !== 'general'
-              )
-              .map(({ value, label, icon: Icon }) => (
-                <MenuItem
-                  key={value}
-                  selected={readingStatus === value}
-                  onClick={() => {
-                    onReadingStatusChange?.(value);
-                    setStatusMenuAnchor(null);
-                  }}
-                >
-                  <ListItemIcon>
-                    <Icon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>{label}</ListItemText>
-                </MenuItem>
-              ))}
-          </Menu>
+            Ver más
+          </Button>
         </Box>
-
-        {/* Contenido */}
-        <CardContent
-          sx={{
-            flex: 1,
-            p: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-            minWidth: 0,
-          }}
-        >
-          <Box
-            sx={{
-              px: HORIZONTAL_PADDING,
-              pb: 1,
-              pt: featured ? 4 : 6,
-            }}
-          >
-            <Typography
-              variant={featured ? 'h5' : 'subtitle1'}
-              fontWeight="bold"
-              sx={{ mb: 0.5 }}
-            >
-              {title}
-            </Typography>
-
-            {autor && (
-              <Typography
-                variant={featured ? 'body1' : 'body2'}
-                color="text.secondary"
-                sx={{ mb: 0.5 }}
-              >
-                <b>Autor:</b> {autor}
-              </Typography>
-            )}
-
-            {gender && (
-              <Typography
-                variant={featured ? 'body1' : 'body2'}
-                color="text.secondary"
-                sx={{ mb: 0.5 }}
-              >
-                <b>Género:</b> {gender}
-              </Typography>
-            )}
-
-            {description && (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 0.5 }}
-              >
-                {description}
-              </Typography>
-            )}
-
-            <Rating
-              value={rating ?? 0}
-              precision={0.5}
-              readOnly
-              size={featured ? 'medium' : 'small'}
-            />
-
-            {rating != null && rating > 0 && (
-              <Typography
-                variant="h6"
-                color="text.secondary"
-                fontWeight="bold"
-                sx={{ mt: 0.2, mb: 1 }}
-              >
-                {rating.toFixed(1)}
-              </Typography>
-            )}
-          </Box>
-
-          {/* Acciones */}
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 1,
-              mt: 'auto',
-              px: HORIZONTAL_PADDING,
-              pt: 1,
-              pb: 0,
-            }}
-          >
-            {/* Recomendar / quitar recomendación */}
-            {showRecommendControl && onRecommendToggle && (
-              <Button
-                variant={isRecommended ? 'outlined' : 'contained'}
-                color={isRecommended ? 'error' : 'success'}
-                size="small"
-                disabled={
-                  bookIdentifier == null || recommendLoading
-                }
-                startIcon={
-                  recommendLoading ? (
-                    <CircularProgress size={16} color="inherit" />
-                  ) : isRecommended ? (
-                    <RemoveCircleOutlineIcon />
-                  ) : (
-                    <RecommendIcon />
-                  )
-                }
-                onClick={handleRecommend}
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
-                }}
-              >
-                {isRecommended
-                  ? 'Quitar recomendación'
-                  : 'Recomendar'}
-              </Button>
-            )}
-
-            {/* Ver más */}
-            <Button
-              variant="contained"
-              onClick={() => {
-                if (onVerMas) {
-                  onVerMas();
-                  return;
-                }
-
-                if (bookIdentifier != null) {
-                  navigate(`/bookdetails/${bookIdentifier}`);
-                }
-              }}
-              sx={{
-                bgcolor: '#f25600',
-                textTransform: 'none',
-                fontSize: featured ? '0.9rem' : '0.8rem',
-                borderRadius: 2,
-                '&:hover': {
-                  bgcolor: '#d64500',
-                },
-              }}
-            >
-              Ver más
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Notificaciones */}
-      <Snackbar
-        open={Boolean(notification)}
-        autoHideDuration={3500}
-        onClose={() => setNotification(null)}
-      >
-        <Alert
-          severity={notification?.severity ?? 'success'}
-          onClose={() => setNotification(null)}
-          sx={{ width: '100%' }}
-        >
-          {notification?.message}
-        </Alert>
-      </Snackbar>
-    </>
+      </CardContent>
+    </Card>
   );
 }
 
