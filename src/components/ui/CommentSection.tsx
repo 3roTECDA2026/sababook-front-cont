@@ -82,6 +82,7 @@ const CommentSection = ({
 
               <ListItemText
                 primary={name}
+                slotProps={{ secondary: { component: 'div' } }}
                 secondary={
                   <>
                     <Typography variant="body2">
