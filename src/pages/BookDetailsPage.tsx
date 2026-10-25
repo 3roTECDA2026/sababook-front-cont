@@ -737,7 +737,7 @@ const BookDetailsPage = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: '#fff8f4',
+              backgroundColor: 'background.paper',
               gap: 2,
             }}
           >
@@ -750,7 +750,7 @@ const BookDetailsPage = () => {
             >
               <MenuBookIcon
                 sx={{
-                  color: ORANGE_COLOR,
+                  color: 'primary.main',
                   fontSize: 30,
                 }}
               />
@@ -769,7 +769,7 @@ const BookDetailsPage = () => {
               <CircularProgress
                 size={24}
                 sx={{
-                  color: ORANGE_COLOR,
+                  color: 'primary.main',
                 }}
               />
             ) : (
@@ -777,7 +777,7 @@ const BookDetailsPage = () => {
                 variant="h5"
                 sx={{
                   fontWeight: 800,
-                  color: ORANGE_COLOR,
+                  color: 'primary.main',
                 }}
               >
                 {librosLeidos ?? '—'}
