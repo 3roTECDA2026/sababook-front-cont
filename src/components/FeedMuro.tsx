@@ -17,7 +17,9 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  Snackbar,
 } from '@mui/material';
+import type { AlertColor } from '@mui/material';
 import {
   Radio as RadioIcon,
   Forum as ForumIcon,
@@ -28,6 +30,8 @@ import {
   DeleteSweep as DeleteSweepIcon,
 } from '@mui/icons-material';
 import { API_BASE_URL } from '../environments/api';
+import { useAuth } from '@/hooks/useAuth';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 type TipoActividad = 'RADIO_EPISODIO' | 'FORO_APL' | 'NUEVO_LIBRO' | 'NUEVA_OPINION' | 'RESEÑA' | 'AVISO' | string;
 
@@ -51,6 +55,12 @@ interface FeedResponse {
   total: number;
 }
 
+interface NotificationState {
+  open: boolean;
+  message: string;
+  severity: AlertColor;
+}
+
 const feedService = {
   async obtenerFeed(page: number, limit: number): Promise<FeedResponse> {
     const token = localStorage.getItem('token');
@@ -69,20 +79,30 @@ const feedService = {
     return response.json() as Promise<FeedResponse>;
   },
 
-  // Método para borrar o limpiar el feed en backend/vista
-  async limpiarFeed(): Promise<boolean> {
+  // Vacía el muro en el back (solo administrador).
+  // Si falla, lanza el mensaje de error que devuelve la API para mostrarlo en pantalla.
+  async limpiarFeed(): Promise<void> {
     const token = localStorage.getItem('token');
+
+    let response: Response;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/feed`, {
+      response = await fetch(`${API_BASE_URL}/api/v1/feed`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-      return response.ok;
     } catch {
-      return false;
+      throw new Error('No pudimos conectar con el servidor. Inténtalo en un momento.');
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      // El back responde { error }, salvo los 401 del middleware, que responden { message }
+      throw new Error(
+        data?.error ?? data?.message ?? `No se pudo limpiar el muro (${response.status}).`
+      );
     }
   },
 };
@@ -91,6 +111,7 @@ const PAGE_LIMIT = 10;
 
 export const FeedMuro: React.FC = () => {
   const navigate = useNavigate();
+  const { isAdmin, loading: authLoading } = useAuth();
   const [actividades, setActividades] = useState<ActividadFeed[]>([]);
   const [pagina, setPagina] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
@@ -98,6 +119,12 @@ export const FeedMuro: React.FC = () => {
   const [cargandoMas, setCargandoMas] = useState<boolean>(false);
   const [limpiando, setLimpiando] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState<boolean>(false);
+  const [notification, setNotification] = useState<NotificationState>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   useEffect(() => {
     fetchFeed(1, true);
@@ -137,19 +164,29 @@ export const FeedMuro: React.FC = () => {
     }
   };
 
-  // Función para vaciar / limpiar el muro de actividades
-  const handleLimpiarMuro = async () => {
-    if (window.confirm('¿Estás seguro de que querés limpiar las actividades del muro?')) {
-      setLimpiando(true);
-      const ok = await feedService.limpiarFeed();
-      if (ok) {
-        setActividades([]);
-        setTotal(0);
-      } else {
-        // Si el backend no tiene un endpoint DELETE /feed, las limpiamos localmente en el estado
-        setActividades([]);
-        setTotal(0);
-      }
+  // Vacía el muro después de confirmar en el modal (solo administrador).
+  // La lista se borra en pantalla recién cuando el back confirma el borrado.
+  const handleConfirmClear = async () => {
+    setIsClearConfirmOpen(false);
+    setLimpiando(true);
+
+    try {
+      await feedService.limpiarFeed();
+      setActividades([]);
+      setTotal(0);
+      setNotification({
+        open: true,
+        message: 'Se limpió el muro de actividades.',
+        severity: 'success',
+      });
+    } catch (err) {
+      // Si el back rechaza el borrado, las publicaciones siguen en pantalla
+      setNotification({
+        open: true,
+        message: err instanceof Error ? err.message : 'No se pudo limpiar el muro.',
+        severity: 'error',
+      });
+    } finally {
       setLimpiando(false);
     }
   };
@@ -205,6 +242,9 @@ export const FeedMuro: React.FC = () => {
 
   const hayMasPaginas = actividades.length < total;
 
+  // Solo el administrador puede vaciar el muro (el back también lo valida)
+  const canClearFeed = !authLoading && isAdmin && actividades.length > 0;
+
   if (cargandoInicial) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" py={8} gap={2}>
@@ -232,11 +272,19 @@ export const FeedMuro: React.FC = () => {
             {total} {total === 1 ? 'publicación' : 'publicaciones'}
           </Typography>
 
-          {actividades.length > 0 && (
+          {canClearFeed && (
             <Tooltip title="Limpiar muro">
-              <IconButton onClick={handleLimpiarMuro} color="error" disabled={limpiando} size="small">
-                <DeleteSweepIcon />
-              </IconButton>
+              <span>
+                <IconButton
+                  onClick={() => setIsClearConfirmOpen(true)}
+                  color="error"
+                  disabled={limpiando}
+                  size="small"
+                  aria-label="Limpiar muro"
+                >
+                  {limpiando ? <CircularProgress size={20} color="inherit" /> : <DeleteSweepIcon />}
+                </IconButton>
+              </span>
             </Tooltip>
           )}
         </Box>
@@ -338,6 +386,29 @@ export const FeedMuro: React.FC = () => {
           </Button>
         </Box>
       )}
+
+      {/* Confirmación antes de vaciar el muro */}
+      <ConfirmationModal
+        open={isClearConfirmOpen}
+        onClose={() => setIsClearConfirmOpen(false)}
+        onConfirm={handleConfirmClear}
+        title="Limpiar el muro"
+        message="¿Querés borrar todas las publicaciones del muro? Se borran para toda la escuela y no se puede deshacer."
+      />
+
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+      >
+        <Alert
+          onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+          severity={notification.severity}
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
