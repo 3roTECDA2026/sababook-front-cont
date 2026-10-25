@@ -364,7 +364,7 @@ export async function getCafesLiterarios(
 
   return await apiRequest<CafeLiterario[]>(
     `/cafes${query}`,
-    { signal }
+    { signal, headers: getAuthHeaders() }
   );
 }
 
@@ -394,6 +394,7 @@ export async function crearCafeLiterario(data: {
 }> {
   return await apiRequest('/cafes', {
     method: 'POST',
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
 }
@@ -410,6 +411,7 @@ export async function toggleAsistenciaCafe(
     `/cafes/${cafeId}/asistencia`,
     {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: JSON.stringify({ estado }),
     }
   );
@@ -432,6 +434,7 @@ export async function votarCafeLiterario(
     `/cafes/${cafeId}/voto`,
     {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: JSON.stringify({ voto }),
     }
   );
