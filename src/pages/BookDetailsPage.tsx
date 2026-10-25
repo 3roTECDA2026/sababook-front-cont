@@ -29,7 +29,6 @@ import BookOpinionList from '@/components/ui/BookOpinionList';
 import BookDescription from '@/components/ui/BookDescription';
 import TriviaPlaySection from '@/components/ui/TriviaPlaySection';
 
-const ORANGE_COLOR = '#FF6633';
 const BLUE_COLOR = '#1976d2';
 
 interface Recomendacion {
@@ -389,7 +388,6 @@ const BookDetailsPage = () => {
                 ? `Leído el ${formatearFecha(fechaLectura)}`
                 : 'Todavía no lo marcaste como leído.'}
             </Typography>
-
              <Button
               startIcon={leido && !guardandoLectura ? <CheckCircleIcon /> : undefined}
               disabled={guardandoLectura}
@@ -471,19 +469,13 @@ const BookDetailsPage = () => {
         )}
 
         {/* BOTÓN NARANJA: COMENTAR */}
-        <NavButton
+         <NavButton
           onClick={handleCommentClick}
           sx={{
             width: '100%',
             p: '12px 20px',
-            bgcolor: ORANGE_COLOR + ' !important',
-            color: 'white',
-            fontWeight: 'bold',
-            borderRadius: '8px !important',
-            boxShadow: '0 4px 10px rgba(255, 102, 51, 0.4)',
-            '&:hover': {
-              bgcolor: '#cc4800 !important',
-            },
+            borderRadius: '8px',
+            boxShadow: '0 4px 10px rgba(242, 86, 0, 0.4)',
           }}
         >
           Comentar
