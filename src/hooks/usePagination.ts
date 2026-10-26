@@ -35,11 +35,16 @@ export function usePagination<T>({
     fetchRef.current = fetchPage;
   }, [fetchPage]);
 
-  // Reinicio al cambiar la búsqueda/filtros (patrón "ajustar estado durante el render")
+  // Reinicio al cambiar la búsqueda/filtros (patrón "ajustar estado durante el render").
+  // También se reinician hasMore y loading: si quedaran los valores de la carga anterior
+  // (hasMore = true, loading = false), InfiniteScroll pediría la página 2 antes de que
+  // llegue la 1, y esa petición cancelaría la página 1 con los resultados.
   if (prevResetKey !== resetKey) {
     setPrevResetKey(resetKey);
     setPage(1);
     setItems([]);
+    setHasMore(false);
+    if (enabled) setLoading(true);
   }
 
   useEffect(() => {
@@ -82,11 +87,14 @@ export function usePagination<T>({
 
   const reload = useCallback(() => {
     if (mode === 'append') {
+      // Mismo motivo que en el reinicio: evita que se pida la página 2 antes que la 1
       setItems([]);
       setPage(1);
+      setHasMore(false);
+      if (enabled) setLoading(true);
     }
     setReloadToken((t) => t + 1);
-  }, [mode]);
+  }, [mode, enabled]);
 
   return { items, page, total, totalPages, hasMore, loading, error, goToPage, loadMore, reload };
 }
