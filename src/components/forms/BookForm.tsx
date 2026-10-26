@@ -1,5 +1,5 @@
 // src/components/BookForm.tsx
-import React, { useState, useEffect, ChangeEvent, FormEvent, SyntheticEvent } from 'react';
+import React, { useState, useEffect, useRef, ChangeEvent, FormEvent, SyntheticEvent } from 'react';
 import {
   Box,
   Typography,
@@ -14,9 +14,18 @@ import {
   useTheme,
   Paper,
   Grid,
+  Alert,
+  CircularProgress,
+  Chip,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import type { Book } from '@/types';
+import { uploadPdfMaterial } from '@/services/apiService';
+import PdfReaderModal from '@/components/ui/PdfReaderModal';
 
 // NOTA: Se eliminan useParams y useNavigate ya que el formulario es llamado por un modal y no por una ruta.
 
@@ -33,6 +42,7 @@ interface BookFormData {
   descripcion: string;
   imagenUrl?: string;
   portada_url?: string;
+  archivo_url?: string;
   id?: number;
   [key: string]: unknown;
 }
@@ -46,6 +56,7 @@ const INITIAL_BOOK_DATA: BookFormData = {
   nivel_educativo: '',
   descripcion: '',
   imagenUrl: '', // Se mapea a 'portada_url' para el backend
+  archivo_url: '',
 };
 
 // --- Componentes Estilizados (Material UI) ---
@@ -112,10 +123,15 @@ interface BookFormProps {
 // 💡 Ahora acepta props para el modo edición, guardado y cancelación
 const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
   const theme = useTheme();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // 💡 ESTADO INICIAL: Mapea bookToEdit (si existe) o usa datos iniciales vacíos
   const [formData, setFormData] = useState<BookFormData>(INITIAL_BOOK_DATA);
-  const [loading, setLoading] = useState<boolean>(false); // Para manejar la carga local de la acción de guardar
+  const [loading, setLoading] = useState<boolean>(false);
+  const [uploadingPdf, setUploadingPdf] = useState<boolean>(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [previewPdfOpen, setPreviewPdfOpen] = useState<boolean>(false);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   // 💡 EFECTO: Actualiza el formulario cuando cambia bookToEdit (al abrir el modal)
   useEffect(() => {
@@ -127,11 +143,15 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
         libro_id: bookToEdit.libro_id,
         // Mapeamos el campo de la DB (portada_url) al campo del formulario (imagenUrl)
         imagenUrl: bookToEdit.imagenUrl || bookToEdit.portada_url || '',
+        archivo_url: bookToEdit.archivo_url || '',
       };
       setFormData(mappedData);
+      setSelectedFileName(bookToEdit.archivo_url ? 'Archivo PDF cargado' : null);
     } else {
       setFormData(INITIAL_BOOK_DATA);
+      setSelectedFileName(null);
     }
+    setPdfError(null);
   }, [bookToEdit]);
 
   // Manejador de cambios en los campos del formulario
@@ -140,6 +160,46 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Manejador de selección y carga de archivo PDF
+  const handlePdfFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setPdfError('El archivo seleccionado debe ser un documento PDF (.pdf)');
+      return;
+    }
+
+    // Límite 25MB
+    if (file.size > 25 * 1024 * 1024) {
+      setPdfError('El tamaño del PDF no debe superar los 25 MB');
+      return;
+    }
+
+    setPdfError(null);
+    setUploadingPdf(true);
+    setSelectedFileName(file.name);
+
+    try {
+      const res = await uploadPdfMaterial(file);
+      setFormData((prev) => ({ ...prev, archivo_url: res.url }));
+    } catch (err) {
+      console.error('Error al subir PDF:', err);
+      setPdfError('No se pudo subir el archivo PDF. Intenta de nuevo.');
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
+  const handleClearPdf = () => {
+    setFormData((prev) => ({ ...prev, archivo_url: '' }));
+    setSelectedFileName(null);
+    setPdfError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // 💡 Manejador de Guardado (POST/PUT delegado al padre)
@@ -158,6 +218,11 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
       payload.portada_url = payload.imagenUrl;
     }
     delete payload.imagenUrl;
+
+    // Incluimos archivo_url limpio
+    if (payload.archivo_url) {
+      payload.archivo_url = payload.archivo_url.trim();
+    }
 
     // Incluimos libro_id en el payload si estamos editando (crucial para que Dashboard use PUT)
     if (bookToEdit && bookToEdit.libro_id) {
@@ -333,15 +398,110 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
               />
             </Box>
           </Grid>
+
+          {/* Sección de Material de Lectura PDF (SAB-67) */}
+          <Grid size={{ xs: 12 }}>
+            <Box
+              sx={{
+                p: 2.5,
+                border: `1px solid ${theme.palette.grey[300]}`,
+                borderRadius: '8px',
+                backgroundColor: theme.palette.grey[50] || '#fafafa',
+              }}
+            >
+              <Box display="flex" alignItems="center" gap={1} mb={1.5}>
+                <PictureAsPdfIcon sx={{ color: '#e53935' }} />
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Material de lectura (Archivo PDF)
+                </Typography>
+              </Box>
+
+              <Typography variant="body2" color="text.secondary" mb={2}>
+                Carga el archivo PDF del libro para que los alumnos puedan leerlo directamente desde la plataforma.
+              </Typography>
+
+              {pdfError && (
+                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPdfError(null)}>
+                  {pdfError}
+                </Alert>
+              )}
+
+              {/* Botón para seleccionar archivo local */}
+              <Box display="flex" alignItems="center" flexWrap="wrap" gap={2} mb={2}>
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handlePdfFileSelect}
+                />
+                <Button
+                  variant="outlined"
+                  startIcon={uploadingPdf ? <CircularProgress size={18} /> : <UploadFileIcon />}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPdf}
+                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                >
+                  {uploadingPdf ? 'Subiendo PDF...' : 'Seleccionar archivo PDF'}
+                </Button>
+
+                {formData.archivo_url && (
+                  <>
+                    <Chip
+                      icon={<PictureAsPdfIcon />}
+                      label={selectedFileName || 'PDF adjunto'}
+                      color="primary"
+                      variant="outlined"
+                      onDelete={handleClearPdf}
+                    />
+                    <Button
+                      size="small"
+                      variant="text"
+                      startIcon={<VisibilityIcon />}
+                      onClick={() => setPreviewPdfOpen(true)}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      Previsualizar
+                    </Button>
+                  </>
+                )}
+              </Box>
+
+              {/* O ingresar URL directa */}
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                  O ingresa la URL directa del documento PDF si está alojado externamente:
+                </Typography>
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  placeholder="https://ejemplo.com/material-de-lectura.pdf"
+                  name="archivo_url"
+                  value={formData.archivo_url || ''}
+                  onChange={handleChange}
+                />
+              </Box>
+            </Box>
+          </Grid>
         </Grid>
+
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
           <Button onClick={onCancel} variant="outlined">
             Cancelar
           </Button>
-          <Button type="submit" variant="contained" sx={{ backgroundColor: 'button.main' }}>
-            Guardar Cambios
+          <Button type="submit" variant="contained" disabled={loading || uploadingPdf}>
+            {loading ? 'Guardando...' : 'Guardar Cambios'}
           </Button>
         </Box>
+
+        {/* Modal de previsualización del PDF */}
+        <PdfReaderModal
+          open={previewPdfOpen}
+          onClose={() => setPreviewPdfOpen(false)}
+          pdfUrl={formData.archivo_url}
+          title={formData.titulo || 'Material de lectura'}
+        />
       </FormContainer>
     </form>
   );

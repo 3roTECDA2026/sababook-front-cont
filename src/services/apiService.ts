@@ -553,3 +553,61 @@ export async function deleteReadingGoal(
     }
   );
 }
+
+// =====================================================
+// MATERIAL DE LECTURA PDF (SAB-67)
+// =====================================================
+
+export async function uploadPdfMaterial(
+  fileOrBase64: File | string,
+  fileName?: string
+): Promise<{ url: string; mensaje: string }> {
+  let base64 = '';
+  let nombreArchivo = fileName || 'material_lectura.pdf';
+
+  if (typeof fileOrBase64 === 'string') {
+    if (
+      fileOrBase64.startsWith('http://') ||
+      fileOrBase64.startsWith('https://') ||
+      fileOrBase64.startsWith('/')
+    ) {
+      return await apiRequest<{ url: string; mensaje: string }>('/books/upload-pdf', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ url: fileOrBase64 }),
+      });
+    }
+    base64 = fileOrBase64;
+  } else {
+    nombreArchivo = fileOrBase64.name;
+    base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(fileOrBase64);
+    });
+  }
+
+  return await apiRequest<{ url: string; mensaje: string }>('/books/upload-pdf', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      base64,
+      nombreArchivo,
+    }),
+  });
+}
+
+export async function adjuntarPdfLibro(
+  libroId: number,
+  archivoUrl: string
+): Promise<{ mensaje: string; libro: Book }> {
+  return await apiRequest<{ mensaje: string; libro: Book }>(`/books/${libroId}/pdf`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      archivo_url: archivoUrl,
+    }),
+  });
+}
+
