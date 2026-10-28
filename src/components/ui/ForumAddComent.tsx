@@ -17,7 +17,6 @@ interface ForumAddCommentProps {
 
 const ForumAddComment = ({
   forumId,
-  userId,
   userName,
   userAvatar,
   onCommentAdded,

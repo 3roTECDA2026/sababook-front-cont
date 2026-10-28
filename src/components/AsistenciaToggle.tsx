@@ -29,7 +29,7 @@ export default function AsistenciaToggle({
 
   const confirmar = () => {
     setOpenConfirm(false);
-    onToggle && onToggle(true);
+    onToggle?.(true);
   };
 
   return (
@@ -85,7 +85,7 @@ export default function AsistenciaToggle({
         onClose={() => setOpenConfirm(false)}
         onConfirm={() => {
           setOpenConfirm(false);
-          onToggle && onToggle(false);
+          onToggle?.(false);
         }}
         title="Cancelar asistencia"
         message="¿Querés cancelar tu asistencia a este Café Literario? Si lo canceláis, te perderás el próximo encuentro."

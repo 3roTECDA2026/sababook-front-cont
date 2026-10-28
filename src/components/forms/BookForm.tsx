@@ -57,30 +57,7 @@ const FormContainer = styled(Paper)(({ theme }) => ({
   // Quitamos el margin: '40px auto' ya que el modal lo centrará
 }));
 
-const PrimaryButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  color: '#FFFFFF',
-  padding: '10px 25px',
-  borderRadius: '8px',
-  fontWeight: 'bold',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-}));
 
-const SecondaryButton = styled(Button)(({ theme }) => ({
-  backgroundColor: 'transparent',
-  color: theme.palette.text.secondary,
-  border: '1px solid #ccc',
-  padding: '10px 25px',
-  borderRadius: '8px',
-  fontWeight: 'bold',
-  marginRight: theme.spacing(2),
-  '&:hover': {
-    backgroundColor: theme.palette.grey[200],
-    borderColor: theme.palette.grey[500],
-  },
-}));
 
 const StyledTextarea = styled(TextareaAutosize)(({ theme }) => ({
   width: '100%',
@@ -115,7 +92,7 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
 
   // 💡 ESTADO INICIAL: Mapea bookToEdit (si existe) o usa datos iniciales vacíos
   const [formData, setFormData] = useState<BookFormData>(INITIAL_BOOK_DATA);
-  const [loading, setLoading] = useState<boolean>(false); // Para manejar la carga local de la acción de guardar
+  const [, setLoading] = useState<boolean>(false); // Para manejar la carga local de la acción de guardar
 
   // 💡 EFECTO: Actualiza el formulario cuando cambia bookToEdit (al abrir el modal)
   useEffect(() => {
@@ -175,12 +152,7 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
     }
   };
 
-  // 💡 La cancelación llama al prop onCancel
-  const handleCancel = () => {
-    onCancel();
-  };
-
-  // Renderizado
+   // Renderizado
   const currentTitle = title || (bookToEdit ? 'Editar Libro' : 'Crear Nuevo Libro');
   const bookIdentifier = bookToEdit?.libro_id ? ` (ID: ${bookToEdit.libro_id})` : '';
 

@@ -46,7 +46,7 @@ interface SideMenuProps {
 export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuProps) {
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
   const navigate = useNavigate();
-  const { isAdmin, isTeacher, logout } = useAuth();
+  const { isAdmin, isTeacher } = useAuth();
 
   let menuItems: MenuItem[];
 
