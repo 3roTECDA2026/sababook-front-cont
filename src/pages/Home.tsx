@@ -819,7 +819,9 @@ export default function Home() {
                   status
                 )
               }
-
+              showReadingStatusControl
+              includeGeneralStatus
+              
               // El botón Recomendar aparece
               // solo para docentes y administradores,
               // si el libro aún no está recomendado.
