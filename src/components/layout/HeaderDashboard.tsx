@@ -54,8 +54,8 @@ interface HeaderDashboardProps {
 
 const HeaderDashboard = ({
   activeView = 'users',
-  onNavigate = () => console.log('Navegación Desactivada'),
-  onAddClick = () => console.log('Agregar Desactivado'),
+  onNavigate = () => {},
+  onAddClick = () => {},
   rachaActual: rachaProp,
   recordRacha: recordProp,
   mostrarRacha = true,

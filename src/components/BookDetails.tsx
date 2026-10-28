@@ -29,8 +29,8 @@ const BookDetails = () => {
   const theme = useTheme();
   const book = MOCK_BOOK_DATA;
 
-  const handleCommentClick = () => console.log('Navegar a comentarios');
-  const handleMenuToggle = () => console.log('Abrir SideMenu');
+  const handleCommentClick = () => {};
+  const handleMenuToggle = () => {};
 
   return (
     <Box
@@ -125,7 +125,7 @@ const BookDetails = () => {
           </Paper>
 
           <NavButton
-            onClick={() => console.log('Ver todos los comentarios')}
+            onClick={() => {}}
             sx={{
               width: '100%',
               mt: 3,

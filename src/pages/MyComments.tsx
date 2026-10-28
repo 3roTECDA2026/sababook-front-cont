@@ -128,14 +128,12 @@ export default function MyComments() {
   const handleViewComment = (id: number) => {
     // Asumimos que la ruta para ver un comentario es /comentarios/ID
     navigate(`/comentarios/${id}`);
-    console.log(`Navegando a ver comentario ${id}`);
   };
 
   // 2. EDITAR: Navega al formulario de edición
   const handleEditComment = (id: number) => {
     // Asumimos que la ruta para editar es /comentarios/editar/ID
     navigate(`/comentarios/editar/${id}`);
-    console.log(`Navegando a editar comentario ${id}`);
   };
 
   // 3. ELIMINAR: Abre el diálogo de confirmación
@@ -150,7 +148,6 @@ export default function MyComments() {
     setDialogOpen(false);
     if (commentToDelete !== null) {
       //  AQUÍ IRÍA LA LLAMADA AL MÉTODO DELETE DE LA API
-      console.log(`Eliminando comentario con ID: ${commentToDelete}`);
 
       // Lógica optimista/local: Eliminar el comentario de la lista de estado
       setComments((prevComments) => prevComments.filter((comment) => comment.id !== commentToDelete));
