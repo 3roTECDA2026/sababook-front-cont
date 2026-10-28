@@ -95,6 +95,7 @@ export default function FilterChips({
   const [dynamicGenres, setDynamicGenres] = useState<string[]>([]);
   const [dynamicLevels, setDynamicLevels] = useState<string[]>([]);
   const [cargandoOpciones, setCargandoOpciones] = useState(true);
+  const [errorOpciones, setErrorOpciones] = useState(false);
 
   const openMenu = Boolean(anchorEl);
 
@@ -155,6 +156,7 @@ export default function FilterChips({
       .catch((error) => {
         console.error('Error al cargar opciones de filtros:', error);
         if (!montado) return;
+        setErrorOpciones(true);
         setCargandoOpciones(false);
       });
 
@@ -372,6 +374,10 @@ export default function FilterChips({
         ) : cargandoOpciones && (activeFilterId === 'genre' || activeFilterId === 'level') ? (
           <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
             Cargando opciones…
+          </MenuItem>
+        ) : errorOpciones && (activeFilterId === 'genre' || activeFilterId === 'level') ? (
+          <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'error.main' }}>
+            No se pudieron cargar las opciones. Intente nuevamente más tarde.
           </MenuItem>
         ) : currentOptions.length === 0 ? (
           <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
