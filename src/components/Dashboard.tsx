@@ -1,12 +1,6 @@
 
 import { useState, useEffect, SyntheticEvent, useCallback } from 'react';
-import {
-  Box,
-  Modal,
-  Snackbar,
-  Alert,
-  Button,
-} from '@mui/material';
+import { Box, Modal, Snackbar, Alert, Button } from '@mui/material';
 import type { AlertColor } from '@mui/material';
 
 import HeaderDashboard from './layout/HeaderDashboard';
@@ -65,7 +59,6 @@ const Dashboard = () => {
   const [booksLoading, setBooksLoading] = useState<boolean>(true);
   const [booksError, setBooksError] = useState<string | null>(null);
 
-  // Estados de modales
   const [openForumModal, setOpenForumModal] = useState(false);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openCreateBookModal, setOpenCreateBookModal] = useState(false);
@@ -90,7 +83,6 @@ const Dashboard = () => {
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
 
-  // Estados de foros
   const [forums, setForums] = useState<Forum[]>([]);
   const [forumsLoading, setForumsLoading] = useState(true);
   const [forumsError, setForumsError] = useState<string | null>(null);
@@ -252,7 +244,6 @@ const Dashboard = () => {
       });
     } catch (error) {
       console.error('Error al crear usuario:', error);
-
       setSnackbar({
         open: true,
         message: 'Error al crear el usuario',
@@ -261,32 +252,52 @@ const Dashboard = () => {
     }
   };
 
-  // Crear o editar libro
+  // Crear o editar libro - SAB-91
   const handleSaveBook = async (
     bookData: { libro_id?: number; [key: string]: unknown }
   ) => {
     setIsApiLoading(true);
-    const token = localStorage.getItem('token');
 
+    const token = localStorage.getItem('token');
     const isEditing = !!bookData.libro_id;
+
     const endpoint = isEditing
       ? `${API_BASE_URL}/api/v1/books/${bookData.libro_id}`
       : `${API_BASE_URL}/api/v1/books`;
 
     try {
+      const paginas = bookData.paginas_totales;
+
+      if (
+        typeof paginas !== 'number' ||
+        !Number.isSafeInteger(paginas) ||
+        paginas <= 0 ||
+        paginas > 2147483647
+      ) {
+        throw new Error(
+          'Ingresá un número entero de páginas mayor que cero.'
+        );
+      }
+
       const response = await fetch(endpoint, {
         method: isEditing ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(bookData),
+        body: JSON.stringify({
+          ...bookData,
+          paginas_totales: paginas,
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+
         throw new Error(
-          errorData.message || `Falló la operación (HTTP ${response.status})`
+          errorData.mensaje ||
+          errorData.message ||
+          `Falló la operación (HTTP ${response.status})`
         );
       }
 
@@ -300,10 +311,10 @@ const Dashboard = () => {
           : 'Libro creado correctamente.',
         severity: 'success',
       });
-
-      return Promise.resolve();
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message =
+        error instanceof Error ? error.message : String(error);
+
       console.error('Error al guardar libro:', error);
 
       setSnackbar({
@@ -312,18 +323,19 @@ const Dashboard = () => {
         severity: 'error',
       });
 
-      return Promise.reject(error);
+      throw error;
     } finally {
       setIsApiLoading(false);
     }
   };
 
-  // --- HANDLER PARA ABRIR EL MODAL DE CONFIRMACIÓN ---
-  // Antes de pedir confirmación, revisa si el libro fue asignado a algún curso:
-  // en ese caso no se puede eliminar y se avisa directamente
+  // Comprobar historial antes de eliminar libro
   const handleOpenDeleteConfirm = async (bookId: number) => {
     try {
-      const historial = await getHistorialAsignaciones({ libro_id: bookId });
+      const historial = await getHistorialAsignaciones({
+        libro_id: bookId,
+      });
+
       if (historial.length > 0) {
         setSnackbar({
           open: true,
@@ -334,13 +346,14 @@ const Dashboard = () => {
         return;
       }
     } catch {
-      // Si no se pudo consultar el historial, se sigue con la confirmación:
-      // el back igual valida y responde 409 si corresponde
+      // El backend también valida la eliminación.
     }
 
-    const foundBook = books.find((b) => b.libro_id === bookId) ?? null;
+    const foundBook =
+      books.find((b) => b.libro_id === bookId) ?? null;
+
     setBookToDelete(foundBook);
-    setOpenDeleteConfirm(true); // Abre el modal
+    setOpenDeleteConfirm(true);
   };
 
   const handleCloseDeleteConfirm = () => {
@@ -353,20 +366,25 @@ const Dashboard = () => {
     if (!bookId) return;
 
     setIsApiLoading(true);
+
     const token = localStorage.getItem('token');
     const endpoint = `${API_BASE_URL}/api/v1/books/${bookId}`;
 
     try {
       const response = await fetch(endpoint, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        // El back de libros responde { mensaje }; otros endpoints usan { message }
+
         throw new Error(
-          errorData.mensaje || errorData.message || `Fallo la eliminación (HTTP ${response.status})`
+          errorData.mensaje ||
+          errorData.message ||
+          `Falló la eliminación (HTTP ${response.status})`
         );
       }
 
@@ -377,9 +395,11 @@ const Dashboard = () => {
         message: 'Libro eliminado correctamente.',
         severity: 'success',
       });
+
       setOpenDeleteConfirm(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message =
+        error instanceof Error ? error.message : String(error);
 
       setSnackbar({
         open: true,
@@ -401,7 +421,9 @@ const Dashboard = () => {
 
   // Eliminar meta
   const handleOpenDeleteGoalConfirm = (goalId: number) => {
-    const foundGoal = goals.find((g) => (g.meta_id ?? g.id) === goalId) ?? null;
+    const foundGoal =
+      goals.find((g) => (g.meta_id ?? g.id) === goalId) ?? null;
+
     setGoalToDelete(foundGoal);
     setOpenDeleteGoalConfirm(true);
   };
@@ -423,14 +445,18 @@ const Dashboard = () => {
         `${API_BASE_URL}/api/v1/metas-lectura/${goalId}`,
         {
           method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+
         throw new Error(
-          errorData.message || `Falló la eliminación (HTTP ${response.status})`
+          errorData.message ||
+          `Falló la eliminación (HTTP ${response.status})`
         );
       }
 
@@ -441,9 +467,12 @@ const Dashboard = () => {
         message: 'Meta de lectura eliminada correctamente.',
         severity: 'success',
       });
+
       setOpenDeleteGoalConfirm(false);
     } catch (err) {
-      setGoalsError(err instanceof Error ? err.message : String(err));
+      setGoalsError(
+        err instanceof Error ? err.message : String(err)
+      );
     } finally {
       setIsApiLoading(false);
       setGoalToDelete(null);
@@ -475,6 +504,7 @@ const Dashboard = () => {
     const token = localStorage.getItem('token');
 
     const isEditing = !!forumData.foro_id;
+
     const endpoint = isEditing
       ? `${API_BASE_URL}/api/v1/forums/${forumData.foro_id}`
       : `${API_BASE_URL}/api/v1/forums`;
@@ -491,8 +521,10 @@ const Dashboard = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+
         throw new Error(
-          errorData.message || `Falló la operación (HTTP ${response.status})`
+          errorData.message ||
+          `Falló la operación (HTTP ${response.status})`
         );
       }
 
@@ -506,10 +538,9 @@ const Dashboard = () => {
           : 'Foro creado correctamente.',
         severity: 'success',
       });
-
-      return Promise.resolve();
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message =
+        error instanceof Error ? error.message : String(error);
 
       setSnackbar({
         open: true,
@@ -517,7 +548,7 @@ const Dashboard = () => {
         severity: 'error',
       });
 
-      return Promise.reject(error);
+      throw error;
     } finally {
       setIsApiLoading(false);
     }
@@ -525,7 +556,9 @@ const Dashboard = () => {
 
   // Eliminar foro
   const handleOpenDeleteForumConfirm = (forumId: number) => {
-    const foundForum = forums.find((f) => f.foro_id === forumId) ?? null;
+    const foundForum =
+      forums.find((f) => f.foro_id === forumId) ?? null;
+
     setForumToDelete(foundForum);
     setOpenDeleteForumConfirm(true);
   };
@@ -547,15 +580,18 @@ const Dashboard = () => {
         `${API_BASE_URL}/api/v1/forums/${forumId}`,
         {
           method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+
         throw new Error(
           errorData.message ||
-            `Falló la eliminación del foro (HTTP ${response.status})`
+          `Falló la eliminación del foro (HTTP ${response.status})`
         );
       }
 
@@ -566,9 +602,11 @@ const Dashboard = () => {
         message: 'Foro eliminado correctamente.',
         severity: 'success',
       });
+
       setOpenDeleteForumConfirm(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message =
+        error instanceof Error ? error.message : String(error);
 
       setSnackbar({
         open: true,
@@ -595,10 +633,16 @@ const Dashboard = () => {
 
   // Actualizar meta
   const handleSaveGoal = async (
-    goalData: { meta_id?: number; id?: number; [key: string]: unknown }
+    goalData: {
+      meta_id?: number;
+      id?: number;
+      [key: string]: unknown;
+    }
   ) => {
     setIsApiLoading(true);
+
     const token = localStorage.getItem('token');
+
     const endpoint = `${API_BASE_URL}/api/v1/metas-lectura/${
       goalData.meta_id || goalData.id
     }`;
@@ -615,8 +659,10 @@ const Dashboard = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+
         throw new Error(
-          errorData.message || `Falló la actualización (HTTP ${response.status})`
+          errorData.message ||
+          `Falló la actualización (HTTP ${response.status})`
         );
       }
 
@@ -630,7 +676,9 @@ const Dashboard = () => {
         severity: 'success',
       });
     } catch (err) {
-      setGoalsError(err instanceof Error ? err.message : String(err));
+      setGoalsError(
+        err instanceof Error ? err.message : String(err)
+      );
     } finally {
       setIsApiLoading(false);
     }
@@ -714,7 +762,6 @@ const Dashboard = () => {
         alignItems: 'center',
       }}
     >
-      {/* Encabezado del Dashboard, sin recomendación vieja */}
       <HeaderDashboard
         activeView={activeView}
         onNavigate={handleNavigate}
@@ -722,13 +769,22 @@ const Dashboard = () => {
         isLoading={isApiLoading}
       />
 
-      {/* Tabla activa */}
-      <Box sx={{ width: '100%', maxWidth: '1200px', flexGrow: 1, mt: 2 }}>
+      <Box
+        sx={{
+          width: '100%',
+          maxWidth: '1200px',
+          flexGrow: 1,
+          mt: 2,
+        }}
+      >
         {renderActiveView()}
       </Box>
 
       {/* Modal Usuario */}
-      <Modal open={openCreateModal} onClose={handleCloseCreateModal}>
+      <Modal
+        open={openCreateModal}
+        onClose={handleCloseCreateModal}
+      >
         <Box
           sx={{
             position: 'absolute',
@@ -746,7 +802,10 @@ const Dashboard = () => {
       </Modal>
 
       {/* Modal Libro */}
-      <Modal open={openCreateBookModal} onClose={handleCloseCreateBookModal}>
+      <Modal
+        open={openCreateBookModal}
+        onClose={handleCloseCreateBookModal}
+      >
         <Box
           sx={{
             position: 'absolute',
@@ -766,7 +825,11 @@ const Dashboard = () => {
         >
           <BookForm
             bookToEdit={bookToEdit}
-            title={bookToEdit ? 'Editar Libro' : 'Crear Nuevo Libro'}
+            title={
+              bookToEdit
+                ? 'Editar Libro'
+                : 'Crear Nuevo Libro'
+            }
             onSave={handleSaveBook}
             onCancel={handleCloseCreateBookModal}
           />
@@ -774,7 +837,10 @@ const Dashboard = () => {
       </Modal>
 
       {/* Modal Foro */}
-      <Modal open={openForumModal} onClose={handleCloseForumModal}>
+      <Modal
+        open={openForumModal}
+        onClose={handleCloseForumModal}
+      >
         <Box
           sx={{
             position: 'absolute',
@@ -786,7 +852,11 @@ const Dashboard = () => {
         >
           <ForumForm
             forumToEdit={forumToEdit}
-            title={forumToEdit ? 'Editar Foro' : 'Crear Nuevo Foro'}
+            title={
+              forumToEdit
+                ? 'Editar Foro'
+                : 'Crear Nuevo Foro'
+            }
             onSave={handleSaveForum}
             onCancel={handleCloseForumModal}
           />
@@ -794,7 +864,10 @@ const Dashboard = () => {
       </Modal>
 
       {/* Modal Meta de Lectura */}
-      <Modal open={openGoalModal} onClose={() => setOpenGoalModal(false)}>
+      <Modal
+        open={openGoalModal}
+        onClose={() => setOpenGoalModal(false)}
+      >
         <Box
           sx={{
             position: 'absolute',

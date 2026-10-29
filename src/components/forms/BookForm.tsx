@@ -1,5 +1,11 @@
-// src/components/BookForm.tsx
-import React, { useState, useEffect, ChangeEvent, FormEvent, SyntheticEvent } from 'react';
+
+import { useState, useEffect } from 'react';
+import type {
+  ChangeEvent,
+  FormEvent,
+  SyntheticEvent,
+} from 'react';
+
 import {
   Box,
   Typography,
@@ -15,13 +21,19 @@ import {
   Paper,
   Grid,
 } from '@mui/material';
+
 import type { SelectChangeEvent } from '@mui/material';
 import type { Book } from '@/types';
 
-// NOTA: Se eliminan useParams y useNavigate ya que el formulario es llamado por un modal y no por una ruta.
+const GENEROS = [
+  'Novela',
+  'Ficción',
+  'Ciencia Ficción',
+  'Poesía',
+  'Ensayo',
+  'Biografía',
+];
 
-// --- Constantes de Opciones ---
-const GENEROS = ['Novela', 'Ficción', 'Ciencia Ficción', 'Poesía', 'Ensayo', 'Biografía'];
 const NIVELES_EDUCATIVOS = ['Básico', 'Superior'];
 
 interface BookFormData {
@@ -31,55 +43,31 @@ interface BookFormData {
   genero: string;
   nivel_educativo: string;
   descripcion: string;
+  paginas_totales: number | '';
   imagenUrl?: string;
   portada_url?: string;
   id?: number;
   [key: string]: unknown;
 }
 
-// --- Datos Iniciales del Libro ---
 const INITIAL_BOOK_DATA: BookFormData = {
-  libro_id: undefined, // Usamos este campo para la API
+  libro_id: undefined,
   titulo: '',
   autor: '',
   genero: '',
   nivel_educativo: '',
   descripcion: '',
-  imagenUrl: '', // Se mapea a 'portada_url' para el backend
+  paginas_totales: '',
+  imagenUrl: '',
 };
 
-// --- Componentes Estilizados (Material UI) ---
 const FormContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   borderRadius: '16px',
   boxShadow: '0 8px 30px rgba(0, 0, 0, 0.1)',
   maxWidth: '900px',
-  // Quitamos el margin: '40px auto' ya que el modal lo centrará
-}));
-
-const PrimaryButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  color: '#FFFFFF',
-  padding: '10px 25px',
-  borderRadius: '8px',
-  fontWeight: 'bold',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-}));
-
-const SecondaryButton = styled(Button)(({ theme }) => ({
-  backgroundColor: 'transparent',
-  color: theme.palette.text.secondary,
-  border: '1px solid #ccc',
-  padding: '10px 25px',
-  borderRadius: '8px',
-  fontWeight: 'bold',
-  marginRight: theme.spacing(2),
-  '&:hover': {
-    backgroundColor: theme.palette.grey[200],
-    borderColor: theme.palette.grey[500],
-  },
+  maxHeight: '90vh',
+  overflowY: 'auto',
 }));
 
 const StyledTextarea = styled(TextareaAutosize)(({ theme }) => ({
@@ -98,9 +86,9 @@ const StyledTextarea = styled(TextareaAutosize)(({ theme }) => ({
   },
 }));
 
-// --- 3. Componente Funcional ---
-
-type BookToEdit = Partial<Book> & { imagenUrl?: string };
+type BookToEdit = Partial<Book> & {
+  imagenUrl?: string;
+};
 
 interface BookFormProps {
   bookToEdit?: BookToEdit | null;
@@ -109,90 +97,145 @@ interface BookFormProps {
   title?: string;
 }
 
-// 💡 Ahora acepta props para el modo edición, guardado y cancelación
-const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
+const BookForm = ({
+  bookToEdit,
+  onSave,
+  onCancel,
+  title,
+}: BookFormProps) => {
   const theme = useTheme();
 
-  // 💡 ESTADO INICIAL: Mapea bookToEdit (si existe) o usa datos iniciales vacíos
-  const [formData, setFormData] = useState<BookFormData>(INITIAL_BOOK_DATA);
-  const [loading, setLoading] = useState<boolean>(false); // Para manejar la carga local de la acción de guardar
+  const [formData, setFormData] = useState<BookFormData>({
+    ...INITIAL_BOOK_DATA,
+  });
 
-  // 💡 EFECTO: Actualiza el formulario cuando cambia bookToEdit (al abrir el modal)
+  const [loading, setLoading] = useState(false);
+  const [pageError, setPageError] = useState('');
+
   useEffect(() => {
     if (bookToEdit) {
-      // Mapeamos los campos del objeto bookToEdit al formato del formulario
       const mappedData: BookFormData = {
         ...INITIAL_BOOK_DATA,
         ...bookToEdit,
         libro_id: bookToEdit.libro_id,
-        // Mapeamos el campo de la DB (portada_url) al campo del formulario (imagenUrl)
-        imagenUrl: bookToEdit.imagenUrl || bookToEdit.portada_url || '',
+        paginas_totales: bookToEdit.paginas_totales ?? '',
+        imagenUrl:
+          bookToEdit.imagenUrl ||
+          bookToEdit.portada_url ||
+          '',
       };
+
       setFormData(mappedData);
     } else {
-      setFormData(INITIAL_BOOK_DATA);
+      setFormData({ ...INITIAL_BOOK_DATA });
     }
+
+    setPageError('');
   }, [bookToEdit]);
 
-  // Manejador de cambios en los campos del formulario
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent
+    e:
+      | ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      | SelectChangeEvent
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  // 💡 Manejador de Guardado (POST/PUT delegado al padre)
-  const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handlePagesChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const value = e.target.value;
+
+    setFormData((prev) => ({
+      ...prev,
+      paginas_totales: value === '' ? '' : Number(value),
+    }));
+
+    setPageError('');
+  };
+
+  const handleFormSubmit = async (
+    e: FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
+
+    if (loading) return;
+
+    const paginas = formData.paginas_totales;
+
+    if (
+      typeof paginas !== 'number' ||
+      !Number.isSafeInteger(paginas) ||
+      paginas <= 0 ||
+      paginas > 2147483647
+    ) {
+      setPageError(
+        'Ingresá un número entero de páginas mayor que cero.'
+      );
+      return;
+    }
+
+    setPageError('');
     setLoading(true);
 
-    // ---  Mapeamos 'imagenUrl' a 'portada_url' y limpiamos IDs ---
-    const payload: BookFormData = { ...formData };
+    const payload: BookFormData = {
+      ...formData,
+      paginas_totales: paginas,
+    };
 
-    // 1. Eliminar IDs internos del componente
     delete payload.id;
 
-    // 2. Mapear 'imagenUrl' (frontend) a 'portada_url' (backend/DB)
     if (payload.imagenUrl !== undefined) {
       payload.portada_url = payload.imagenUrl;
     }
+
     delete payload.imagenUrl;
 
-    // Incluimos libro_id en el payload si estamos editando (crucial para que Dashboard use PUT)
-    if (bookToEdit && bookToEdit.libro_id) {
+    if (bookToEdit?.libro_id) {
       payload.libro_id = bookToEdit.libro_id;
+    } else {
+      delete payload.libro_id;
     }
 
     try {
-      // 💡 Llamamos al handler del componente padre (Dashboard) para que haga el API call
       await onSave(payload);
-    } catch (err) {
-      // El componente padre ya maneja el Snackbar para errores
-      console.error('Error al guardar en el formulario:', err);
+    } catch (error) {
+      console.error(
+        'Error al guardar el libro:',
+        error
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // 💡 La cancelación llama al prop onCancel
-  const handleCancel = () => {
-    onCancel();
-  };
+  const currentTitle =
+    title ||
+    (bookToEdit
+      ? 'Editar Libro'
+      : 'Crear Nuevo Libro');
 
-  // Renderizado
-  const currentTitle = title || (bookToEdit ? 'Editar Libro' : 'Crear Nuevo Libro');
-  const bookIdentifier = bookToEdit?.libro_id ? ` (ID: ${bookToEdit.libro_id})` : '';
+  const bookIdentifier = bookToEdit?.libro_id
+    ? ` (ID: ${bookToEdit.libro_id})`
+    : '';
 
   return (
-    // 💡 Usa el nuevo handler unificado
     <form onSubmit={handleFormSubmit}>
       <FormContainer>
         <Box mb={4}>
           <Typography
             variant="h4"
             fontWeight="bold"
-            sx={{ color: theme.palette.body?.main || '#4A4C52' }}
+            sx={{
+              color:
+                theme.palette.body?.main ||
+                '#4A4C52',
+            }}
           >
             {currentTitle}
             {bookIdentifier}
@@ -200,53 +243,79 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
         </Box>
 
         <Grid container spacing={4}>
-          {/* Columna Izquierda: Campos del formulario */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box mb={3}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                gutterBottom
+              >
                 Título
               </Typography>
+
               <TextField
                 name="titulo"
                 fullWidth
+                required
                 value={formData.titulo}
                 onChange={handleChange}
                 variant="outlined"
                 size="small"
-                placeholder="Ej: El Ingenioso Hidalgo Don Quijote de la Mancha"
+                placeholder="Ej: El principito"
               />
             </Box>
 
             <Box mb={3}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                gutterBottom
+              >
                 Autor
               </Typography>
+
               <TextField
                 name="autor"
                 fullWidth
+                required
                 value={formData.autor}
                 onChange={handleChange}
                 variant="outlined"
                 size="small"
-                placeholder="Ej: García Márquez, Gabriel"
+                placeholder="Ej: Gabriel García Márquez"
               />
             </Box>
 
             <Box mb={3}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                gutterBottom
+              >
                 Género
               </Typography>
-              <FormControl fullWidth variant="outlined" size="small">
-                <InputLabel>Selecciona Género</InputLabel>
+
+              <FormControl
+                fullWidth
+                variant="outlined"
+                size="small"
+              >
+                <InputLabel>
+                  Selecciona Género
+                </InputLabel>
+
                 <Select
                   name="genero"
                   value={formData.genero}
                   onChange={handleChange}
                   label="Selecciona Género"
                 >
-                  {GENEROS.map((g) => (
-                    <MenuItem key={g} value={g}>
-                      {g}
+                  {GENEROS.map((genero) => (
+                    <MenuItem
+                      key={genero}
+                      value={genero}
+                    >
+                      {genero}
                     </MenuItem>
                   ))}
                 </Select>
@@ -254,20 +323,35 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
             </Box>
 
             <Box mb={3}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                gutterBottom
+              >
                 Nivel Educativo
               </Typography>
-              <FormControl fullWidth variant="outlined" size="small">
-                <InputLabel>Selecciona Nivel</InputLabel>
+
+              <FormControl
+                fullWidth
+                variant="outlined"
+                size="small"
+              >
+                <InputLabel>
+                  Selecciona Nivel
+                </InputLabel>
+
                 <Select
                   name="nivel_educativo"
                   value={formData.nivel_educativo}
                   onChange={handleChange}
                   label="Selecciona Nivel"
                 >
-                  {NIVELES_EDUCATIVOS.map((n) => (
-                    <MenuItem key={n} value={n}>
-                      {n}
+                  {NIVELES_EDUCATIVOS.map((nivel) => (
+                    <MenuItem
+                      key={nivel}
+                      value={nivel}
+                    >
+                      {nivel}
                     </MenuItem>
                   ))}
                 </Select>
@@ -275,9 +359,48 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
             </Box>
 
             <Box mb={3}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                gutterBottom
+              >
+                Número de páginas *
+              </Typography>
+
+              <TextField
+                name="paginas_totales"
+                type="number"
+                fullWidth
+                required
+                value={formData.paginas_totales}
+                onChange={handlePagesChange}
+                size="small"
+                variant="outlined"
+                placeholder="Ej: 250"
+                slotProps={{
+                  htmlInput: {
+                    min: 1,
+                    max: 2147483647,
+                    step: 1,
+                  },
+                }}
+                error={Boolean(pageError)}
+                helperText={
+                  pageError ||
+                  'Obligatorio para realizar el seguimiento de lectura.'
+                }
+              />
+            </Box>
+
+            <Box mb={3}>
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                gutterBottom
+              >
                 Descripción
               </Typography>
+
               <StyledTextarea
                 name="descripcion"
                 value={formData.descripcion}
@@ -287,24 +410,27 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
             </Box>
           </Grid>
 
-          {/* Columna Derecha: Imagen */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box mb={3}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                gutterBottom
+              >
                 Imagen
               </Typography>
+
               <TextField
                 fullWidth
                 variant="outlined"
                 size="small"
                 placeholder="URL de la imagen"
-                value={formData.imagenUrl}
+                value={formData.imagenUrl ?? ''}
                 onChange={handleChange}
                 name="imagenUrl"
               />
             </Box>
 
-            {/* Previsualización de la Imagen */}
             <Box
               sx={{
                 border: '1px solid #ccc',
@@ -317,29 +443,62 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
             >
               <Box
                 component="img"
-                src={formData.imagenUrl || 'https://placehold.co/300x400/cccccc/333333?text=Sin+Imagen'}
+                src={
+                  formData.imagenUrl ||
+                  'https://placehold.co/300x400/cccccc/333333?text=Sin+Imagen'
+                }
                 alt="Portada del libro"
-                // 🚨 Importante: Añadir fallback de error para la imagen
-                onError={(e: SyntheticEvent<HTMLImageElement>) => {
-                  e.currentTarget.src = 'https://placehold.co/300x400/cccccc/333333?text=Error+Carga';
+                onError={(
+                  e: SyntheticEvent<HTMLImageElement>
+                ) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src =
+                    'https://placehold.co/300x400/cccccc/333333?text=Error+Carga';
                 }}
                 sx={{
                   width: 300,
                   height: 400,
                   objectFit: 'cover',
                   display: 'block',
-                  backgroundColor: formData.imagenUrl ? 'transparent' : '#eee',
+                  backgroundColor:
+                    formData.imagenUrl
+                      ? 'transparent'
+                      : '#eee',
                 }}
               />
             </Box>
           </Grid>
         </Grid>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-          <Button onClick={onCancel} variant="outlined">
+
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            mt: 3,
+            gap: 2,
+          }}
+        >
+          <Button
+            onClick={onCancel}
+            variant="outlined"
+            disabled={loading}
+          >
             Cancelar
           </Button>
-          <Button type="submit" variant="contained" sx={{ backgroundColor: 'button.main' }}>
-            Guardar Cambios
+
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading}
+            sx={{
+              backgroundColor: 'button.main',
+            }}
+          >
+            {loading
+              ? 'Guardando...'
+              : bookToEdit
+                ? 'Guardar Cambios'
+                : 'Crear Libro'}
           </Button>
         </Box>
       </FormContainer>
