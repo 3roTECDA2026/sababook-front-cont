@@ -450,7 +450,6 @@ const Dashboard = () => {
       });
     } catch (error) {
       console.error('Error al crear usuario:', error);
-
       setSnackbar({
         open: true,
         message: 'Error al crear el usuario',
@@ -472,7 +471,6 @@ const Dashboard = () => {
     setIsApiLoading(true);
 
     const token = localStorage.getItem('token');
-
     const isEditing = !!bookData.libro_id;
 
     const endpoint = isEditing
@@ -480,23 +478,38 @@ const Dashboard = () => {
       : `${API_BASE_URL}/api/v1/books`;
 
     try {
+      const paginas = bookData.paginas_totales;
+
+      if (
+        typeof paginas !== 'number' ||
+        !Number.isSafeInteger(paginas) ||
+        paginas <= 0 ||
+        paginas > 2147483647
+      ) {
+        throw new Error(
+          'Ingresá un número entero de páginas mayor que cero.'
+        );
+      }
+
       const response = await fetch(endpoint, {
         method: isEditing ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(bookData),
+        body: JSON.stringify({
+          ...bookData,
+          paginas_totales: paginas,
+        }),
       });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({}));
+        const errorData = await response.json().catch(() => ({}));
 
         throw new Error(
+          errorData.mensaje ||
           errorData.message ||
-            `Falló la operación (HTTP ${response.status})`
+          `Falló la operación (HTTP ${response.status})`
         );
       }
 
@@ -511,8 +524,6 @@ const Dashboard = () => {
           : 'Libro creado correctamente.',
         severity: 'success',
       });
-
-      return Promise.resolve();
     } catch (error) {
       const message =
         error instanceof Error
@@ -530,18 +541,19 @@ const Dashboard = () => {
         severity: 'error',
       });
 
-      return Promise.reject(error);
+      throw error;
     } finally {
       setIsApiLoading(false);
     }
   };
 
-  // --- HANDLER PARA ABRIR EL MODAL DE CONFIRMACIÓN ---
-  // Antes de pedir confirmación, revisa si el libro fue asignado a algún curso:
-  // en ese caso no se puede eliminar y se avisa directamente
+  // Comprobar historial antes de eliminar libro
   const handleOpenDeleteConfirm = async (bookId: number) => {
     try {
-      const historial = await getHistorialAsignaciones({ libro_id: bookId });
+      const historial = await getHistorialAsignaciones({
+        libro_id: bookId,
+      });
+
       if (historial.length > 0) {
         setSnackbar({
           open: true,
@@ -552,8 +564,7 @@ const Dashboard = () => {
         return;
       }
     } catch {
-      // Si no se pudo consultar el historial, se sigue con la confirmación:
-      // el back igual valida y responde 409 si corresponde
+      // El backend también valida la eliminación.
     }
 
     setBookToDelete(books.find((book) => book.libro_id === bookId) ?? null);
@@ -601,6 +612,7 @@ const Dashboard = () => {
         message: 'Libro eliminado correctamente.',
         severity: 'success',
       });
+
       setOpenDeleteConfirm(false);
     } catch (error) {
       const message =
@@ -633,7 +645,9 @@ const Dashboard = () => {
   // =========================================================
 
   const handleOpenDeleteGoalConfirm = (goalId: number) => {
-    const foundGoal = goals.find((g) => (g.meta_id ?? g.id) === goalId) ?? null;
+    const foundGoal =
+      goals.find((g) => (g.meta_id ?? g.id) === goalId) ?? null;
+
     setGoalToDelete(foundGoal);
     setOpenDeleteGoalConfirm(true);
   };
@@ -680,6 +694,7 @@ const Dashboard = () => {
         message: 'Meta de lectura eliminada correctamente.',
         severity: 'success',
       });
+
       setOpenDeleteGoalConfirm(false);
     } catch (err) {
       setGoalsError(
@@ -759,8 +774,6 @@ const Dashboard = () => {
           : 'Foro creado correctamente.',
         severity: 'success',
       });
-
-      return Promise.resolve();
     } catch (error) {
       const message =
         error instanceof Error
@@ -773,7 +786,7 @@ const Dashboard = () => {
         severity: 'error',
       });
 
-      return Promise.reject(error);
+      throw error;
     } finally {
       setIsApiLoading(false);
     }
@@ -784,7 +797,9 @@ const Dashboard = () => {
   // =========================================================
 
   const handleOpenDeleteForumConfirm = (forumId: number) => {
-    const foundForum = forums.find((f) => f.foro_id === forumId) ?? null;
+    const foundForum =
+      forums.find((f) => f.foro_id === forumId) ?? null;
+
     setForumToDelete(foundForum);
     setOpenDeleteForumConfirm(true);
   };
@@ -820,7 +835,7 @@ const Dashboard = () => {
 
         throw new Error(
           errorData.message ||
-            `Falló la eliminación del foro (HTTP ${response.status})`
+          `Falló la eliminación del foro (HTTP ${response.status})`
         );
       }
 
@@ -831,6 +846,7 @@ const Dashboard = () => {
         message: 'Foro eliminado correctamente.',
         severity: 'success',
       });
+
       setOpenDeleteForumConfirm(false);
     } catch (error) {
       const message =
