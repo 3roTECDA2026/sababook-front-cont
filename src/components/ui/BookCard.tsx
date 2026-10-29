@@ -14,8 +14,6 @@ import {
   ListItemText,
   Chip,
   CircularProgress,
-  Snackbar,
-  Alert,
 } from '@mui/material';
 
 import { useNavigate } from 'react-router-dom';
@@ -56,6 +54,8 @@ interface BookCardProps {
   progress?: number;
 
   // Recomendaciones: habilitadas desde el catálogo.
+  // La tarjeta solo avisa que se tocó el botón: el componente padre abre el diálogo
+  // y muestra el resultado recién cuando el back confirma.
   showRecommendControl?: boolean;
   isRecommended?: boolean;
   onRecommendToggle?: (
@@ -91,13 +91,10 @@ export default function BookCard({
 
   const [recommendLoading, setRecommendLoading] = useState(false);
 
-  const [notification, setNotification] = useState<{
-    message: string;
-    severity: 'success' | 'error';
-  } | null>(null);
-
   const bookIdentifier = libro_id;
 
+  // No muestra avisos: el resultado lo informa el padre, que sabe
+  // cuándo terminó de verdad la acción (después de confirmar y guardar).
   const handleRecommend = async () => {
     if (
       bookIdentifier == null ||
@@ -111,23 +108,8 @@ export default function BookCard({
       setRecommendLoading(true);
 
       await onRecommendToggle(bookIdentifier, isRecommended);
-
-      setNotification({
-        message: isRecommended
-          ? 'Recomendación quitada correctamente.'
-          : 'Libro recomendado correctamente.',
-        severity: 'success',
-      });
     } catch (error) {
       console.error('Error al modificar recomendación:', error);
-
-      setNotification({
-        message:
-          error instanceof Error
-            ? error.message
-            : 'No se pudo modificar la recomendación.',
-        severity: 'error',
-      });
     } finally {
       setRecommendLoading(false);
     }
@@ -365,11 +347,11 @@ export default function BookCard({
               pb: 0,
             }}
           >
-            {/* Recomendar / quitar recomendación */}
+            {/* Recomendar / quitar recomendación.
+                Quitar es una acción de eliminar: usa color="error", como pide la guía. */}
             {showRecommendControl && onRecommendToggle && (
               <Button
-                variant={isRecommended ? 'outlined' : 'contained'}
-                color={isRecommended ? 'error' : 'success'}
+                color={isRecommended ? 'error' : 'primary'}
                 size="small"
                 disabled={
                   bookIdentifier == null || recommendLoading
@@ -409,13 +391,9 @@ export default function BookCard({
                 }
               }}
               sx={{
-                bgcolor: '#f25600',
                 textTransform: 'none',
                 fontSize: featured ? '0.9rem' : '0.8rem',
                 borderRadius: 2,
-                '&:hover': {
-                  bgcolor: '#d64500',
-                },
               }}
             >
               Ver más
@@ -423,21 +401,6 @@ export default function BookCard({
           </Box>
         </CardContent>
       </Card>
-
-      {/* Notificaciones */}
-      <Snackbar
-        open={Boolean(notification)}
-        autoHideDuration={3500}
-        onClose={() => setNotification(null)}
-      >
-        <Alert
-          severity={notification?.severity ?? 'success'}
-          onClose={() => setNotification(null)}
-          sx={{ width: '100%' }}
-        >
-          {notification?.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 }
