@@ -70,7 +70,7 @@ const LoginPage = () => {
     password: string;
     confirmPassword: string;
   }) => {
-    console.log("Datos de registro enviados:", formData);
+    
   };
 
   const handleBackToLogin = () => {

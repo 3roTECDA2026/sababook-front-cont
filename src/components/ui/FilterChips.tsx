@@ -6,6 +6,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import { getCursos } from '@/services/courseService';
+import { getCatalogoLibros } from '@/services/apiService';
 import type { BookFilters, CourseSummary } from '@/types';
 
 interface FilterOption {
@@ -19,24 +20,12 @@ interface FilterCategory {
   id: FilterCategoryId;
   name: string;
   icon?: React.ReactElement;
-  getOptions: (cursos: CourseSummary[], selectedFilters: BookFilters) => FilterOption[];
+  getOptions: (
+    cursos: CourseSummary[],
+    selectedFilters: BookFilters,
+    dynamicOptions?: { genres: string[]; levels: string[] }
+  ) => FilterOption[];
 }
-
-const STATIC_GENRES = [
-  'Novela',
-  'Ficción',
-  'Poesía',
-  'Ensayo',
-  'Biografía',
-  'Terror',
-  'Romance',
-  'Policial',
-  'Ciencia Ficción',
-  'Fantasía',
-  'Académico',
-];
-
-const STATIC_LEVELS = ['Básico', 'Superior'];
 
 const FILTERS_CONFIG: FilterCategory[] = [
   {
@@ -69,12 +58,18 @@ const FILTERS_CONFIG: FilterCategory[] = [
   {
     id: 'genre',
     name: 'Género',
-    getOptions: () => STATIC_GENRES.map((g) => ({ label: g, value: g })),
+    getOptions: (_cursos, _selectedFilters, dynamicOptions) => {
+      const genres = dynamicOptions?.genres ?? [];
+      return genres.map((g) => ({ label: g, value: g }));
+    },
   },
   {
     id: 'level',
     name: 'Nivel Educativo',
-    getOptions: () => STATIC_LEVELS.map((l) => ({ label: l, value: l })),
+    getOptions: (_cursos, _selectedFilters, dynamicOptions) => {
+      const levels = dynamicOptions?.levels ?? [];
+      return levels.map((l) => ({ label: l, value: l }));
+    },
   },
 ];
 
@@ -97,6 +92,10 @@ export default function FilterChips({
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
   const [selectedFilters, setSelectedFilters] = useState<BookFilters>({});
+  const [dynamicGenres, setDynamicGenres] = useState<string[]>([]);
+  const [dynamicLevels, setDynamicLevels] = useState<string[]>([]);
+  const [cargandoOpciones, setCargandoOpciones] = useState(true);
+  const [errorOpciones, setErrorOpciones] = useState(false);
 
   const openMenu = Boolean(anchorEl);
 
@@ -120,6 +119,45 @@ export default function FilterChips({
         if (!montado) return;
         setErrorCursos(true);
         setCargandoCursos(false);
+      });
+
+    return () => {
+      montado = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let montado = true;
+    getCatalogoLibros()
+      .then((libros) => {
+        if (!montado) return;
+        if (Array.isArray(libros)) {
+          const generos = Array.from(
+            new Set(
+              libros
+                .map((libro) => libro.genero)
+                .filter((genero): genero is string => typeof genero === 'string' && genero.trim() !== '')
+            )
+          ).sort((a, b) => a.localeCompare(b));
+
+          const niveles = Array.from(
+            new Set(
+              libros
+                .map((libro) => libro.nivel_educativo)
+                .filter((nivel): nivel is string => typeof nivel === 'string' && nivel.trim() !== '')
+            )
+          ).sort((a, b) => a.localeCompare(b));
+
+          setDynamicGenres(generos);
+          setDynamicLevels(niveles);
+        }
+        setCargandoOpciones(false);
+      })
+      .catch((error) => {
+        console.error('Error al cargar opciones de filtros:', error);
+        if (!montado) return;
+        setErrorOpciones(true);
+        setCargandoOpciones(false);
       });
 
     return () => {
@@ -222,7 +260,9 @@ export default function FilterChips({
   };
 
   const activeCategory = FILTERS_CONFIG.find((f) => f.id === activeFilterId);
-  const currentOptions = activeCategory ? activeCategory.getOptions(cursosVigentes, selectedFilters) : [];
+  const currentOptions = activeCategory
+    ? activeCategory.getOptions(cursosVigentes, selectedFilters, { genres: dynamicGenres, levels: dynamicLevels })
+    : [];
 
   return (
     <Box sx={[{ mb: 2 }, ...(sx ? [sx] : [])] as SxProps<Theme>}>
@@ -330,6 +370,14 @@ export default function FilterChips({
         ) : errorCursos && (activeFilterId === 'year' || activeFilterId === 'course') ? (
           <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'error.main' }}>
             No se pudieron cargar los cursos. Intente nuevamente más tarde.
+          </MenuItem>
+        ) : cargandoOpciones && (activeFilterId === 'genre' || activeFilterId === 'level') ? (
+          <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
+            Cargando opciones…
+          </MenuItem>
+        ) : errorOpciones && (activeFilterId === 'genre' || activeFilterId === 'level') ? (
+          <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'error.main' }}>
+            No se pudieron cargar las opciones. Intente nuevamente más tarde.
           </MenuItem>
         ) : currentOptions.length === 0 ? (
           <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>

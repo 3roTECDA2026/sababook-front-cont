@@ -75,7 +75,6 @@ const Profile = () => {
     const result = await updateUser(updatedData as ProfileSaveData);
 
     if (result.success) {
-      console.log('Datos guardados exitosamente');
       handleCancel();
     } else {
       console.error('Error al guardar:', result.error);
