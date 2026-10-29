@@ -70,7 +70,7 @@ export function usePagination<T>({
       })
      .catch((err) => {
         // Capturamos cualquier variante de cancelación por AbortController
-        if (err?.name === 'AbortError' || err?.code === 20. || String(err).includes('aborted')) {
+        if (err?.name === 'AbortError' || err?.code === 20 || String(err).includes('aborted')) {
           return;
         }
         setError(err?.message ?? 'Error al cargar los datos');

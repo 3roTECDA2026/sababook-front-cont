@@ -64,7 +64,7 @@ const LoginPage = () => {
     }
   };
 
-  const handleRegisterSubmit = (formData: {
+  const handleRegisterSubmit = (_formData: {
     name: string;
     email: string;
     password: string;

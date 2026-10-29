@@ -14,7 +14,7 @@ import type { Medal } from '@/types';
 
 const Insignias = () => {
   const theme = useTheme();
-  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [, setMenuOpen] = useState<boolean>(false);
   const { user } = useAuth();
 
   // ----------------------------------------------------

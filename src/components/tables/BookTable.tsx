@@ -43,7 +43,7 @@ const columns: Column[] = [
   { id: 'acciones', label: 'Acciones' }, // Renombrado a 'acciones' para claridad
 ];
 
-const StyledTableContainer = styled(Paper)(({ theme }) => ({
+const StyledTableContainer = styled(Paper)(() => ({
   borderRadius: '16px',
   overflow: 'hidden',
   boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
