@@ -23,12 +23,13 @@ const ReadingGoalsSection = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [openModal, setOpenModal] = useState<boolean>(false);
 
-  // Genera la fecha de mañana en formato YYYY-MM-DD
+  // Genera la fecha de hoy en formato YYYY-MM-DD
+  const fechaHoyStr = new Date().toISOString().split('T')[0];
   const fechaMananaStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
   const [formData, setFormData] = useState({
     target_books: 5,
-    start_date: fechaMananaStr, // Por defecto inicia mañana
+    start_date: fechaHoyStr,
     end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
   });
 
@@ -38,10 +39,27 @@ const ReadingGoalsSection = () => {
       const userId = user?.usuario_id;
       if (userId) {
         const data = await getActiveReadingGoal(userId);
-        setGoal(data || null);
+        if (Array.isArray(data)) {
+          const hoy = new Date();
+          const vigente = data.find((meta) => {
+            const inicio = new Date(meta.fecha_inicio || meta.start_date || '');
+            const fin = new Date(meta.fecha_fin || meta.end_date || '');
+            if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) return false;
+            fin.setHours(23, 59, 59, 999);
+            return hoy >= inicio && hoy <= fin;
+          });
+          setGoal(vigente || data[0] || null);
+        } else if (data && typeof data === 'object') {
+          setGoal(data);
+        } else {
+          setGoal(null);
+        }
+      } else {
+        setGoal(null);
       }
     } catch (err) {
       console.error('Error al cargar la meta:', err);
+      setGoal(null);
     } finally {
       setLoading(false);
     }
@@ -50,6 +68,9 @@ const ReadingGoalsSection = () => {
   useEffect(() => {
     if (user) {
       fetchGoal();
+    } else {
+      setLoading(false);
+      setGoal(null);
     }
   }, [user]);
 
@@ -58,16 +79,14 @@ const ReadingGoalsSection = () => {
       const userId = user?.usuario_id;
       if (!userId) return;
 
-      // Calculamos el inicio para mañana a primera hora (00:00:00 hs)
-      const manana = new Date();
-      manana.setDate(manana.getDate() + 1);
-      manana.setHours(0, 0, 0, 0);
+      const inicio = new Date();
+      inicio.setHours(0, 0, 0, 0);
 
       const payload = {
-        ...formData,
         usuario_id: userId,
         periodo_nombre: 'Meta Personal',
-        fecha_inicio: manana.toISOString(), // Forzamos inicio a mañana
+        cantidad_libros: Number(formData.target_books) || 1,
+        fecha_inicio: inicio.toISOString(),
         fecha_fin: new Date(`${formData.end_date}T23:59:59.999Z`).toISOString(),
       };
 
@@ -119,8 +138,14 @@ const ReadingGoalsSection = () => {
             />
 
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, textAlign: 'right' }}>
-              Período: {new Date(goal.fecha_inicio || goal.start_date || '').toLocaleDateString()} -{' '}
-              {new Date(goal.fecha_fin || goal.end_date || '').toLocaleDateString()}
+              Período:{' '}
+              {goal?.fecha_inicio || goal?.start_date
+                ? new Date(goal.fecha_inicio || goal.start_date || '').toLocaleDateString()
+                : '-'}{' '}
+              -{' '}
+              {goal?.fecha_fin || goal?.end_date
+                ? new Date(goal.fecha_fin || goal.end_date || '').toLocaleDateString()
+                : '-'}
             </Typography>
 
             {/* Cartel de éxito si la meta está completada */}
@@ -165,7 +190,7 @@ const ReadingGoalsSection = () => {
               onClick={() => setOpenModal(true)}
               sx={{ backgroundColor: '#f25600', '&:hover': { backgroundColor: '#cc4800' }, borderRadius: '20px', fontWeight: 'bold' }}
             >
-              Establecer Meta
+              Crear meta
             </Button>
           </Box>
         )}
@@ -183,12 +208,11 @@ const ReadingGoalsSection = () => {
               fullWidth
             />
 
-            {/* FECHA DE INICIO CON BLOQUEO A PARTIR DE MAÑANA */}
             <TextField
               label="Fecha de inicio"
               type="date"
               InputLabelProps={{ shrink: true }}
-              inputProps={{ min: fechaMananaStr }} // <-- Deshabilita hoy y días pasados
+              inputProps={{ min: fechaHoyStr }}
               value={formData.start_date}
               onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
               fullWidth

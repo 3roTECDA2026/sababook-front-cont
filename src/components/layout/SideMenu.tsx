@@ -1,3 +1,4 @@
+
 // src/components/layout/SideMenu.tsx
 import React, { useState, ReactNode } from 'react';
 import {
@@ -15,6 +16,7 @@ import {
   DialogTitle,
   Button,
 } from '@mui/material';
+
 import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -43,7 +45,11 @@ interface SideMenuProps {
   active?: string;
 }
 
-export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuProps) {
+export default function SideMenu({
+  open,
+  onClose,
+  active = 'Inicio',
+}: SideMenuProps) {
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
   const { isAdmin, isTeacher, logout } = useAuth();
 
@@ -70,6 +76,10 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Mi Biblioteca', icon: <FavoriteIcon />, path: '/favoritos' },
       { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
+
+      // Radio Sábato habilitada para docentes
+      { text: 'Radio Sábato', icon: <RadioIcon />, path: '/radio' },
+
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
       { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
       { text: 'Libros por curso', icon: <MenuBookIcon />, path: '/cursos/libros' },
@@ -77,10 +87,11 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
       { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
     ];
   } else {
-    // Menú para usuarios normales / estudiantes / docentes
+    // Menú para usuarios normales / estudiantes
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio Sábato', icon: <RadioIcon />, path: '/radio' },
       { text: 'Mi Biblioteca', icon: <FavoriteIcon />, path: '/favoritos' },
@@ -102,11 +113,10 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
         open={open}
         onClose={onClose}
         transitionDuration={400}
-       ModalProps={{
+        ModalProps={{
           disableEnforceFocus: true,
-         
         }}
-        slotProps= {{
+        slotProps={{
           paper: {
             sx: {
               width: 240,
@@ -128,6 +138,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
           <List>
             {menuItems.map((item, i) => {
               const isActive = item.text === active;
+
               return (
                 <ListItem key={i} disablePadding sx={{ mb: 0.5 }}>
                   <ListItemButton
@@ -139,7 +150,9 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
                       bgcolor: isActive ? '#ff8a00' : 'transparent',
                       color: isActive ? '#837878' : '#4b2c15',
                       '&:hover': {
-                        bgcolor: isActive ? '#ff9e2a' : 'rgba(0,0,0,0.04)',
+                        bgcolor: isActive
+                          ? '#ff9e2a'
+                          : 'rgba(0,0,0,0.04)',
                       },
                     }}
                   >
@@ -151,7 +164,13 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
                     >
                       {item.icon}
                     </ListItemIcon>
-                    <ListItemText primary={item.text} primaryTypographyProps={{ fontWeight: 500 }} />
+
+                    <ListItemText
+                      primary={item.text}
+                      primaryTypographyProps={{
+                        fontWeight: 500,
+                      }}
+                    />
                   </ListItemButton>
                 </ListItem>
               );
@@ -160,10 +179,12 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
         </Box>
 
         <Box textAlign="center" pb={2}>
-          <ListItemButton onClick={() => {
-             onClose();           // cierra el Drawer ya
-             setConfirmOpen(true)
-            }}>
+          <ListItemButton
+            onClick={() => {
+              onClose();
+              setConfirmOpen(true);
+            }}
+          >
             <ListItemIcon sx={{ color: '#4b2c15' }}>
               <LogoutIcon />
             </ListItemIcon>
@@ -172,7 +193,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
         </Box>
       </Drawer>
 
-      {/* Diálogo de Confirmación */}
+      {/* Diálogo de confirmación */}
       <Dialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
@@ -180,17 +201,29 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">{'Confirmar cierre de sesión'}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">
+          Confirmar cierre de sesión
+        </DialogTitle>
+
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             ¿Estás seguro de que quieres cerrar la sesión?
           </DialogContentText>
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)} color="primary">
+          <Button
+            onClick={() => setConfirmOpen(false)}
+            color="primary"
+          >
             Cancelar
           </Button>
-          <Button onClick={handleLogout} color="primary" autoFocus>
+
+          <Button
+            onClick={handleLogout}
+            color="primary"
+            autoFocus
+          >
             Confirmar
           </Button>
         </DialogActions>

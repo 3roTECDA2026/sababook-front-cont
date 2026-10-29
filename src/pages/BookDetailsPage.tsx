@@ -21,6 +21,7 @@ import { useParams } from 'react-router-dom';
 import SideMenu from '@/components/layout/SideMenu';
 import AppHeader from '@/components/layout/AppHeader';
 import NavButton from '@/components/ui/NavButton';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookDetails } from '@/hooks/useBookDetails';
 import { useBookOpinion } from '@/hooks/useBookOpinion';
@@ -103,6 +104,10 @@ const BookDetailsPage = () => {
   const [loadingRecomendaciones, setLoadingRecomendaciones] =
     useState(true);
   const [removingRecommendation, setRemovingRecommendation] =
+    useState(false);
+
+  // Confirmación antes de dejar de recomendar
+  const [isUnrecommendConfirmOpen, setIsUnrecommendConfirmOpen] =
     useState(false);
 
   // Notificaciones
@@ -407,7 +412,10 @@ const BookDetailsPage = () => {
   // QUITAR RECOMENDACIÓN
   // =====================================================
 
+  // Se llama desde el modal de confirmación, nunca directo desde el botón
   const handleRemoveRecommendation = async () => {
+    setIsUnrecommendConfirmOpen(false);
+
     if (
       !id ||
       !puedeQuitarRecomendacion ||
@@ -890,7 +898,7 @@ const BookDetailsPage = () => {
 
         {/* ===================================== */}
         {/* DEJAR DE RECOMENDAR */}
-        {/* Colores definidos por el tema */}
+        {/* Acción de eliminar: color="error" y confirmación */}
         {/* ===================================== */}
 
         {!loadingRecomendaciones &&
@@ -905,8 +913,9 @@ const BookDetailsPage = () => {
             >
               <Button
                 variant="contained"
+                color="error"
                 disabled={removingRecommendation}
-                onClick={handleRemoveRecommendation}
+                onClick={() => setIsUnrecommendConfirmOpen(true)}
                 sx={{
                   fontWeight: 600,
                   textTransform: 'none',
@@ -958,8 +967,20 @@ const BookDetailsPage = () => {
         />
       </Box>
 
+      {/* CONFIRMACIÓN PARA DEJAR DE RECOMENDAR */}
+      <ConfirmationModal
+        open={isUnrecommendConfirmOpen}
+        onClose={() => setIsUnrecommendConfirmOpen(false)}
+        onConfirm={() => {
+          void handleRemoveRecommendation();
+        }}
+        title="Dejar de recomendar"
+        message={`¿Querés dejar de recomendar "${book.titulo}"? Se va a quitar de «Nuestros recomendados».`}
+      />
+
       {/* ===================================== */}
       {/* NOTIFICACIONES */}
+      {/* Posición por defecto: abajo a la izquierda, como en el resto de la app */}
       {/* ===================================== */}
 
       <Snackbar
@@ -971,10 +992,6 @@ const BookDetailsPage = () => {
             open: false,
           }))
         }
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
-        }}
       >
         <Alert
           severity={notification.severity}

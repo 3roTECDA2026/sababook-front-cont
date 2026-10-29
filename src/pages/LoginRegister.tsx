@@ -64,13 +64,13 @@ const LoginPage = () => {
     }
   };
 
-  const handleRegisterSubmit = (formData: {
+  const handleRegisterSubmit = (_formData: {
     name: string;
     email: string;
     password: string;
     confirmPassword: string;
   }) => {
-    console.log("Datos de registro enviados:", formData);
+    
   };
 
   const handleBackToLogin = () => {

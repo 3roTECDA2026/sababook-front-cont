@@ -179,7 +179,6 @@ function BookDetailsPageMUI() {
     };
     setComments([submittedRating, ...comments]); // Agrega el nuevo al inicio
     setIsRating(false);
-    console.log('Calificación enviada:', submittedRating);
   };
 
   return (

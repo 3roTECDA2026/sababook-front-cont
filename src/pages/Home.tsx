@@ -9,6 +9,7 @@ import {
   DialogActions,
   TextField,
   Alert,
+  Snackbar,
 } from "@mui/material";
 
 import {
@@ -41,6 +42,8 @@ import { useReadingStatus } from "@/hooks/useReadingStatus";
 
 import type { Book, BookFilters } from "@/types";
 import type { LibroDestacado } from "@/components/ui/FeaturedBookSection";
+
+import type { AlertColor } from "@mui/material";
 
 // --------------------------------------------------
 // TIPOS DE DATOS RECIBIDOS DESDE LA API
@@ -238,6 +241,17 @@ export default function Home() {
       isFavorite
     );
   };
+
+  // Avisos de éxito de las recomendaciones
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   // --------------------------------------------------
   // NORMALIZAR LIBROS RECOMENDADOS
@@ -469,6 +483,13 @@ export default function Home() {
         setLibroParaRecomendar(null);
 
         setComentarioRecomendacion("");
+
+        // El aviso sale recién cuando el back guardó la recomendación
+        setNotification({
+          open: true,
+          message: "Libro recomendado correctamente.",
+          severity: "success",
+        });
       } catch (error) {
         setErrorAccionRecomendacion(
           error instanceof Error
@@ -1041,12 +1062,6 @@ export default function Home() {
             onClick={() => {
               void guardarRecomendacionConComentario();
             }}
-            sx={{
-              bgcolor: "#f25600",
-              "&:hover": {
-                bgcolor: "#d64500",
-              },
-            }}
           >
             {guardandoRecomendacion
               ? "Guardando..."
@@ -1054,6 +1069,25 @@ export default function Home() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* AVISOS DE RECOMENDACIONES */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={() =>
+          setNotification((prev) => ({ ...prev, open: false }))
+        }
+      >
+        <Alert
+          onClose={() =>
+            setNotification((prev) => ({ ...prev, open: false }))
+          }
+          severity={notification.severity}
+          sx={{ width: "100%" }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
