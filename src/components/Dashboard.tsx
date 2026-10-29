@@ -1,25 +1,40 @@
+// src/components/Dashboard.tsx
 
-import { useState, useEffect, SyntheticEvent, useCallback } from 'react';
-import { Box, Modal, Snackbar, Alert, Button } from '@mui/material';
+import { useState, useEffect, useCallback } from 'react';
+import type { SyntheticEvent } from 'react';
+
+import {
+  Box,
+  Modal,
+  Snackbar,
+  Alert,
+} from '@mui/material';
+
 import type { AlertColor } from '@mui/material';
 
 import HeaderDashboard from './layout/HeaderDashboard';
 import type { DashboardView } from './layout/HeaderDashboard';
+
 import ForumDetail from './ui/ForumDetail';
+
 import UserForm from './forms/UserForm';
 import type { UserFormData } from './forms/UserForm';
+
 import ForumForm from './forms/ForumForm';
 import BookForm from './forms/BookForm';
 import GoalForm from './GoalForm';
 import ModerationAdmin from './ModerationAdmin';
+
 import { API_BASE_URL } from '@/environments/api';
 import type { Book, Forum, User, ReadingGoal } from '@/types';
+
 import UserTable from './tables/UserTable';
 import BookTable from './tables/BookTable';
 import ForumTable from './tables/ForumTable';
 import GoalTable from './tables/GoalTable';
+
+import SearchFilterBar from '@/components/ui/SearchFilterBar';
 import { usePagination } from '@/hooks/usePagination';
-import { getUsersPaginated } from '@/services/apiService';
 import { getHistorialAsignaciones } from '@/services/courseService';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
@@ -34,11 +49,57 @@ interface SnackbarState {
 const Dashboard = () => {
   const [activeView, setActiveView] = useState<DashboardView>('users');
 
+  // =========================================================
+  // BÚSQUEDA Y FILTROS
+  // =========================================================
+
+  const [currentQuery, setCurrentQuery] = useState<string>('');
+  const [currentFilter, setCurrentFilter] = useState<string>('');
+
+  // =========================================================
+  // PAGINACIÓN DE USUARIOS
+  // =========================================================
+
   const fetchUsersPage = useCallback(
-    (page: number, limit: number, signal?: AbortSignal) =>
-      getUsersPaginated(page, limit, signal),
-    []
+    (page: number, limit: number, signal?: AbortSignal) => {
+      const token = localStorage.getItem('token');
+
+      const params = new URLSearchParams();
+
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+
+      if (currentQuery) {
+        params.append('q', currentQuery);
+      }
+
+      if (currentFilter) {
+        params.append('filter', currentFilter);
+      }
+
+      return fetch(
+        `${API_BASE_URL}/api/v1/users?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal,
+        }
+      ).then(async (res) => {
+        if (!res.ok) {
+          throw new Error('Error al cargar usuarios');
+        }
+
+        return res.json();
+      });
+    },
+    [currentQuery, currentFilter]
   );
+
+  const resetKey = JSON.stringify({
+    q: currentQuery,
+    filter: currentFilter,
+  });
 
   const {
     items: users,
@@ -52,20 +113,34 @@ const Dashboard = () => {
     fetchPage: fetchUsersPage,
     limit: 5,
     mode: 'replace',
+    resetKey,
     enabled: activeView === 'users',
   });
+
+  // =========================================================
+  // LIBROS
+  // =========================================================
 
   const [books, setBooks] = useState<Book[]>([]);
   const [booksLoading, setBooksLoading] = useState<boolean>(true);
   const [booksError, setBooksError] = useState<string | null>(null);
 
+  // =========================================================
+  // MODALES
+  // =========================================================
+
   const [openForumModal, setOpenForumModal] = useState(false);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openCreateBookModal, setOpenCreateBookModal] = useState(false);
 
+  // =========================================================
+  // METAS DE LECTURA
+  // =========================================================
+
   const [goals, setGoals] = useState<ReadingGoal[]>([]);
   const [goalsLoading, setGoalsLoading] = useState(true);
   const [goalsError, setGoalsError] = useState<string | null>(null);
+
   const [openGoalModal, setOpenGoalModal] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<ReadingGoal | null>(null);
   const [openDeleteGoalConfirm, setOpenDeleteGoalConfirm] = useState(false);
@@ -83,95 +158,198 @@ const Dashboard = () => {
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
 
+  // =========================================================
+  // FOROS
+  // =========================================================
+
   const [forums, setForums] = useState<Forum[]>([]);
   const [forumsLoading, setForumsLoading] = useState(true);
   const [forumsError, setForumsError] = useState<string | null>(null);
-  const [selectedForumId, setSelectedForumId] = useState<number | null>(null);
+
+  const [selectedForumId, setSelectedForumId] =
+    useState<number | null>(null);
+
   const [openForumDetail, setOpenForumDetail] = useState(false);
   const [forumToEdit, setForumToEdit] = useState<Forum | null>(null);
   const [openDeleteForumConfirm, setOpenDeleteForumConfirm] = useState(false);
   const [forumToDelete, setForumToDelete] = useState<Forum | null>(null);
 
-  // Cargar libros
+  // =========================================================
+  // CARGAR LIBROS
+  // =========================================================
+
   const fetchBooks = async (signal?: AbortSignal) => {
     try {
       setBooksLoading(true);
       setBooksError(null);
 
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('No autenticado.');
 
-      const res = await fetch(`${API_BASE_URL}/api/v1/books`, {
-        headers: { Authorization: `Bearer ${token}` },
-        signal,
-      });
+      if (!token) {
+        throw new Error('No autenticado.');
+      }
+
+      const params = new URLSearchParams();
+
+      if (currentQuery) {
+        params.append('q', currentQuery);
+      }
+
+      if (currentFilter) {
+        params.append('filter', currentFilter);
+      }
+
+      const res = await fetch(
+        `${API_BASE_URL}/api/v1/books?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal,
+        }
+      );
 
       if (!res.ok) {
-        if (res.status === 403) throw new Error('Acceso denegado.');
+        if (res.status === 403) {
+          throw new Error('Acceso denegado.');
+        }
+
         throw new Error('Error al cargar los libros');
       }
 
       const data: Book[] = await res.json();
-      setBooks(data);
+
+      if (!signal?.aborted) {
+        setBooks(data);
+      }
     } catch (err) {
-      if ((err as { name?: string })?.name === 'AbortError') return;
-      setBooksError(err instanceof Error ? err.message : String(err));
+      if ((err as { name?: string })?.name === 'AbortError') {
+        return;
+      }
+
+      setBooksError(
+        err instanceof Error ? err.message : String(err)
+      );
     } finally {
-      setBooksLoading(false);
+      if (!signal?.aborted) {
+        setBooksLoading(false);
+      }
     }
   };
 
-  // Cargar foros
+  // =========================================================
+  // CARGAR FOROS
+  // =========================================================
+
   const fetchForums = async (signal?: AbortSignal) => {
     try {
       setForumsLoading(true);
       setForumsError(null);
 
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE_URL}/api/v1/forums`, {
-        headers: { Authorization: `Bearer ${token}` },
-        signal,
-      });
+
+      const params = new URLSearchParams();
+
+      if (currentQuery) {
+        params.append('q', currentQuery);
+      }
+
+      const res = await fetch(
+        `${API_BASE_URL}/api/v1/forums?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal,
+        }
+      );
 
       if (!res.ok) {
-        if (res.status === 403) throw new Error('Acceso denegado.');
+        if (res.status === 403) {
+          throw new Error('Acceso denegado.');
+        }
+
         throw new Error('Error al cargar los foros');
       }
 
       const data: Forum[] = await res.json();
-      setForums(data);
+
+      if (!signal?.aborted) {
+        setForums(data);
+      }
     } catch (err) {
-      if ((err as { name?: string })?.name === 'AbortError') return;
-      setForumsError(err instanceof Error ? err.message : String(err));
+      if ((err as { name?: string })?.name === 'AbortError') {
+        return;
+      }
+
+      setForumsError(
+        err instanceof Error ? err.message : String(err)
+      );
     } finally {
-      setForumsLoading(false);
+      if (!signal?.aborted) {
+        setForumsLoading(false);
+      }
     }
   };
 
-  // Cargar metas
+  // =========================================================
+  // CARGAR METAS DE LECTURA
+  // =========================================================
+
   const fetchGoals = async () => {
     try {
       setGoalsLoading(true);
       setGoalsError(null);
 
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE_URL}/api/v1/metas-lectura`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+
+      const res = await fetch(
+        `${API_BASE_URL}/api/v1/metas-lectura`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!res.ok) {
-        if (res.status === 403) throw new Error('Acceso denegado.');
+        if (res.status === 403) {
+          throw new Error('Acceso denegado.');
+        }
+
         throw new Error('Error al cargar las metas de lectura');
       }
 
       const data: ReadingGoal[] = await res.json();
+
       setGoals(data);
     } catch (err) {
-      setGoalsError(err instanceof Error ? err.message : String(err));
+      setGoalsError(
+        err instanceof Error ? err.message : String(err)
+      );
     } finally {
       setGoalsLoading(false);
     }
   };
+
+  // =========================================================
+  // BUSCADOR Y FILTROS
+  // =========================================================
+
+  const handleDashboardSearch = (
+    searchTerm: string,
+    filterValue?: string
+  ) => {
+    setCurrentQuery(searchTerm);
+
+    if (filterValue !== undefined) {
+      setCurrentFilter(filterValue);
+    }
+  };
+
+  // =========================================================
+  // CARGAR DATOS SEGÚN LA VISTA
+  // =========================================================
 
   useEffect(() => {
     const controller = new AbortController();
@@ -184,16 +362,25 @@ const Dashboard = () => {
       void fetchGoals();
     }
 
-    setBooksError(null);
-    setForumsError(null);
-    setGoalsError(null);
+    return () => {
+      controller.abort();
+    };
+  }, [activeView, currentQuery, currentFilter]);
 
-    return () => controller.abort();
-  }, [activeView]);
+  // =========================================================
+  // NAVEGACIÓN
+  // =========================================================
 
   const handleNavigate = (viewName: DashboardView) => {
     setActiveView(viewName);
+
+    setCurrentQuery('');
+    setCurrentFilter('');
   };
+
+  // =========================================================
+  // CERRAR MODALES
+  // =========================================================
 
   const handleCloseCreateModal = () => {
     setOpenCreateModal(false);
@@ -204,14 +391,28 @@ const Dashboard = () => {
     setBookToEdit(null);
   };
 
+  const handleCloseForumModal = () => {
+    setOpenForumModal(false);
+    setForumToEdit(null);
+  };
+
+  // =========================================================
+  // EDITAR LIBRO
+  // =========================================================
+
   const handleEditBookClick = (book: Book) => {
     setBookToEdit(book);
     setOpenCreateBookModal(true);
   };
 
-  // Crear usuario
+  // =========================================================
+  // CREAR USUARIO
+  // =========================================================
+
   const handleSaveNewUser = async (formData: UserFormData) => {
-    const dataToSend: UserFormData = { ...formData };
+    const dataToSend: UserFormData = {
+      ...formData,
+    };
 
     if (dataToSend.rol) {
       dataToSend.rol = String(dataToSend.rol).toUpperCase();
@@ -223,16 +424,21 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem('token');
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(dataToSend),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/users`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(dataToSend),
+        }
+      );
 
-      if (!response.ok) throw new Error('Error al crear el usuario');
+      if (!response.ok) {
+        throw new Error('Error al crear el usuario');
+      }
 
       reloadUsers();
       handleCloseCreateModal();
@@ -252,9 +458,15 @@ const Dashboard = () => {
     }
   };
 
-  // Crear o editar libro - SAB-91
+  // =========================================================
+  // CREAR O EDITAR LIBRO
+  // =========================================================
+
   const handleSaveBook = async (
-    bookData: { libro_id?: number; [key: string]: unknown }
+    bookData: {
+      libro_id?: number;
+      [key: string]: unknown;
+    }
   ) => {
     setIsApiLoading(true);
 
@@ -302,6 +514,7 @@ const Dashboard = () => {
       }
 
       await fetchBooks();
+
       handleCloseCreateBookModal();
 
       setSnackbar({
@@ -313,9 +526,14 @@ const Dashboard = () => {
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : String(error);
+        error instanceof Error
+          ? error.message
+          : String(error);
 
-      console.error('Error al guardar libro:', error);
+      console.error(
+        `Error al ${isEditing ? 'editar' : 'crear'} libro:`,
+        error
+      );
 
       setSnackbar({
         open: true,
@@ -349,11 +567,8 @@ const Dashboard = () => {
       // El backend también valida la eliminación.
     }
 
-    const foundBook =
-      books.find((b) => b.libro_id === bookId) ?? null;
-
-    setBookToDelete(foundBook);
-    setOpenDeleteConfirm(true);
+    setBookToDelete(books.find((book) => book.libro_id === bookId) ?? null);
+    setOpenDeleteConfirm(true); // Abre el modal
   };
 
   const handleCloseDeleteConfirm = () => {
@@ -379,12 +594,14 @@ const Dashboard = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response
+          .json()
+          .catch(() => ({}));
 
         throw new Error(
           errorData.mensaje ||
-          errorData.message ||
-          `Falló la eliminación (HTTP ${response.status})`
+            errorData.message ||
+            `Falló la eliminación (HTTP ${response.status})`
         );
       }
 
@@ -399,7 +616,9 @@ const Dashboard = () => {
       setOpenDeleteConfirm(false);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : String(error);
+        error instanceof Error
+          ? error.message
+          : String(error);
 
       setSnackbar({
         open: true,
@@ -412,14 +631,19 @@ const Dashboard = () => {
     }
   };
 
-  // Editar foro
+  // =========================================================
+  // EDITAR FORO
+  // =========================================================
+
   const handleEditForumClick = (forum: Forum) => {
     setForumToEdit(forum);
     setOpenForumModal(true);
-    setBookToDelete(null);
   };
 
-  // Eliminar meta
+  // =========================================================
+  // ELIMINAR META
+  // =========================================================
+
   const handleOpenDeleteGoalConfirm = (goalId: number) => {
     const foundGoal =
       goals.find((g) => (g.meta_id ?? g.id) === goalId) ?? null;
@@ -438,6 +662,7 @@ const Dashboard = () => {
     if (!goalId) return;
 
     setIsApiLoading(true);
+
     const token = localStorage.getItem('token');
 
     try {
@@ -452,11 +677,13 @@ const Dashboard = () => {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response
+          .json()
+          .catch(() => ({}));
 
         throw new Error(
           errorData.message ||
-          `Falló la eliminación (HTTP ${response.status})`
+            `Falló la eliminación (HTTP ${response.status})`
         );
       }
 
@@ -479,10 +706,9 @@ const Dashboard = () => {
     }
   };
 
-  const handleCloseForumModal = () => {
-    setOpenForumModal(false);
-    setForumToEdit(null);
-  };
+  // =========================================================
+  // BOTÓN AGREGAR
+  // =========================================================
 
   const handleAddClick = () => {
     if (activeView === 'users') {
@@ -496,11 +722,18 @@ const Dashboard = () => {
     }
   };
 
-  // Crear o editar foro
+  // =========================================================
+  // CREAR O EDITAR FORO
+  // =========================================================
+
   const handleSaveForum = async (
-    forumData: { foro_id?: number; [key: string]: unknown }
+    forumData: {
+      foro_id?: number;
+      [key: string]: unknown;
+    }
   ) => {
     setIsApiLoading(true);
+
     const token = localStorage.getItem('token');
 
     const isEditing = !!forumData.foro_id;
@@ -520,15 +753,18 @@ const Dashboard = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response
+          .json()
+          .catch(() => ({}));
 
         throw new Error(
           errorData.message ||
-          `Falló la operación (HTTP ${response.status})`
+            `Falló la operación (HTTP ${response.status})`
         );
       }
 
       await fetchForums();
+
       handleCloseForumModal();
 
       setSnackbar({
@@ -540,7 +776,9 @@ const Dashboard = () => {
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : String(error);
+        error instanceof Error
+          ? error.message
+          : String(error);
 
       setSnackbar({
         open: true,
@@ -554,7 +792,10 @@ const Dashboard = () => {
     }
   };
 
-  // Eliminar foro
+  // =========================================================
+  // ELIMINAR FORO
+  // =========================================================
+
   const handleOpenDeleteForumConfirm = (forumId: number) => {
     const foundForum =
       forums.find((f) => f.foro_id === forumId) ?? null;
@@ -573,6 +814,7 @@ const Dashboard = () => {
     if (!forumId) return;
 
     setIsApiLoading(true);
+
     const token = localStorage.getItem('token');
 
     try {
@@ -587,7 +829,9 @@ const Dashboard = () => {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response
+          .json()
+          .catch(() => ({}));
 
         throw new Error(
           errorData.message ||
@@ -606,7 +850,9 @@ const Dashboard = () => {
       setOpenDeleteForumConfirm(false);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : String(error);
+        error instanceof Error
+          ? error.message
+          : String(error);
 
       setSnackbar({
         open: true,
@@ -619,11 +865,17 @@ const Dashboard = () => {
     }
   };
 
+  // =========================================================
+  // SNACKBAR
+  // =========================================================
+
   const handleSnackbarClose = (
     _event?: SyntheticEvent | Event,
     reason?: string
   ) => {
-    if (reason === 'clickaway') return;
+    if (reason === 'clickaway') {
+      return;
+    }
 
     setSnackbar((prev) => ({
       ...prev,
@@ -631,7 +883,10 @@ const Dashboard = () => {
     }));
   };
 
-  // Actualizar meta
+  // =========================================================
+  // ACTUALIZAR META DE LECTURA
+  // =========================================================
+
   const handleSaveGoal = async (
     goalData: {
       meta_id?: number;
@@ -643,9 +898,9 @@ const Dashboard = () => {
 
     const token = localStorage.getItem('token');
 
-    const endpoint = `${API_BASE_URL}/api/v1/metas-lectura/${
-      goalData.meta_id || goalData.id
-    }`;
+    const endpoint =
+      `${API_BASE_URL}/api/v1/metas-lectura/` +
+      `${goalData.meta_id || goalData.id}`;
 
     try {
       const response = await fetch(endpoint, {
@@ -658,15 +913,18 @@ const Dashboard = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response
+          .json()
+          .catch(() => ({}));
 
         throw new Error(
           errorData.message ||
-          `Falló la actualización (HTTP ${response.status})`
+            `Falló la actualización (HTTP ${response.status})`
         );
       }
 
       await fetchGoals();
+
       setOpenGoalModal(false);
       setGoalToEdit(null);
 
@@ -684,7 +942,10 @@ const Dashboard = () => {
     }
   };
 
-  // Vistas del Dashboard
+  // =========================================================
+  // RENDERIZAR VISTA ACTIVA
+  // =========================================================
+
   const renderActiveView = () => {
     switch (activeView) {
       case 'users':
@@ -723,7 +984,7 @@ const Dashboard = () => {
             onDeleteForum={handleOpenDeleteForumConfirm}
             onForumClick={(id: number) => {
               setSelectedForumId(id);
-              setActiveView('forumCommentsAdmin');
+              setOpenForumDetail(true);
             }}
           />
         );
@@ -750,6 +1011,10 @@ const Dashboard = () => {
     }
   };
 
+  // =========================================================
+  // INTERFAZ PRINCIPAL
+  // =========================================================
+
   return (
     <DashboardContainer
       sx={{
@@ -762,6 +1027,8 @@ const Dashboard = () => {
         alignItems: 'center',
       }}
     >
+      {/* NAVEGACIÓN */}
+
       <HeaderDashboard
         activeView={activeView}
         onNavigate={handleNavigate}
@@ -769,18 +1036,48 @@ const Dashboard = () => {
         isLoading={isApiLoading}
       />
 
+      {/* BUSCADOR */}
+
+      {['users', 'books', 'forums'].includes(activeView) && (
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: '1200px',
+            mt: 2,
+          }}
+        >
+          <SearchFilterBar
+            key={activeView}
+            placeholder={`Buscar en ${
+              activeView === 'users'
+                ? 'usuarios'
+                : activeView === 'books'
+                  ? 'libros'
+                  : 'foros'
+            }...`}
+            onSearch={handleDashboardSearch}
+          />
+        </Box>
+      )}
+
+      {/* TABLA ACTIVA */}
+
       <Box
         sx={{
           width: '100%',
           maxWidth: '1200px',
           flexGrow: 1,
           mt: 2,
+          minHeight: '400px',
         }}
       >
         {renderActiveView()}
       </Box>
 
-      {/* Modal Usuario */}
+      {/* =====================================================
+          MODAL CREAR USUARIO
+      ===================================================== */}
+
       <Modal
         open={openCreateModal}
         onClose={handleCloseCreateModal}
@@ -801,7 +1098,10 @@ const Dashboard = () => {
         </Box>
       </Modal>
 
-      {/* Modal Libro */}
+      {/* =====================================================
+          MODAL CREAR O EDITAR LIBRO
+      ===================================================== */}
+
       <Modal
         open={openCreateBookModal}
         onClose={handleCloseCreateBookModal}
@@ -836,7 +1136,10 @@ const Dashboard = () => {
         </Box>
       </Modal>
 
-      {/* Modal Foro */}
+      {/* =====================================================
+          MODAL CREAR O EDITAR FORO
+      ===================================================== */}
+
       <Modal
         open={openForumModal}
         onClose={handleCloseForumModal}
@@ -863,10 +1166,16 @@ const Dashboard = () => {
         </Box>
       </Modal>
 
-      {/* Modal Meta de Lectura */}
+      {/* =====================================================
+          MODAL EDITAR META
+      ===================================================== */}
+
       <Modal
         open={openGoalModal}
-        onClose={() => setOpenGoalModal(false)}
+        onClose={() => {
+          setOpenGoalModal(false);
+          setGoalToEdit(null);
+        }}
       >
         <Box
           sx={{
@@ -881,16 +1190,25 @@ const Dashboard = () => {
             <GoalForm
               goalToEdit={goalToEdit}
               onSave={handleSaveGoal}
-              onCancel={() => setOpenGoalModal(false)}
+              onCancel={() => {
+                setOpenGoalModal(false);
+                setGoalToEdit(null);
+              }}
             />
           )}
         </Box>
       </Modal>
 
-      {/* Detalle del foro */}
+      {/* =====================================================
+          DETALLE DEL FORO
+      ===================================================== */}
+
       <Modal
         open={openForumDetail}
-        onClose={() => setOpenForumDetail(false)}
+        onClose={() => {
+          setOpenForumDetail(false);
+          setSelectedForumId(null);
+        }}
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -909,10 +1227,13 @@ const Dashboard = () => {
             overflowY: 'auto',
           }}
         >
-          {selectedForumId && (
+          {selectedForumId !== null && (
             <ForumDetail
               foroId={selectedForumId}
-              onClose={() => setOpenForumDetail(false)}
+              onClose={() => {
+                setOpenForumDetail(false);
+                setSelectedForumId(null);
+              }}
             />
           )}
         </Box>
@@ -923,7 +1244,7 @@ const Dashboard = () => {
         open={openDeleteConfirm}
         onClose={handleCloseDeleteConfirm}
         onConfirm={handleConfirmDeleteBook}
-        title="Confirmar Eliminación"
+        title="Confirmar eliminación"
         loading={isApiLoading}
         message={
           bookToDelete
@@ -937,7 +1258,7 @@ const Dashboard = () => {
         open={openDeleteForumConfirm}
         onClose={handleCloseDeleteForumConfirm}
         onConfirm={handleConfirmDeleteForum}
-        title="Confirmar Eliminación del Foro"
+        title="Confirmar eliminación del foro"
         loading={isApiLoading}
         message={
           forumToDelete
@@ -951,7 +1272,7 @@ const Dashboard = () => {
         open={openDeleteGoalConfirm}
         onClose={handleCloseDeleteGoalConfirm}
         onConfirm={handleConfirmDeleteGoal}
-        title="Confirmar Eliminación de la Meta"
+        title="Confirmar eliminación de la meta"
         loading={isApiLoading}
         message={
           goalToDelete
@@ -960,7 +1281,10 @@ const Dashboard = () => {
         }
       />
 
-      {/* Notificaciones */}
+      {/* =====================================================
+          NOTIFICACIONES
+      ===================================================== */}
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -969,7 +1293,9 @@ const Dashboard = () => {
         <Alert
           onClose={handleSnackbarClose}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          sx={{
+            width: '100%',
+          }}
         >
           {snackbar.message}
         </Alert>

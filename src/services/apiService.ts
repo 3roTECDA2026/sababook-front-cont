@@ -364,7 +364,7 @@ export async function getCafesLiterarios(
 
   return await apiRequest<CafeLiterario[]>(
     `/cafes${query}`,
-    { signal }
+    { signal, headers: getAuthHeaders() }
   );
 }
 
@@ -394,6 +394,7 @@ export async function crearCafeLiterario(data: {
 }> {
   return await apiRequest('/cafes', {
     method: 'POST',
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
 }
@@ -410,6 +411,7 @@ export async function toggleAsistenciaCafe(
     `/cafes/${cafeId}/asistencia`,
     {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: JSON.stringify({ estado }),
     }
   );
@@ -432,6 +434,7 @@ export async function votarCafeLiterario(
     `/cafes/${cafeId}/voto`,
     {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: JSON.stringify({ voto }),
     }
   );
@@ -459,19 +462,22 @@ function getAuthHeaders(): Record<string, string> {
 interface CreateGoalData {
   usuario_id: number | string;
   periodo_nombre?: string;
-  target_books: number;
-  start_date: string;
-  end_date: string;
+  target_books?: number;
+  cantidad_libros?: number;
+  start_date?: string;
+  fecha_inicio?: string;
+  end_date?: string;
+  fecha_fin?: string;
 }
 
 export async function getActiveReadingGoal(
   userId: number | string
-): Promise<ReadingGoal | null> {
+): Promise<ReadingGoal[] | ReadingGoal | null> {
   if (!userId) {
     return null;
   }
 
-  return await apiRequest<ReadingGoal>(
+  return await apiRequest<ReadingGoal[] | ReadingGoal>(
     `/metas-lectura/usuario/${userId}`,
     {
       headers: getAuthHeaders(),
@@ -484,11 +490,10 @@ export async function createReadingGoal(
 ): Promise<ReadingGoal> {
   const payload = {
     usuario_id: Number(goalData.usuario_id),
-    periodo_nombre:
-      goalData.periodo_nombre || 'Meta Personal',
-    cantidad_libros: Number(goalData.target_books),
-    fecha_inicio: goalData.start_date,
-    fecha_fin: goalData.end_date,
+    periodo_nombre: goalData.periodo_nombre || 'Meta Personal',
+    cantidad_libros: Number(goalData.cantidad_libros ?? goalData.target_books ?? 1),
+    fecha_inicio: goalData.fecha_inicio ?? goalData.start_date,
+    fecha_fin: goalData.fecha_fin ?? goalData.end_date,
   };
 
   return await apiRequest<ReadingGoal>(
@@ -504,14 +509,8 @@ export async function createReadingGoal(
 export async function logBookProgress(
   bookId: number | string
 ): Promise<ReadingGoal> {
-  return await apiRequest<ReadingGoal>(
-    '/metas-lectura/log-book',
-    {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ bookId }),
-    }
-  );
+  // Deprecated: el progreso se calcula en base al estado "leído" del libro
+  throw new Error('logBookProgress no está soportado');
 }
 
 export async function getAllReadingGoals(): Promise<

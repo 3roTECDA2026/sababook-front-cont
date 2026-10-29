@@ -214,14 +214,13 @@ export default function BookCard({
             )}
           </IconButton>
 
-          {/* Estado de lectura */}
-          {isFavorite &&
-            onReadingStatusChange &&
+          {/* Estado de lectura (independiente del favorito)*/}
+          {onReadingStatusChange &&
             showReadingStatusControl && (
               <Chip
                 label={
                   readingStatus === 'general'
-                    ? 'Favorito'
+                    ? 'Sin estado'
                     : statusLabels[readingStatus]
                 }
                 size="small"
@@ -444,7 +443,7 @@ export default function BookCard({
 }
 
 const statusLabels: Record<ReadingStatus, string> = {
-  general: 'Favorito',
+  general: 'Sin estado',
   'quiero-leer': 'Quiero leer',
   leyendo: 'Leyendo',
   leido: 'Leído',
@@ -472,7 +471,7 @@ const readingOptions: Array<{
   },
   {
     value: 'general',
-    label: 'Favorito (General)',
+    label: 'Sin estado de lectura',
     icon: StarIcon,
   },
 ];

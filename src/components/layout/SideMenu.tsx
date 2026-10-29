@@ -94,6 +94,7 @@ export default function SideMenu({
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio Sábato', icon: <RadioIcon />, path: '/radio' },
       { text: 'Mi Biblioteca', icon: <FavoriteIcon />, path: '/favoritos' },
