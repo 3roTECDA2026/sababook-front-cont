@@ -92,7 +92,7 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
 
   // 💡 ESTADO INICIAL: Mapea bookToEdit (si existe) o usa datos iniciales vacíos
   const [formData, setFormData] = useState<BookFormData>(INITIAL_BOOK_DATA);
-  const [, setLoading] = useState<boolean>(false); // Para manejar la carga local de la acción de guardar
+ 
 
   // 💡 EFECTO: Actualiza el formulario cuando cambia bookToEdit (al abrir el modal)
   useEffect(() => {
@@ -122,7 +122,7 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
   // 💡 Manejador de Guardado (POST/PUT delegado al padre)
   const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    
 
     // ---  Mapeamos 'imagenUrl' a 'portada_url' y limpiamos IDs ---
     const payload: BookFormData = { ...formData };
@@ -147,9 +147,8 @@ const BookForm = ({ bookToEdit, onSave, onCancel, title }: BookFormProps) => {
     } catch (err) {
       // El componente padre ya maneja el Snackbar para errores
       console.error('Error al guardar en el formulario:', err);
-    } finally {
-      setLoading(false);
     }
+    
   };
 
    // Renderizado

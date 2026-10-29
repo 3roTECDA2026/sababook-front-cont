@@ -28,7 +28,7 @@ import RadioIcon from '@mui/icons-material/Radio';
 import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import InsightsIcon from '@mui/icons-material/Insights';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 interface MenuItem {
@@ -45,8 +45,7 @@ interface SideMenuProps {
 
 export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuProps) {
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
-  const navigate = useNavigate();
-  const { isAdmin, isTeacher } = useAuth();
+  const { isAdmin, isTeacher, logout } = useAuth();
 
   let menuItems: MenuItem[];
 
@@ -91,10 +90,7 @@ export default function SideMenu({ open, onClose, active = 'Inicio' }: SideMenuP
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('rol');
-    localStorage.removeItem('userId');
-    navigate('/');
+    logout();
     setConfirmOpen(false);
     onClose();
   };
