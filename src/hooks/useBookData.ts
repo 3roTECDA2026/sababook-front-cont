@@ -41,8 +41,7 @@ export function useBookData(enabled = true) {
       .then((data: Book[]) => {
         setBooks(data);
         setFeaturedBook(DEFAULT_FEATURED_BOOK);
-        // console.log("Books loaded:", data);
-
+        
         // const featured = data.find(book =>
         //     book.libro_id === FEATURED_BOOK_ID || book.id === FEATURED_BOOK_ID
         // );

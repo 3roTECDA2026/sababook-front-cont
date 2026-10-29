@@ -26,7 +26,6 @@ const useForumDetail = (foroId: number | string | undefined) => {
         }
         const data: ForumDetail = await res.json();
         setForo(data);
-        console.log('Datos del foro desde API:', data);
       } catch (err) {
         if ((err as { name?: string })?.name === 'AbortError') return;
         const message = err instanceof Error ? err.message : String(err);
