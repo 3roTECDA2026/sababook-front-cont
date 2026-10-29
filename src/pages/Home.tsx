@@ -178,7 +178,7 @@ export default function Home() {
         ...currentFilters,
       };
 
-      const q = normalizarTexto(currentQuery);
+      const q = currentQuery.trim();
 
       if (q) {
         filtros.query = q;
