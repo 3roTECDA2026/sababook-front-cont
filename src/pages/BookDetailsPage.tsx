@@ -1,3 +1,4 @@
+
 import { API_BASE_URL } from '@/environments/api';
 import { recomendacionService } from '@/services/recomendacionService';
 import ReadingProgress from '@/components/ReadingProgress';
@@ -14,11 +15,13 @@ import {
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useParams } from 'react-router-dom';
 
 import SideMenu from '@/components/layout/SideMenu';
 import AppHeader from '@/components/layout/AppHeader';
 import NavButton from '@/components/ui/NavButton';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookDetails } from '@/hooks/useBookDetails';
 import { useBookOpinion } from '@/hooks/useBookOpinion';
@@ -29,13 +32,30 @@ import BookOpinionList from '@/components/ui/BookOpinionList';
 import BookDescription from '@/components/ui/BookDescription';
 import TriviaPlaySection from '@/components/ui/TriviaPlaySection';
 
-const BLUE_COLOR = '#1976d2';
-
 interface Recomendacion {
   recomendacion_id: number;
   libro_id: number;
   usuario_id: number;
   explicacion?: string;
+}
+
+interface ReadingProgressResponse {
+  libro_id?: number;
+  pagina_actual?: number;
+  paginas_totales?: number;
+  porcentaje?: number;
+  data?: {
+    libro_id?: number;
+    pagina_actual?: number;
+    paginas_totales?: number;
+    porcentaje?: number;
+  };
+  message?: string;
+  error?: string;
+}
+
+interface ReadBooksCountResponse {
+  libros_leidos: number;
 }
 
 const formatearFecha = (fecha: string) =>
@@ -49,19 +69,48 @@ const BookDetailsPage = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getReadingStatus, getReadingDate, setReadingStatus } = useReadingStatus();
+
+  const {
+    getReadingStatus,
+    getReadingDate,
+    setReadingStatus,
+  } = useReadingStatus();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [newRating, setNewRating] = useState(0);
-  const [currentProgress, setCurrentProgress] = useState<number | null>(null);
+
+  // SAB-91: progreso individual
+  const [currentProgress, setCurrentProgress] =
+    useState<number | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState(true);
+  const [savingProgress, setSavingProgress] = useState(false);
+
+  // Estado de lectura
   const [guardandoLectura, setGuardandoLectura] = useState(false);
 
-  const [recomendaciones, setRecomendaciones] = useState<Recomendacion[]>([]);
-  const [loadingRecomendaciones, setLoadingRecomendaciones] = useState(true);
-  const [removingRecommendation, setRemovingRecommendation] = useState(false);
+  // Contador individual de libros leídos
+  const [librosLeidos, setLibrosLeidos] =
+    useState<number | null>(null);
+  const [loadingLibrosLeidos, setLoadingLibrosLeidos] =
+    useState(false);
+  const [versionLibrosLeidos, setVersionLibrosLeidos] =
+    useState(0);
 
+  // Recomendaciones
+  const [recomendaciones, setRecomendaciones] =
+    useState<Recomendacion[]>([]);
+  const [loadingRecomendaciones, setLoadingRecomendaciones] =
+    useState(true);
+  const [removingRecommendation, setRemovingRecommendation] =
+    useState(false);
+
+  // Confirmación antes de dejar de recomendar
+  const [isUnrecommendConfirmOpen, setIsUnrecommendConfirmOpen] =
+    useState(false);
+
+  // Notificaciones
   const [notification, setNotification] = useState<{
     open: boolean;
     message: string;
@@ -103,8 +152,189 @@ const BookDetailsPage = () => {
   const isTeacher = userRole === 'DOCENTE';
 
   // =====================================================
+  // CONTADOR INDIVIDUAL DE LIBROS LEÍDOS
+  // =====================================================
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const cargarLibrosLeidos = async () => {
+      setLibrosLeidos(null);
+
+      if (!userId) {
+        setLoadingLibrosLeidos(false);
+        return;
+      }
+
+      setLoadingLibrosLeidos(true);
+
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          throw new Error('No hay una sesión activa.');
+        }
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/v1/favorites/read-count`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }
+        );
+
+        const data: ReadBooksCountResponse & {
+          error?: string;
+          message?: string;
+        } = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+              data.message ||
+              'No se pudo obtener el contador de libros leídos.'
+          );
+        }
+
+        const total = Number(data.libros_leidos);
+
+        if (!Number.isInteger(total) || total < 0) {
+          throw new Error(
+            'El servidor devolvió un contador inválido.'
+          );
+        }
+
+        if (!controller.signal.aborted) {
+          setLibrosLeidos(total);
+        }
+      } catch (error) {
+        if (controller.signal.aborted) return;
+
+        console.error(
+          'Error al cargar libros leídos:',
+          error
+        );
+
+        setLibrosLeidos(null);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingLibrosLeidos(false);
+        }
+      }
+    };
+
+    void cargarLibrosLeidos();
+
+    return () => controller.abort();
+  }, [userId, versionLibrosLeidos]);
+
+  // =====================================================
+  // SAB-91: CONSULTAR PROGRESO INDIVIDUAL
+  // =====================================================
+
+  useEffect(() => {
+    setCurrentProgress(null);
+
+    if (!id || !user) {
+      setLoadingProgress(false);
+      return;
+    }
+
+    const libroId = Number(id);
+
+    if (!Number.isInteger(libroId) || libroId <= 0) {
+      setLoadingProgress(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const cargarProgreso = async () => {
+      setLoadingProgress(true);
+
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          throw new Error(
+            'Debés iniciar sesión para consultar tu progreso.'
+          );
+        }
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/v1/favorites/progress?libro_id=${libroId}`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }
+        );
+
+        const data: ReadingProgressResponse =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              data.error ||
+              'No se pudo consultar el progreso de lectura.'
+          );
+        }
+
+        const progreso = data.data ?? data;
+        const paginaActual = Number(
+          progreso.pagina_actual ?? 0
+        );
+
+        if (
+          !Number.isInteger(paginaActual) ||
+          paginaActual < 0
+        ) {
+          throw new Error(
+            'El servidor devolvió un progreso inválido.'
+          );
+        }
+
+        if (!controller.signal.aborted) {
+          setCurrentProgress(paginaActual);
+        }
+      } catch (error) {
+        if (controller.signal.aborted) return;
+
+        console.error(
+          'Error al cargar progreso:',
+          error
+        );
+
+        setNotification({
+          open: true,
+          message:
+            error instanceof Error
+              ? error.message
+              : 'No se pudo cargar el progreso de lectura.',
+          severity: 'error',
+        });
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingProgress(false);
+        }
+      }
+    };
+
+    void cargarProgreso();
+
+    return () => controller.abort();
+  }, [id, userId, user]);
+
+  // =====================================================
   // CONSULTAR RECOMENDACIONES
   // =====================================================
+
   useEffect(() => {
     if (!id) {
       setLoadingRecomendaciones(false);
@@ -131,7 +361,8 @@ const BookDetailsPage = () => {
               return false;
             }
 
-            const item = recomendacion as Partial<Recomendacion>;
+            const item =
+              recomendacion as Partial<Recomendacion>;
 
             return Number(item.libro_id) === Number(id);
           }
@@ -143,7 +374,11 @@ const BookDetailsPage = () => {
       } catch (error) {
         if (controller.signal.aborted) return;
 
-        console.error('Error al cargar recomendaciones:', error);
+        console.error(
+          'Error al cargar recomendaciones:',
+          error
+        );
+
         setRecomendaciones([]);
       } finally {
         if (!controller.signal.aborted) {
@@ -160,7 +395,9 @@ const BookDetailsPage = () => {
   // =====================================================
   // PERMISOS PARA QUITAR RECOMENDACIÓN
   // =====================================================
-  const libroEstaRecomendado = recomendaciones.length > 0;
+
+  const libroEstaRecomendado =
+    recomendaciones.length > 0;
 
   const recomendacionPropia = recomendaciones.some(
     (recomendacion) =>
@@ -174,8 +411,16 @@ const BookDetailsPage = () => {
   // =====================================================
   // QUITAR RECOMENDACIÓN
   // =====================================================
+
+  // Se llama desde el modal de confirmación, nunca directo desde el botón
   const handleRemoveRecommendation = async () => {
-    if (!id || !puedeQuitarRecomendacion || removingRecommendation) {
+    setIsUnrecommendConfirmOpen(false);
+
+    if (
+      !id ||
+      !puedeQuitarRecomendacion ||
+      removingRecommendation
+    ) {
       return;
     }
 
@@ -184,7 +429,8 @@ const BookDetailsPage = () => {
     if (!token) {
       setNotification({
         open: true,
-        message: 'Debés iniciar sesión para quitar una recomendación.',
+        message:
+          'Debés iniciar sesión para quitar una recomendación.',
         severity: 'error',
       });
       return;
@@ -193,11 +439,11 @@ const BookDetailsPage = () => {
     setRemovingRecommendation(true);
 
     try {
-      await recomendacionService.eliminar(Number(id), token);
+      await recomendacionService.eliminar(
+        Number(id),
+        token
+      );
 
-      // El administrador puede eliminar todas las
-      // recomendaciones del libro.
-      // El docente solamente elimina la propia.
       if (isAdmin) {
         setRecomendaciones([]);
       } else {
@@ -211,11 +457,15 @@ const BookDetailsPage = () => {
 
       setNotification({
         open: true,
-        message: 'La recomendación se quitó correctamente.',
+        message:
+          'La recomendación se quitó correctamente.',
         severity: 'success',
       });
     } catch (error) {
-      console.error('Error al quitar recomendación:', error);
+      console.error(
+        'Error al quitar recomendación:',
+        error
+      );
 
       setNotification({
         open: true,
@@ -231,38 +481,63 @@ const BookDetailsPage = () => {
   };
 
   // =====================================================
-  // MARCAR COMO LEÍDO
+  // MARCAR O DESMARCAR COMO LEÍDO
   // =====================================================
-  // Marcar = estado "leido"; desmarcar = volver a "general".
-  // Si el libro no estaba en la biblioteca, el back lo agrega.
+
   const handleToggleLeido = async () => {
     if (!book || guardandoLectura) return;
 
-    const yaLeido = getReadingStatus(book.libro_id) === 'leido';
+    const yaLeido =
+      getReadingStatus(book.libro_id) === 'leido';
 
     setGuardandoLectura(true);
-    const ok = await setReadingStatus(book.libro_id, yaLeido ? 'general' : 'leido');
-    setGuardandoLectura(false);
 
-    setNotification({
-      open: true,
-      message: ok
-        ? yaLeido
-          ? 'Se quitó la marca de leído.'
-          : '¡Libro marcado como leído!'
-        : 'No se pudo guardar. Intentá de nuevo en un momento.',
-      severity: ok ? 'success' : 'error',
-    });
+    try {
+      const ok = await setReadingStatus(
+        book.libro_id,
+        yaLeido ? 'general' : 'leido'
+      );
+
+      if (ok) {
+        setVersionLibrosLeidos((prev) => prev + 1);
+      }
+
+      setNotification({
+        open: true,
+        message: ok
+          ? yaLeido
+            ? 'Se quitó la marca de leído.'
+            : '¡Libro marcado como leído!'
+          : 'No se pudo guardar. Intentá de nuevo en un momento.',
+        severity: ok ? 'success' : 'error',
+      });
+    } catch (error) {
+      console.error(
+        'Error al actualizar estado de lectura:',
+        error
+      );
+
+      setNotification({
+        open: true,
+        message:
+          'No se pudo guardar el estado de lectura.',
+        severity: 'error',
+      });
+    } finally {
+      setGuardandoLectura(false);
+    }
   };
 
   // =====================================================
   // COMENTARIOS
   // =====================================================
+
   const handleCommentClick = () => {
     if (!user) {
       setNotification({
         open: true,
-        message: 'Debés iniciar sesión para comentar.',
+        message:
+          'Debés iniciar sesión para comentar.',
         severity: 'error',
       });
       return;
@@ -275,38 +550,122 @@ const BookDetailsPage = () => {
   const handleMenuClose = () => setMenuOpen(false);
 
   // =====================================================
-  // PROGRESO DE LECTURA
+  // SAB-91: ACTUALIZAR PROGRESO INDIVIDUAL
   // =====================================================
-  const handleUpdateProgress = async (newPage: number) => {
-    if (!id) return;
+
+  const handleUpdateProgress = async (
+    newPage: number
+  ) => {
+    if (!book || savingProgress) return;
+
+    if (!user) {
+      setNotification({
+        open: true,
+        message:
+          'Debés iniciar sesión para guardar tu progreso.',
+        severity: 'error',
+      });
+      return;
+    }
+
+    const totalPages = Number(
+      book.paginas_totales
+    );
+
+    if (
+      !Number.isInteger(newPage) ||
+      newPage < 0 ||
+      !Number.isInteger(totalPages) ||
+      totalPages <= 0 ||
+      newPage > totalPages
+    ) {
+      setNotification({
+        open: true,
+        message:
+          `Ingresá una página válida entre 0 y ${totalPages}.`,
+        severity: 'error',
+      });
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      setNotification({
+        open: true,
+        message:
+          'Tu sesión no está disponible. Iniciá sesión nuevamente.',
+        severity: 'error',
+      });
+      return;
+    }
+
+    setSavingProgress(true);
 
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/v1/libros/${id}`,
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/favorites/progress`,
         {
-          method: 'PUT',
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
+            libro_id: book.libro_id,
             pagina_actual: newPage,
           }),
         }
       );
 
-      if (!res.ok) {
-        throw new Error('Error al actualizar el progreso.');
+      const data: ReadingProgressResponse =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            'No se pudo actualizar el progreso.'
+        );
       }
 
-      setCurrentProgress(newPage);
+      const progreso = data.data ?? data;
+
+      const paginaGuardada = Number(
+        progreso.pagina_actual ?? newPage
+      );
+
+      setCurrentProgress(paginaGuardada);
+
+      setNotification({
+        open: true,
+        message:
+          `Progreso guardado: página ${paginaGuardada}.`,
+        severity: 'success',
+      });
     } catch (error) {
-      console.error('Error al actualizar progreso:', error);
+      console.error(
+        'Error al actualizar progreso:',
+        error
+      );
+
+      setNotification({
+        open: true,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'No se pudo actualizar el progreso.',
+        severity: 'error',
+      });
+    } finally {
+      setSavingProgress(false);
     }
   };
 
   // =====================================================
   // ESTADOS DE CARGA
   // =====================================================
+
   if (bookLoading || opinionsLoading) {
     return <div>Cargando...</div>;
   }
@@ -319,9 +678,18 @@ const BookDetailsPage = () => {
     return <div>No se encontró el libro.</div>;
   }
 
-  const coverImageSrc = book.portada_url?.trim() || undefined;
-  const leido = getReadingStatus(book.libro_id) === 'leido';
-  const fechaLectura = getReadingDate(book.libro_id);
+  const coverImageSrc =
+    book.portada_url?.trim() || undefined;
+
+  const leido =
+    getReadingStatus(book.libro_id) === 'leido';
+
+  const fechaLectura =
+    getReadingDate(book.libro_id);
+
+  const totalPages = Number(
+    book.paginas_totales ?? 0
+  );
 
   return (
     <Box
@@ -353,25 +721,107 @@ const BookDetailsPage = () => {
           coverImageSrc={coverImageSrc}
           authorStyle={authorStyle}
           actions={
-            <TriviaPlaySection bookId={book.libro_id} />
+            <TriviaPlaySection
+              bookId={book.libro_id}
+            />
           }
         />
 
-        <ReadingProgress
-          currentPage={
-            currentProgress !== null
-              ? currentProgress
-              : (book.pagina_actual ?? 0)
-          }
-          totalPages={
-            book.paginas_totales && book.paginas_totales > 0
-              ? book.paginas_totales
-              : 100
-          }
-          onUpdateProgress={handleUpdateProgress}
-        />
+        {/* ===================================== */}
+        {/* CONTADOR DE LIBROS LEÍDOS */}
+        {/* ===================================== */}
 
+        {user && (
+          <Box
+            sx={{
+              mt: 3,
+              mb: 2,
+              p: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: 'background.paper',
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+              }}
+            >
+              <MenuBookIcon
+                sx={{
+                  color: 'primary.main',
+                  fontSize: 30,
+                }}
+              />
+
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 700,
+                }}
+              >
+                Libros leídos
+              </Typography>
+            </Box>
+
+            {loadingLibrosLeidos ? (
+              <CircularProgress
+                size={24}
+                sx={{
+                  color: 'primary.main',
+                }}
+              />
+            ) : (
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 800,
+                  color: 'primary.main',
+                }}
+              >
+                {librosLeidos ?? '—'}
+              </Typography>
+            )}
+          </Box>
+        )}
+
+        {/* ===================================== */}
+        {/* SAB-91: PROGRESO INDIVIDUAL */}
+        {/* ===================================== */}
+
+        {user ? (
+          <ReadingProgress
+            currentPage={currentProgress ?? 0}
+            totalPages={totalPages}
+            onUpdateProgress={handleUpdateProgress}
+            loading={loadingProgress}
+            saving={savingProgress}
+            disabled={
+              loadingProgress ||
+              currentProgress === null
+            }
+          />
+        ) : (
+          <Alert
+            severity="info"
+            sx={{ mt: 3 }}
+          >
+            Iniciá sesión para consultar y guardar
+            tu progreso de lectura.
+          </Alert>
+        )}
+
+        {/* ===================================== */}
         {/* MARCAR COMO LEÍDO */}
+        {/* ===================================== */}
+
         {user && (
           <Box
             sx={{
@@ -383,19 +833,37 @@ const BookDetailsPage = () => {
               mt: 2,
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
               {leido && fechaLectura
                 ? `Leído el ${formatearFecha(fechaLectura)}`
                 : 'Todavía no lo marcaste como leído.'}
             </Typography>
-             <Button
-              startIcon={leido && !guardandoLectura ? <CheckCircleIcon /> : undefined}
+
+            <Button
+              startIcon={
+                leido && !guardandoLectura
+                  ? <CheckCircleIcon />
+                  : undefined
+              }
               disabled={guardandoLectura}
               onClick={handleToggleLeido}
-              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', px: 2.5 }}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: '8px',
+                px: 2.5,
+              }}
             >
               {guardandoLectura ? (
-                <CircularProgress size={17} sx={{ color: 'inherit' }} />
+                <CircularProgress
+                  size={17}
+                  sx={{
+                    color: 'inherit',
+                  }}
+                />
               ) : leido ? (
                 'Desmarcar como leído'
               ) : (
@@ -405,7 +873,10 @@ const BookDetailsPage = () => {
           </Box>
         )}
 
+        {/* ===================================== */}
         {/* FORMULARIO DE COMENTARIOS */}
+        {/* ===================================== */}
+
         {showCommentBox && user && (
           <BookCommentBox
             theme={theme}
@@ -425,57 +896,63 @@ const BookDetailsPage = () => {
         {/* DESCRIPCIÓN DEL LIBRO */}
         <BookDescription book={book} />
 
-        {/* BOTÓN AZUL: DEJAR DE RECOMENDAR */}
-        {!loadingRecomendaciones && puedeQuitarRecomendacion && (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              mt: 2,
-              mb: 2,
-            }}
-          >
-            <Button
-              variant="contained"
-              color="primary"
-              disabled={removingRecommendation}
-              onClick={handleRemoveRecommendation}
+        {/* ===================================== */}
+        {/* DEJAR DE RECOMENDAR */}
+        {/* Acción de eliminar: color="error" y confirmación */}
+        {/* ===================================== */}
+
+        {!loadingRecomendaciones &&
+          puedeQuitarRecomendacion && (
+            <Box
               sx={{
-                backgroundColor: BLUE_COLOR,
-                color: '#fff',
-                fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: '8px',
-                px: 2.5,
-                py: 1,
-                '&:hover': {
-                  backgroundColor: '#125aa0',
-                },
+                display: 'flex',
+                justifyContent: 'flex-end',
+                mt: 2,
+                mb: 2,
               }}
             >
-              {removingRecommendation ? (
-                <>
-                  <CircularProgress
-                    size={17}
-                    sx={{ color: '#fff', mr: 1 }}
-                  />
-                  Quitando...
-                </>
-              ) : (
-                'Dejar de recomendar'
-              )}
-            </Button>
-          </Box>
-        )}
+              <Button
+                variant="contained"
+                color="error"
+                disabled={removingRecommendation}
+                onClick={() => setIsUnrecommendConfirmOpen(true)}
+                sx={{
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '8px',
+                  px: 2.5,
+                  py: 1,
+                }}
+              >
+                {removingRecommendation ? (
+                  <>
+                    <CircularProgress
+                      size={17}
+                      sx={{
+                        color: 'inherit',
+                        mr: 1,
+                      }}
+                    />
+                    Quitando...
+                  </>
+                ) : (
+                  'Dejar de recomendar'
+                )}
+              </Button>
+            </Box>
+          )}
 
-        {/* BOTÓN NARANJA: COMENTAR */}
-         <NavButton
+        {/* ===================================== */}
+        {/* COMENTAR */}
+        {/* Colores definidos por el tema */}
+        {/* ===================================== */}
+
+        <NavButton
           onClick={handleCommentClick}
           sx={{
             width: '100%',
             p: '12px 20px',
             borderRadius: '8px',
-            boxShadow: '0 4px 10px rgba(242, 86, 0, 0.4)',
           }}
         >
           Comentar
@@ -490,7 +967,22 @@ const BookDetailsPage = () => {
         />
       </Box>
 
+      {/* CONFIRMACIÓN PARA DEJAR DE RECOMENDAR */}
+      <ConfirmationModal
+        open={isUnrecommendConfirmOpen}
+        onClose={() => setIsUnrecommendConfirmOpen(false)}
+        onConfirm={() => {
+          void handleRemoveRecommendation();
+        }}
+        title="Dejar de recomendar"
+        message={`¿Querés dejar de recomendar "${book.titulo}"? Se va a quitar de «Nuestros recomendados».`}
+      />
+
+      {/* ===================================== */}
       {/* NOTIFICACIONES */}
+      {/* Posición por defecto: abajo a la izquierda, como en el resto de la app */}
+      {/* ===================================== */}
+
       <Snackbar
         open={notification.open}
         autoHideDuration={4000}
@@ -500,10 +992,6 @@ const BookDetailsPage = () => {
             open: false,
           }))
         }
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
-        }}
       >
         <Alert
           severity={notification.severity}
