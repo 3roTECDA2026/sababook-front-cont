@@ -20,12 +20,14 @@ import {
   useMemo,
 } from "react";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import HomeIcon from "@mui/icons-material/Home";
 
 import AppHeader from "@/components/layout/AppHeader";
 import BookCard from "@/components/ui/BookCard";
 import FeaturedBookSection from "@/components/ui/FeaturedBookSection";
 import FilterChips from "@/components/ui/FilterChips";
+import type { FilterChipsHandle } from "@/components/ui/FilterChips";
 import SearchBar from "@/components/ui/SearchBar";
 import type { SearchBarHandle } from "@/components/ui/SearchBar";
 import SideMenu from "@/components/layout/SideMenu";
@@ -90,6 +92,7 @@ interface UsuarioConRol {
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // --------------------------------------------------
   // ESTADOS DE INTERFAZ
@@ -107,6 +110,7 @@ export default function Home() {
     useState<string>("");
 
   const searchBarRef = useRef<SearchBarHandle>(null);
+  const filterChipsRef = useRef<FilterChipsHandle>(null);
 
   const { user } = useAuth();
 
@@ -178,7 +182,7 @@ export default function Home() {
         ...currentFilters,
       };
 
-      const q = normalizarTexto(currentQuery);
+      const q = currentQuery.trim();
 
       if (q) {
         filtros.query = q;
@@ -558,8 +562,23 @@ export default function Home() {
   const handleSearch = (
     query: string
   ) => {
-    setCurrentQuery(query);
+    setCurrentQuery(query.trim());
   };
+
+  // Deja la pantalla en el estado inicial: sin búsqueda ni filtros
+  const resetSearch = useCallback(() => {
+    setCurrentQuery("");
+    setCurrentFilters({});
+    searchBarRef.current?.clear();
+    filterChipsRef.current?.clear();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  // "Inicio" del menú lateral navega a /home estando en /home: React Router no
+  // remonta Home, pero sí genera una location.key nueva, así que se resetea acá
+  useEffect(() => {
+    resetSearch();
+  }, [location.key, resetSearch]);
 
   // --------------------------------------------------
   // FILTROS
@@ -625,20 +644,11 @@ export default function Home() {
       {/* FILTROS */}
 
       <FilterChips
+        ref={filterChipsRef}
         onFilterChange={
           handleFilterChange
         }
-        onClearSearch={() => {
-          setCurrentQuery("");
-
-          if (
-            searchBarRef.current &&
-            typeof searchBarRef.current
-              .clear === "function"
-          ) {
-            searchBarRef.current.clear();
-          }
-        }}
+        onClearSearch={resetSearch}
       />
 
       {/* NUESTROS RECOMENDADOS */}
@@ -764,6 +774,17 @@ export default function Home() {
               ? "Libros por año y curso"
               : "Libros filtrados"}
           </Typography>
+
+          <Button
+            startIcon={<HomeIcon />}
+            onClick={resetSearch}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+            }}
+          >
+            Volver al inicio
+          </Button>
         </Box>
       )}
 

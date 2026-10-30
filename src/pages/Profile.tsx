@@ -1,8 +1,6 @@
 // src/pages/Profile.tsx
 import React, { useState, useEffect } from 'react';
 import { Box, Button, styled, Avatar, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import UserProfileForm from '@/components/forms/UserProfileForm';
@@ -36,7 +34,6 @@ interface ProfileSaveData {
 }
 
 const Profile = () => {
-  const navigate = useNavigate();
   const { user, updateUser } = useAuth();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ViewState>('menu');
@@ -82,9 +79,6 @@ const Profile = () => {
     }
   };
 
-  const handleMyCommentsClick = () => {
-    navigate('/mis-comentarios');
-  };
 
   // -----------------------------------------------------
   // FUNCIÓN DE RENDERIZADO CONDICIONAL

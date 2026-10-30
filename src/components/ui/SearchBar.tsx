@@ -1,8 +1,9 @@
 // src/components/SearchBar.tsx
-import { useState, forwardRef, useImperativeHandle, KeyboardEvent } from 'react';
+import { useState, forwardRef, useImperativeHandle, KeyboardEvent, ChangeEvent } from 'react';
 import { InputAdornment, IconButton, styled, OutlinedInput, FormControl } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 
 const StyledFormControl = styled(FormControl)(({ theme }) => ({
   width: '100%',
@@ -52,8 +53,25 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onSearch, sx },
     if (onSearch) onSearch(query);
   };
 
+  // Borra el texto y avisa a la pantalla para que vuelva a su estado inicial
+  const handleClear = () => {
+    setQuery('');
+    if (onSearch) onSearch('');
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+
+    // Al vaciar el campo se vuelve al estado inicial sin esperar Enter
+    if (value.trim() === '' && query.trim() !== '' && onSearch) {
+      onSearch('');
+    }
+  };
+
   const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleSearch();
+    if (e.key === 'Escape') handleClear();
   };
 
   return (
@@ -61,11 +79,21 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onSearch, sx },
       <OutlinedInput
         placeholder="Buscar por título o autor..."
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={handleChange}
         onKeyDown={handleKeyPress}
         endAdornment={
           <InputAdornment position="end">
-            <IconButton edge="end" color="primary" onClick={handleSearch}>
+            {query && (
+              <IconButton
+                aria-label="Borrar búsqueda"
+                size="small"
+                onClick={handleClear}
+                sx={{ mr: 0.5 }}
+              >
+                <ClearIcon fontSize="small" />
+              </IconButton>
+            )}
+            <IconButton edge="end" color="primary" aria-label="Buscar" onClick={handleSearch}>
               <SearchIcon />
             </IconButton>
           </InputAdornment>

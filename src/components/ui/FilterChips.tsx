@@ -1,5 +1,5 @@
 // src/components/FilterChips.tsx
-import { useState, useEffect, useMemo, MouseEvent } from 'react';
+import { useState, useEffect, useMemo, forwardRef, useImperativeHandle, MouseEvent } from 'react';
 import { Stack, Chip, Menu, MenuItem, Box, Button } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
@@ -80,18 +80,25 @@ interface FilterChipsProps {
   sx?: SxProps<Theme>;
 }
 
-export default function FilterChips({
-  onFilterChange,
-  onClearSearch,
-  categories,
-  sx,
-}: FilterChipsProps) {
+export interface FilterChipsHandle {
+  clear: () => void;
+}
+
+const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function FilterChips(
+  { onFilterChange, onClearSearch, categories, sx },
+  ref
+) {
   const [cursos, setCursos] = useState<CourseSummary[]>([]);
   const [cargandoCursos, setCargandoCursos] = useState(true);
   const [errorCursos, setErrorCursos] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
   const [selectedFilters, setSelectedFilters] = useState<BookFilters>({});
+
+  // Permite que la pantalla vacíe los chips sin volver a disparar onFilterChange
+  useImperativeHandle(ref, () => ({
+    clear: () => setSelectedFilters({}),
+  }));
   const [dynamicGenres, setDynamicGenres] = useState<string[]>([]);
   const [dynamicLevels, setDynamicLevels] = useState<string[]>([]);
   const [cargandoOpciones, setCargandoOpciones] = useState(true);
@@ -406,4 +413,6 @@ export default function FilterChips({
       </Menu>
     </Box>
   );
-}
+});
+
+export default FilterChips;

@@ -27,14 +27,13 @@ import {
 } from '@mui/material';
 import type { AlertColor } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
 import { useForumComments } from '@/hooks/useForumComments';
 import { useForumCommentsAdmin } from '@/hooks/useForumCommentsAdmin';
-import type { ForumComment, Forum } from '@/types';
+import type { ForumComment } from '@/types';
 
 const StyledTableContainer = styled(Paper)(({ theme }) => ({
   borderRadius: '16px',
@@ -104,7 +103,6 @@ const ForumCommentsAdmin = () => {
   const {
     comments: rawComments,
     loading: loadingComments,
-    error: errorComments,
     refetch,
   } = useForumComments(foroId);
 
@@ -129,11 +127,7 @@ const ForumCommentsAdmin = () => {
     usuario_id: c.usuario_id ?? c.usuario?.id ?? null,
   }));
 
-  // Editar comentario
-  const handleEditClick = (comment: DisplayComment) => {
-    setEditingCommentId(comment.comentario_id);
-    setEditedComment({ comentario: comment.comentario });
-  };
+
   const handleCancelEdit = () => {
     setEditingCommentId(null);
     setEditedComment({ comentario: '' });

@@ -507,7 +507,7 @@ export async function createReadingGoal(
 }
 
 export async function logBookProgress(
-  bookId: number | string
+  _bookId: number | string
 ): Promise<ReadingGoal> {
   // Deprecated: el progreso se calcula en base al estado "leído" del libro
   throw new Error('logBookProgress no está soportado');
