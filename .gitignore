@@ -45,3 +45,5 @@ dump.sql
 
 # Test and coverage output
 coverage/
+playwright-report/
+test-results/

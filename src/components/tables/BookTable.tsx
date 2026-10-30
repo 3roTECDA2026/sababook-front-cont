@@ -15,6 +15,7 @@ import {
   useTheme,
   CircularProgress,
   Button,
+  Chip,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { Book } from '@/types';
@@ -23,6 +24,7 @@ import type { Book } from '@/types';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
 import { downloadCsv } from '@/utils/downloadCsv';
 
@@ -263,6 +265,28 @@ const BookTable = ({
                               Sin portada
                             </Typography>
                           )}
+                        </TableCell>
+                      );
+                    }
+
+                    if (column.id === 'titulo') {
+                      return (
+                        <TableCell key={column.id}>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Typography variant="body2" fontWeight="bold">
+                              {row.titulo}
+                            </Typography>
+                            {row.archivo_url && (
+                              <Chip
+                                size="small"
+                                icon={<PictureAsPdfIcon sx={{ fontSize: '0.85rem !important' }} />}
+                                label="PDF"
+                                color="error"
+                                variant="outlined"
+                                sx={{ height: 20, fontSize: '0.7rem' }}
+                              />
+                            )}
+                          </Box>
                         </TableCell>
                       );
                     }
