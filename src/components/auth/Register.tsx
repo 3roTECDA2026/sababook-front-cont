@@ -1,18 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { Box, Button, TextField, Typography, styled } from '@mui/material';
+import { Alert, Box, Button, TextField, Typography } from '@mui/material';
 import { useNotification } from '@/contexts/NotificationContext';
-
-const StyledButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.button?.main || '#f25600',
-  '&:hover': {
-    backgroundColor: '#cc4800',
-  },
-  color: '#FFFFFF',
-  padding: '12px 0',
-  fontSize: '1rem',
-  fontWeight: 'bold',
-  borderRadius: '30px',
-}));
 
 interface RegisterFormData {
   name: string;
@@ -22,11 +10,18 @@ interface RegisterFormData {
 }
 
 interface RegisterProps {
-  onRegisterSubmit: (formData: RegisterFormData) => void;
+  onRegisterSubmit: (formData: RegisterFormData) => void | Promise<void>;
   onBackToLogin: () => void;
+  loading?: boolean;
+  error?: string | null;
 }
 
-const Register = ({ onRegisterSubmit, onBackToLogin }: RegisterProps) => {
+const Register = ({
+  onRegisterSubmit,
+  onBackToLogin,
+  loading = false,
+  error = null,
+}: RegisterProps) => {
   const { showNotification } = useNotification();
   const [formData, setFormData] = useState<RegisterFormData>({
     name: '',
@@ -45,7 +40,7 @@ const Register = ({ onRegisterSubmit, onBackToLogin }: RegisterProps) => {
       showNotification('Las contraseñas no coinciden', 'error');
       return;
     }
-    onRegisterSubmit(formData);
+    void onRegisterSubmit(formData);
   };
 
   return (
@@ -69,6 +64,7 @@ const Register = ({ onRegisterSubmit, onBackToLogin }: RegisterProps) => {
           value={formData.name}
           onChange={handleChange}
           margin="normal"
+          disabled={loading}
           required
         />
         <TextField
@@ -79,6 +75,7 @@ const Register = ({ onRegisterSubmit, onBackToLogin }: RegisterProps) => {
           value={formData.email}
           onChange={handleChange}
           margin="normal"
+          disabled={loading}
           required
         />
         <TextField
@@ -89,6 +86,7 @@ const Register = ({ onRegisterSubmit, onBackToLogin }: RegisterProps) => {
           value={formData.password}
           onChange={handleChange}
           margin="normal"
+          disabled={loading}
           required
         />
         <TextField
@@ -99,12 +97,23 @@ const Register = ({ onRegisterSubmit, onBackToLogin }: RegisterProps) => {
           value={formData.confirmPassword}
           onChange={handleChange}
           margin="normal"
+          disabled={loading}
           required
         />
-        <StyledButton type="submit" fullWidth sx={{ mt: 2 }}>
-          Registrarse
-        </StyledButton>
-        <Button onClick={onBackToLogin} fullWidth sx={{ mt: 1 }}>
+        {error && (
+          <Alert severity="error" sx={{ mt: 1 }}>
+            {error}
+          </Alert>
+        )}
+        <Button type="submit" fullWidth sx={{ mt: 2 }} disabled={loading}>
+          {loading ? 'Registrando...' : 'Registrarse'}
+        </Button>
+        <Button
+          onClick={onBackToLogin}
+          fullWidth
+          sx={{ mt: 1 }}
+          disabled={loading}
+        >
           Volver al Login
         </Button>
       </form>
