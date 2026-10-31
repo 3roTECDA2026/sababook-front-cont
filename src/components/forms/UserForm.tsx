@@ -9,6 +9,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import type { User } from '@/types';
@@ -136,6 +137,10 @@ export default function UserForm({ userToEdit, onSave, onCancel }: UserFormProps
                 </MenuItem>
               ))}
             </Select>
+            {/* SAB-117: los cursos se asignan según el rol guardado */}
+            {userToEdit && formData.rol === 'DOCENTE' && userToEdit.rol !== 'DOCENTE' && (
+              <FormHelperText>Guardá el rol de docente para poder asignarle cursos.</FormHelperText>
+            )}
           </FormControl>
           <FormControl fullWidth>
             <InputLabel>Nivel Educativo</InputLabel>

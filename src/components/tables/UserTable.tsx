@@ -37,6 +37,7 @@ import { API_BASE_URL } from '@/environments/api';
 import UserForm from '@/components/forms/UserForm';
 import type { UserFormData } from '@/components/forms/UserForm';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import TeacherCoursesSection from '@/components/users/TeacherCoursesSection';
 import type { User } from '@/types';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { downloadCsv } from '@/utils/downloadCsv';
@@ -84,6 +85,10 @@ export default function UserTable({
   const [userToEdit, setUserToEdit] =
     useState<User | null>(null);
 
+  // SAB-117: cursos del docente que se está editando (en todos los años)
+  const [teacherCourseCount, setTeacherCourseCount] =
+    useState<number>(0);
+
   const [roleFilter, setRoleFilter] =
     useState<string>('todos');
 
@@ -110,12 +115,21 @@ export default function UserTable({
     );
 
     setUserToEdit(user ?? null);
+    setTeacherCourseCount(0);
     setOpenModal(true);
   };
 
   const handleCloseModal = () => {
     setOpenModal(false);
     setUserToEdit(null);
+    setTeacherCourseCount(0);
+  };
+
+  const showNotification = (
+    message: string,
+    severity: AlertColor
+  ) => {
+    setSnackbar({ open: true, message, severity });
   };
 
   // --------------------------------------------------
@@ -201,6 +215,19 @@ export default function UserTable({
 
     if (dataToSend.rol) {
       dataToSend.rol = String(dataToSend.rol).toUpperCase();
+    }
+
+    // SAB-117: un docente con cursos no puede cambiar de rol (quedarían cursos sin docente válido)
+    if (
+      userToEdit.rol === 'DOCENTE' &&
+      dataToSend.rol !== 'DOCENTE' &&
+      teacherCourseCount > 0
+    ) {
+      showNotification(
+        `Este docente tiene ${teacherCourseCount} ${teacherCourseCount === 1 ? 'curso asignado' : 'cursos asignados'}. Quitáselos antes de cambiar el rol.`,
+        'error'
+      );
+      return;
     }
 
     dataToSend.contrasena = dataToSend.password;
@@ -562,6 +589,9 @@ export default function UserTable({
             left: '50%',
             transform: 'translate(-50%, -50%)',
             outline: 'none',
+            width: { xs: '95vw', sm: 600 },
+            maxHeight: '90vh',
+            overflowY: 'auto',
           }}
         >
           <UserForm
@@ -569,6 +599,15 @@ export default function UserTable({
             onSave={handleSaveUser}
             onCancel={handleCloseModal}
           />
+
+          {/* SAB-117: cursos del docente (según el rol guardado, no el del formulario) */}
+          {userToEdit?.rol === 'DOCENTE' && (
+            <TeacherCoursesSection
+              teacher={userToEdit}
+              onNotify={showNotification}
+              onAssignedCountChange={setTeacherCourseCount}
+            />
+          )}
         </Box>
       </Modal>
 
