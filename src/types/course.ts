@@ -5,6 +5,12 @@ export interface Subject {
   nombre: string;
 }
 
+export interface CourseTeacher {
+  usuario_id: number;
+  nombre: string;
+  email: string;
+}
+
 export interface CourseSummary {
   curso_id: number;
   anio: number;
@@ -13,6 +19,8 @@ export interface CourseSummary {
   materia: Subject;
   cantidad_docentes: number;
   cantidad_libros: number;
+  // SAB-117: cada curso tiene un solo docente (null si todavía no tiene)
+  docente: CourseTeacher | null;
 }
 
 export interface CourseBook {
