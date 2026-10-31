@@ -39,7 +39,6 @@ const unifiedButton = {
     color: '#FFFFFF',
   },
   '&:focus': {
-    backgroundColor: BUTTON_ORANGE_DARK,
     color: '#FFFFFF',
   },
   '&.Mui-focusVisible': {
@@ -69,7 +68,6 @@ const destructiveButton = {
     color: DELETE_TEXT,
   },
   '&:focus': {
-    backgroundColor: DELETE_ORANGE_DARK,
     color: DELETE_TEXT,
   },
   '&.Mui-focusVisible': {
