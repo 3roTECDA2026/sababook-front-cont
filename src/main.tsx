@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -7,7 +8,12 @@ import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme/theme';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { installFetchInterceptor } from './utils/fetchInterceptor';
 import './styles/index.css';
+
+// SAB-121: instalar una sola vez el interceptor HTTP.
+// Detectará los errores 401 de las peticiones autenticadas.
+installFetchInterceptor();
 
 const rootElement = document.getElementById('root');
 
@@ -17,7 +23,6 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    {/* Envuelve todo lo que necesita rutas */}
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider theme={theme}>
