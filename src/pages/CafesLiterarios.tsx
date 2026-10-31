@@ -45,6 +45,10 @@ import {
   getCatalogoLibros,
 } from '../services/apiService';
 
+// Un encuentro es "pasado" cuando su fecha y hora ya llegaron
+const esCafePasado = (fecha?: string | null) =>
+  Boolean(fecha) && new Date(fecha as string).getTime() <= Date.now();
+
 export default function CafesLiterarios() {
   const navigate = useNavigate();
   const { user, isTeacher, isAdmin } = useAuth();
@@ -164,6 +168,7 @@ export default function CafesLiterarios() {
       await toggleAsistenciaCafe(cafeId, user.usuario_id, 'confirmado');
     } catch (err) {
       console.error('Error al registrar asistencia:', err);
+      alert(err instanceof Error ? err.message : 'No se pudo registrar la asistencia.');
       cargarCafes();
     } finally {
       setCargandoAsistencia(null);
@@ -182,6 +187,8 @@ export default function CafesLiterarios() {
       cargarCafes();
     } catch (err) {
       console.error('Error al registrar voto:', err);
+      alert(err instanceof Error ? err.message : 'No se pudo registrar el voto.');
+      cargarCafes();
     }
   };
 
@@ -269,6 +276,8 @@ export default function CafesLiterarios() {
                 })
               : 'Fecha a confirmar';
 
+            const pasado = esCafePasado(cafe.fecha_evento);
+
             return (
               <Card
                 key={cafe.cafe_id}
@@ -303,7 +312,7 @@ export default function CafesLiterarios() {
                   </Box>
 
                   <Chip
-                    label={cafe.estado === 'programado' ? 'Próximo Encuentro' : 'Finalizado'}
+                    label={pasado ? 'Finalizado' : 'Próximo Encuentro'}
                     size="small"
                     sx={{
                       bgcolor: 'rgba(255,255,255,0.2)',
@@ -376,15 +385,23 @@ export default function CafesLiterarios() {
 
                   <Divider sx={{ my: 2 }} />
 
+                  
+
                   {/* Acciones: Asistencia, Votación Post-Lectura y Foro */}
                   <Box display="flex" flexWrap="wrap" gap={3} justifyContent="space-between" alignItems="center">
-                    {/* Toggle de Asistencia (RSVP) */}
-                    <AsistenciaToggle
-                      asistencia={cafe.asistencia_usuario}
-                      totalAsistentes={cafe.total_asistentes}
-                      cargando={cargandoAsistencia === cafe.cafe_id}
-                      onToggle={(confirmar) => handleAsistencia(cafe.cafe_id, confirmar)}
-                    />
+                    {/* Toggle de Asistencia (RSVP): solo en encuentros próximos */}
+                    {!pasado ? (
+                      <AsistenciaToggle
+                        asistencia={cafe.asistencia_usuario}
+                        totalAsistentes={cafe.total_asistentes}
+                        cargando={cargandoAsistencia === cafe.cafe_id}
+                        onToggle={(confirmar) => handleAsistencia(cafe.cafe_id, confirmar)}
+                      />
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        👥 {Number(cafe.total_asistentes || 0)} asistentes confirmados
+                      </Typography>
+                    )}
 
                     {/* Botón de acceso al Foro de Debate */}
                     {cafe.foro_id && (
@@ -404,55 +421,57 @@ export default function CafesLiterarios() {
                     )}
                   </Box>
 
-                  {/* Sección de Votación Post-Lectura ("¿Te gustó el libro?") */}
-                  <Box sx={{ mt: 3, p: 2, bgcolor: '#fff9f5', borderRadius: 2, border: '1px solid #ffe8d6' }}>
-                    <Typography variant="subtitle2" fontWeight="bold" color="text.primary" mb={1}>
-                      🗣️ Votación de Lectura: ¿Te gustó la propuesta de este libro?
-                    </Typography>
+                  {/* Sección de Votación Post-Lectura ("¿Te gustó el libro?"): solo en encuentros pasados */}
+                  {pasado && (
+                    <Box sx={{ mt: 3, p: 2, bgcolor: '#fff9f5', borderRadius: 2, border: '1px solid #ffe8d6' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="text.primary" mb={1}>
+                        🗣️ Votación de Lectura: ¿Te gustó la propuesta de este libro?
+                      </Typography>
 
-                    <Box display="flex" alignItems="center" gap={2} my={1}>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color="success"
-                        startIcon={<ThumbUpIcon />}
-                        onClick={() => handleVoto(cafe.cafe_id, true)}
-                        sx={{ textTransform: 'none' }}
-                      >
-                        Me gustó ({cafe.votos_positivos || 0})
-                      </Button>
-
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        startIcon={<ThumbDownIcon />}
-                        onClick={() => handleVoto(cafe.cafe_id, false)}
-                        sx={{ textTransform: 'none' }}
-                      >
-                        No me gustó ({cafe.votos_negativos || 0})
-                      </Button>
-                    </Box>
-
-                    {totalVotos > 0 && (
-                      <Box mt={1.5}>
-                        <Box display="flex" justifyContent="space-between" mb={0.5}>
-                          <Typography variant="caption" fontWeight="bold" color="text.secondary">
-                            Aceptación del libro
-                          </Typography>
-                          <Typography variant="caption" fontWeight="bold" color="success.main">
-                            {porcentajePositivo}% Positivo ({totalVotos} votos en total)
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={porcentajePositivo}
+                      <Box display="flex" alignItems="center" gap={2} my={1}>
+                        <Button
+                          size="small"
+                          variant="contained"
                           color="success"
-                          sx={{ height: 8, borderRadius: 4, bgcolor: '#ffe0d0' }}
-                        />
+                          startIcon={<ThumbUpIcon />}
+                          onClick={() => handleVoto(cafe.cafe_id, true)}
+                          sx={{ textTransform: 'none' }}
+                        >
+                          Me gustó ({cafe.votos_positivos || 0})
+                        </Button>
+
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          startIcon={<ThumbDownIcon />}
+                          onClick={() => handleVoto(cafe.cafe_id, false)}
+                          sx={{ textTransform: 'none' }}
+                        >
+                          No me gustó ({cafe.votos_negativos || 0})
+                        </Button>
                       </Box>
-                    )}
-                  </Box>
+
+                      {totalVotos > 0 && (
+                        <Box mt={1.5}>
+                          <Box display="flex" justifyContent="space-between" mb={0.5}>
+                            <Typography variant="caption" fontWeight="bold" color="text.secondary">
+                              Aceptación del libro
+                            </Typography>
+                            <Typography variant="caption" fontWeight="bold" color="success.main">
+                              {porcentajePositivo}% Positivo ({totalVotos} votos en total)
+                            </Typography>
+                          </Box>
+                          <LinearProgress
+                            variant="determinate"
+                            value={porcentajePositivo}
+                            color="success"
+                            sx={{ height: 8, borderRadius: 4, bgcolor: '#ffe0d0' }}
+                          />
+                        </Box>
+                      )}
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             );
