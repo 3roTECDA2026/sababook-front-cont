@@ -30,6 +30,7 @@ import RadioIcon from '@mui/icons-material/Radio';
 import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import InsightsIcon from '@mui/icons-material/Insights';
+import CollectionsBookmarkIcon from '@mui/icons-material/CollectionsBookmark';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -60,6 +61,7 @@ export default function SideMenu({
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Itinerarios APL', icon: <CollectionsBookmarkIcon />, path: '/itinerarios' },
       { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio', icon: <RadioIcon />, path: '/radio' },
@@ -73,6 +75,7 @@ export default function SideMenu({
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Itinerarios APL', icon: <CollectionsBookmarkIcon />, path: '/itinerarios' },
       { text: 'Mi Biblioteca', icon: <FavoriteIcon />, path: '/favoritos' },
       { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
@@ -91,6 +94,7 @@ export default function SideMenu({
     menuItems = [
       { text: 'Inicio', icon: <HomeIcon />, path: '/home' },
       { text: 'Perfil', icon: <PersonIcon />, path: '/perfil' },
+      { text: 'Itinerarios APL', icon: <CollectionsBookmarkIcon />, path: '/itinerarios' },
       { text: 'Café Literario', icon: <LocalCafeIcon />, path: '/cafes' },
       { text: 'Muro', icon: <DynamicFeedIcon />, path: '/feed' },
       { text: 'Radio Sábato', icon: <RadioIcon />, path: '/radio' },
