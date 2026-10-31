@@ -37,7 +37,9 @@ import { API_BASE_URL } from '@/environments/api';
 import UserForm from '@/components/forms/UserForm';
 import type { UserFormData } from '@/components/forms/UserForm';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
-import TeacherCoursesSection from '@/components/users/TeacherCoursesSection';
+import TeacherCoursesSelect from '@/components/users/TeacherCoursesSelect';
+import { useTeacherCourses } from '@/hooks/useTeacherCourses';
+import type { TeacherCoursesSaveResult } from '@/hooks/useTeacherCourses';
 import type { User } from '@/types';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { downloadCsv } from '@/utils/downloadCsv';
@@ -62,6 +64,17 @@ interface SnackbarState {
   severity: AlertColor;
 }
 
+const CURRENT_SCHOOL_YEAR = new Date().getFullYear();
+
+// Texto del resultado de guardar los cursos del docente (SAB-117)
+const describeCoursesResult = ({ added, removed, failed }: TeacherCoursesSaveResult) => {
+  const done: string[] = [];
+  if (added > 0) done.push(added === 1 ? 'se asignó 1 curso' : `se asignaron ${added} cursos`);
+  if (removed > 0) done.push(removed === 1 ? 'se quitó 1 curso' : `se quitaron ${removed} cursos`);
+  const failedText = failed.map((f) => `No se pudo guardar ${f.courseLabel}: ${f.message}`).join(' ');
+  return [done.length > 0 ? `Además, ${done.join(' y ')}.` : '', failedText].filter(Boolean).join(' ');
+};
+
 // --------------------------------------------------
 // COMPONENTE USER TABLE
 // --------------------------------------------------
@@ -85,9 +98,18 @@ export default function UserTable({
   const [userToEdit, setUserToEdit] =
     useState<User | null>(null);
 
-  // SAB-117: cursos del docente que se está editando (en todos los años)
-  const [teacherCourseCount, setTeacherCourseCount] =
-    useState<number>(0);
+  // SAB-117: cursos del docente que se está editando (según el rol guardado)
+  const teacherCourses = useTeacherCourses(
+    userToEdit?.rol === 'DOCENTE' ? userToEdit.usuario_id : null,
+    CURRENT_SCHOOL_YEAR
+  );
+
+  const [isSaving, setIsSaving] =
+    useState<boolean>(false);
+
+  // Datos del usuario esperando la confirmación para quitar cursos
+  const [pendingUserData, setPendingUserData] =
+    useState<UserFormData | null>(null);
 
   const [roleFilter, setRoleFilter] =
     useState<string>('todos');
@@ -115,14 +137,13 @@ export default function UserTable({
     );
 
     setUserToEdit(user ?? null);
-    setTeacherCourseCount(0);
     setOpenModal(true);
   };
 
   const handleCloseModal = () => {
     setOpenModal(false);
     setUserToEdit(null);
-    setTeacherCourseCount(0);
+    setPendingUserData(null);
   };
 
   const showNotification = (
@@ -218,13 +239,14 @@ export default function UserTable({
     }
 
     // SAB-117: un docente con cursos no puede cambiar de rol (quedarían cursos sin docente válido)
+    const { totalAssigned } = teacherCourses;
     if (
       userToEdit.rol === 'DOCENTE' &&
       dataToSend.rol !== 'DOCENTE' &&
-      teacherCourseCount > 0
+      totalAssigned > 0
     ) {
       showNotification(
-        `Este docente tiene ${teacherCourseCount} ${teacherCourseCount === 1 ? 'curso asignado' : 'cursos asignados'}. Quitáselos antes de cambiar el rol.`,
+        `Este docente tiene ${totalAssigned} ${totalAssigned === 1 ? 'curso asignado' : 'cursos asignados'}. Quitáselos antes de cambiar el rol.`,
         'error'
       );
       return;
@@ -237,6 +259,22 @@ export default function UserTable({
     if (!dataToSend.contrasena) {
       delete dataToSend.contrasena;
     }
+
+    // Quitar cursos pide confirmación antes de guardar
+    if (teacherCourses.toRemoveLabels.length > 0) {
+      setPendingUserData(dataToSend);
+      return;
+    }
+
+    await saveUserAndCourses(dataToSend);
+  };
+
+  const saveUserAndCourses = async (
+    dataToSend: UserFormData
+  ) => {
+    if (!userToEdit) return;
+
+    setIsSaving(true);
 
     try {
       const token = localStorage.getItem('token');
@@ -259,14 +297,22 @@ export default function UserTable({
         );
       }
 
-      handleCloseModal();
-      onUserUpdate();
+      // SAB-117: después de guardar el usuario, se aplican los cambios de cursos
+      const coursesResult =
+        userToEdit.rol === 'DOCENTE' && teacherCourses.hasChanges
+          ? await teacherCourses.save()
+          : null;
+      const coursesText = coursesResult ? describeCoursesResult(coursesResult) : '';
+      const hasFailures = !!coursesResult && coursesResult.failed.length > 0;
 
-      setSnackbar({
-        open: true,
-        message: 'Usuario actualizado correctamente',
-        severity: 'success',
-      });
+      onUserUpdate();
+      showNotification(
+        ['Usuario actualizado correctamente.', coursesText].filter(Boolean).join(' '),
+        hasFailures ? 'warning' : 'success'
+      );
+
+      // Si algún curso falló, el modal queda abierto para ver cómo quedó
+      if (!hasFailures) handleCloseModal();
 
     } catch (error) {
       console.error(
@@ -274,11 +320,10 @@ export default function UserTable({
         error
       );
 
-      setSnackbar({
-        open: true,
-        message: 'Error al guardar el usuario',
-        severity: 'error',
-      });
+      showNotification('Error al guardar el usuario', 'error');
+    } finally {
+      setIsSaving(false);
+      setPendingUserData(null);
     }
   };
 
@@ -598,18 +643,38 @@ export default function UserTable({
             userToEdit={userToEdit}
             onSave={handleSaveUser}
             onCancel={handleCloseModal}
+            isSaving={isSaving}
+            extraFields={
+              // SAB-117: cursos del docente (según el rol guardado, no el del formulario)
+              userToEdit?.rol === 'DOCENTE' ? (
+                <TeacherCoursesSelect
+                  courses={teacherCourses.availableCourses}
+                  selectedIds={teacherCourses.selectedIds}
+                  onChange={teacherCourses.setSelectedIds}
+                  schoolYear={CURRENT_SCHOOL_YEAR}
+                  isLoading={teacherCourses.isLoading}
+                  error={teacherCourses.error}
+                  onRetry={teacherCourses.reload}
+                  disabled={isSaving}
+                />
+              ) : null
+            }
           />
-
-          {/* SAB-117: cursos del docente (según el rol guardado, no el del formulario) */}
-          {userToEdit?.rol === 'DOCENTE' && (
-            <TeacherCoursesSection
-              teacher={userToEdit}
-              onNotify={showNotification}
-              onAssignedCountChange={setTeacherCourseCount}
-            />
-          )}
         </Box>
       </Modal>
+
+      {/* SAB-117: CONFIRMAR QUITAR CURSOS */}
+
+      <ConfirmationModal
+        open={pendingUserData !== null}
+        onClose={() => setPendingUserData(null)}
+        onConfirm={() => {
+          if (pendingUserData) void saveUserAndCourses(pendingUserData);
+        }}
+        loading={isSaving}
+        title="Quitar cursos"
+        message={`¿Querés quitar a "${userToEdit?.nombre ?? ''}" de ${teacherCourses.toRemoveLabels.join(', ')}?`}
+      />
 
       {/* NOTIFICACIONES */}
 

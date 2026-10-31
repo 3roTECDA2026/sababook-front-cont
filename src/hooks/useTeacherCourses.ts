@@ -14,25 +14,27 @@ export interface TeacherCoursesSaveResult {
   failed: { courseLabel: string; message: string }[];
 }
 
-// Cursos de un año lectivo y cuáles tiene un docente (SAB-117).
-// Cada curso tiene un solo docente: los que tiene otro no se pueden tildar.
-export function useTeacherCourses(teacherId: number | null, schoolYear: number, enabled = true) {
+// Cursos de un año lectivo que se le pueden asignar a un docente (SAB-117).
+// Cada curso tiene un solo docente: los de otro docente no se ofrecen.
+export function useTeacherCourses(teacherId: number | null, schoolYear: number) {
   const [courses, setCourses] = useState<CourseSummary[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   // Cursos del docente en todos los años: para no dejar cambiarle el rol si tiene alguno
   const [totalAssigned, setTotalAssigned] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [reloads, setReloads] = useState<number>(0);
 
   useEffect(() => {
-    if (!enabled || teacherId === null) return;
+    setCourses([]);
+    setSelectedIds([]);
+    setTotalAssigned(0);
+    setError(null);
+    if (teacherId === null) return;
 
-    // Evita que una respuesta vieja pise a la nueva si se cambia de año o de usuario rápido
+    // Evita que una respuesta vieja pise a la nueva si se cambia de usuario rápido
     let cancelled = false;
     setIsLoading(true);
-    setError(null);
 
     Promise.all([getCoursesByYear(schoolYear), getTeacherCourses(teacherId)])
       .then(([yearCourses, teacherCourses]) => {
@@ -45,9 +47,6 @@ export function useTeacherCourses(teacherId: number | null, schoolYear: number, 
       })
       .catch((err) => {
         if (cancelled) return;
-        // Se descartan los cursos anteriores para no mostrarlos como si fueran del año elegido
-        setCourses([]);
-        setSelectedIds([]);
         setError(err instanceof Error ? err.message : 'No se pudieron cargar los cursos.');
       })
       .finally(() => {
@@ -57,7 +56,12 @@ export function useTeacherCourses(teacherId: number | null, schoolYear: number, 
     return () => {
       cancelled = true;
     };
-  }, [teacherId, schoolYear, enabled, reloads]);
+  }, [teacherId, schoolYear, reloads]);
+
+  // Se ofrecen los cursos libres y los que ya son de este docente
+  const availableCourses = courses
+    .filter((c) => c.docente === null || c.docente.usuario_id === teacherId)
+    .sort((a, b) => a.anio - b.anio || a.division.localeCompare(b.division));
 
   const assignedIds = courses
     .filter((c) => teacherId !== null && c.docente?.usuario_id === teacherId)
@@ -65,16 +69,6 @@ export function useTeacherCourses(teacherId: number | null, schoolYear: number, 
 
   const toAdd = selectedIds.filter((id) => !assignedIds.includes(id));
   const toRemove = assignedIds.filter((id) => !selectedIds.includes(id));
-  const hasChanges = toAdd.length > 0 || toRemove.length > 0;
-
-  const isTakenByOther = (course: CourseSummary) =>
-    course.docente !== null && course.docente.usuario_id !== teacherId;
-
-  const toggle = (courseId: number) => {
-    setSelectedIds((ids) =>
-      ids.includes(courseId) ? ids.filter((id) => id !== courseId) : [...ids, courseId]
-    );
-  };
 
   const labelOf = (courseId: number) => {
     const course = courses.find((c) => c.curso_id === courseId);
@@ -83,18 +77,15 @@ export function useTeacherCourses(teacherId: number | null, schoolYear: number, 
 
   // Aplica los cambios en paralelo: si alguno falla, los demás quedan guardados igual
   const save = async (): Promise<TeacherCoursesSaveResult> => {
-    if (teacherId === null) return { added: 0, removed: 0, failed: [] };
+    const result: TeacherCoursesSaveResult = { added: 0, removed: 0, failed: [] };
+    if (teacherId === null) return result;
 
     const operations = [
       ...toAdd.map((id) => ({ id, kind: 'add' as const, run: () => assignTeacher(id, teacherId) })),
       ...toRemove.map((id) => ({ id, kind: 'remove' as const, run: () => removeTeacher(id, teacherId) })),
     ];
-
-    setIsSaving(true);
     const results = await Promise.allSettled(operations.map((op) => op.run()));
-    setIsSaving(false);
 
-    const result: TeacherCoursesSaveResult = { added: 0, removed: 0, failed: [] };
     results.forEach((r, i) => {
       const op = operations[i];
       if (r.status === 'fulfilled') {
@@ -113,20 +104,16 @@ export function useTeacherCourses(teacherId: number | null, schoolYear: number, 
     return result;
   };
 
-  const reload = () => setReloads((n) => n + 1);
-
   return {
-    courses,
+    availableCourses,
     selectedIds,
+    setSelectedIds,
     totalAssigned,
     isLoading,
-    isSaving,
     error,
-    hasChanges,
+    hasChanges: toAdd.length > 0 || toRemove.length > 0,
     toRemoveLabels: toRemove.map(labelOf),
-    isTakenByOther,
-    toggle,
     save,
-    reload,
+    reload: () => setReloads((n) => n + 1),
   };
 }

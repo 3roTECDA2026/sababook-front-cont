@@ -1,5 +1,6 @@
 // src/components/UserForm.tsx
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import type { ReactNode } from 'react';
 import {
   Box,
   TextField,
@@ -32,9 +33,18 @@ interface UserFormProps {
   userToEdit?: (Partial<User> & { rol?: string | null }) | null;
   onSave: (formData: UserFormData) => void | Promise<void>;
   onCancel: () => void;
+  // Campos extra al final del formulario (ej. cursos del docente, SAB-117)
+  extraFields?: ReactNode;
+  isSaving?: boolean;
 }
 
-export default function UserForm({ userToEdit, onSave, onCancel }: UserFormProps) {
+export default function UserForm({
+  userToEdit,
+  onSave,
+  onCancel,
+  extraFields,
+  isSaving = false,
+}: UserFormProps) {
   const [formData, setFormData] = useState<UserFormData>({
     nombre: '',
     email: '',
@@ -157,14 +167,15 @@ export default function UserForm({ userToEdit, onSave, onCancel }: UserFormProps
               ))}
             </Select>
           </FormControl>
+          {extraFields}
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-          <Button onClick={onCancel} variant="outlined">
+          <Button onClick={onCancel} variant="outlined" disabled={isSaving}>
             Cancelar
           </Button>
-          <Button type="submit" variant="contained" sx={{ backgroundColor: 'button.main' }}>
-            Guardar Cambios
+          <Button type="submit" variant="contained" sx={{ backgroundColor: 'button.main' }} disabled={isSaving}>
+            {isSaving ? 'Guardando...' : 'Guardar Cambios'}
           </Button>
         </Box>
       </Box>
