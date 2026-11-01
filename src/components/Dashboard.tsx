@@ -189,18 +189,15 @@ const Dashboard = () => {
         throw new Error('No autenticado.');
       }
 
-      const params = new URLSearchParams();
-
-      if (currentQuery) {
-        params.append('q', currentQuery);
-      }
-
-      if (currentFilter) {
-        params.append('filter', currentFilter);
-      }
+      // SAB-122: GET /books ignora la búsqueda; /libros/buscar busca por título o autor sin tildes.
+      // Sin page/limit devuelve un array, y BookTable sigue paginando en el cliente.
+      const query = currentQuery.trim();
+      const endpoint = query
+        ? `/libros/buscar?${new URLSearchParams({ query }).toString()}`
+        : '/books';
 
       const res = await fetch(
-        `${API_BASE_URL}/api/v1/books?${params.toString()}`,
+        `${API_BASE_URL}/api/v1${endpoint}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
