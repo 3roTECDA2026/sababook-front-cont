@@ -900,7 +900,12 @@ const BookDetailsPage = () => {
         {/* SAB-91: PROGRESO INDIVIDUAL */}
         {/* ===================================== */}
 
-        {tienePaginas && (user ? (
+        {!tienePaginas ? (
+          <Alert severity="info" sx={{ mt: 3 }}>
+            Este libro todavía no tiene la cantidad de páginas cargada.
+            El seguimiento de lectura estará disponible cuando se agregue ese dato.
+          </Alert>
+        ) : user ? (
           <ReadingProgress
             currentPage={currentProgress ?? 0}
             totalPages={totalPages}
@@ -920,7 +925,7 @@ const BookDetailsPage = () => {
             Iniciá sesión para consultar y guardar
             tu progreso de lectura.
           </Alert>
-        ))}
+        )}
 
         {/* ===================================== */}
         {/* MATERIAL DE LECTURA PDF (SAB-67) */}
