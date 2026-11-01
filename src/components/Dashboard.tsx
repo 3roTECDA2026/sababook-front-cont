@@ -43,8 +43,12 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 const DashboardContainer = Box;
 
-// SAB-060: chips de filtro del listado de usuarios (fuera del componente para que no cambie en cada render)
+// SAB-060: chips de filtro de cada listado (fuera del componente para que no cambien en cada render)
 const USER_FILTER_CATEGORIES: FilterCategoryId[] = ['year', 'course', 'role', 'readingStatus', 'book'];
+const BOOK_FILTER_CATEGORIES: FilterCategoryId[] = ['year', 'course', 'genre', 'level', 'readingStatus'];
+
+// SAB-060: filtros que acepta GET /libros/buscar, además de la búsqueda
+const BOOK_FILTER_KEYS = ['genero', 'nivel_educativo', 'anio_lectivo', 'anio', 'curso_id', 'estado_lectura'] as const;
 
 interface SnackbarState {
   open: boolean;
@@ -127,6 +131,10 @@ const Dashboard = () => {
   // =========================================================
 
   const [books, setBooks] = useState<Book[]>([]);
+  // SAB-060: filtros del listado de libros (independientes de los de usuarios)
+  const [bookFilters, setBookFilters] = useState<ListFilters>({});
+  const bookResetKey = JSON.stringify({ q: currentQuery, ...bookFilters });
+  const hasBookFilters = bookResetKey !== JSON.stringify({ q: '' });
   const [booksLoading, setBooksLoading] = useState<boolean>(true);
   const [booksError, setBooksError] = useState<string | null>(null);
 
@@ -194,15 +202,18 @@ const Dashboard = () => {
         throw new Error('No autenticado.');
       }
 
-      // SAB-122: GET /books ignora la búsqueda; /libros/buscar busca por título o autor sin tildes.
+      // SAB-122 / SAB-060: siempre /libros/buscar, con la búsqueda y los filtros.
       // Sin page/limit devuelve un array, y BookTable sigue paginando en el cliente.
+      const params = new URLSearchParams();
       const query = currentQuery.trim();
-      const endpoint = query
-        ? `/libros/buscar?${new URLSearchParams({ query }).toString()}`
-        : '/books';
+      if (query) params.append('query', query);
+      BOOK_FILTER_KEYS.forEach((key) => {
+        const value = bookFilters[key];
+        if (value !== undefined && value !== '') params.append(key, String(value));
+      });
 
       const res = await fetch(
-        `${API_BASE_URL}/api/v1${endpoint}`,
+        `${API_BASE_URL}/api/v1/libros/buscar?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -367,7 +378,7 @@ const Dashboard = () => {
     return () => {
       controller.abort();
     };
-  }, [activeView, currentQuery, currentFilter]);
+  }, [activeView, currentQuery, currentFilter, bookFilters]);
 
   // =========================================================
   // NAVEGACIÓN
@@ -974,6 +985,8 @@ const Dashboard = () => {
             onBookUpdate={fetchBooks}
             onEditBook={handleEditBookClick}
             onDeleteBook={handleOpenDeleteConfirm}
+            resetKey={bookResetKey}
+            hasFilters={hasBookFilters}
           />
         );
 
@@ -1076,6 +1089,21 @@ const Dashboard = () => {
           mt: 2,
           mb: 0,
           display: activeView === 'users' ? 'block' : 'none',
+        }}
+      />
+
+      {/* FILTROS DE LIBROS (SAB-060) */}
+
+      <FilterChips
+        categories={BOOK_FILTER_CATEGORIES}
+        includeSchoolYear
+        onFilterChange={setBookFilters}
+        sx={{
+          width: '100%',
+          maxWidth: '1200px',
+          mt: 2,
+          mb: 0,
+          display: activeView === 'books' ? 'block' : 'none',
         }}
       />
 
