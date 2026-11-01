@@ -31,10 +31,19 @@ const unifiedButton = {
   boxShadow: 'none',
   '&:hover': {
     backgroundColor: BUTTON_ORANGE_DARK,
+    color: '#FFFFFF',
     boxShadow: 'none',
   },
   '&:active': {
     backgroundColor: BUTTON_ORANGE_DARK,
+    color: '#FFFFFF',
+  },
+  '&:focus': {
+    color: '#FFFFFF',
+  },
+  '&.Mui-focusVisible': {
+    backgroundColor: BUTTON_ORANGE_DARK,
+    color: '#FFFFFF',
   },
   '&.Mui-disabled': {
     backgroundColor: BUTTON_ORANGE,
@@ -51,10 +60,19 @@ const destructiveButton = {
   boxShadow: 'none',
   '&:hover': {
     backgroundColor: DELETE_ORANGE_DARK,
+    color: DELETE_TEXT,
     boxShadow: 'none',
   },
   '&:active': {
     backgroundColor: DELETE_ORANGE_DARK,
+    color: DELETE_TEXT,
+  },
+  '&:focus': {
+    color: DELETE_TEXT,
+  },
+  '&.Mui-focusVisible': {
+    backgroundColor: DELETE_ORANGE_DARK,
+    color: DELETE_TEXT,
   },
   '&.Mui-disabled': {
     backgroundColor: DELETE_ORANGE,
