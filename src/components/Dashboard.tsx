@@ -462,6 +462,7 @@ const Dashboard = () => {
   // CREAR O EDITAR LIBRO
   // =========================================================
 
+  // SAB-123: permitir libros sin cantidad de páginas.
   const handleSaveBook = async (
     bookData: {
       libro_id?: number;
@@ -478,13 +479,18 @@ const Dashboard = () => {
       : `${API_BASE_URL}/api/v1/books`;
 
     try {
-      const paginas = bookData.paginas_totales;
+      // Si no se informan páginas, enviar null.
+      const paginas = bookData.paginas_totales ?? null;
 
+      // Validar solamente cuando se indica una cantidad.
       if (
-        typeof paginas !== 'number' ||
-        !Number.isSafeInteger(paginas) ||
-        paginas <= 0 ||
-        paginas > 2147483647
+        paginas !== null &&
+        (
+          typeof paginas !== 'number' ||
+          !Number.isSafeInteger(paginas) ||
+          paginas <= 0 ||
+          paginas > 2147483647
+        )
       ) {
         throw new Error(
           'Ingresá un número entero de páginas mayor que cero.'

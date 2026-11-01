@@ -14,6 +14,8 @@ import {
   Select,
   MenuItem,
   FormControl,
+  FormControlLabel,
+  Checkbox,
   InputLabel,
   TextareaAutosize,
   styled,
@@ -43,7 +45,7 @@ interface BookFormData {
   genero: string;
   nivel_educativo: string;
   descripcion: string;
-  paginas_totales: number | '';
+  paginas_totales: number | null;
   imagenUrl?: string;
   portada_url?: string;
   id?: number;
@@ -57,7 +59,7 @@ const INITIAL_BOOK_DATA: BookFormData = {
   genero: '',
   nivel_educativo: '',
   descripcion: '',
-  paginas_totales: '',
+  paginas_totales: null,
   imagenUrl: '',
 };
 
@@ -109,16 +111,27 @@ const BookForm = ({
     ...INITIAL_BOOK_DATA,
   });
 
+  // SAB-123: controlar si se informa cantidad de páginas.
+  const [agregarPaginas, setAgregarPaginas] = useState(false);
+  const [paginasInput, setPaginasInput] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [pageError, setPageError] = useState('');
 
   useEffect(() => {
     if (bookToEdit) {
+      const paginas = bookToEdit.paginas_totales;
+
+      const tienePaginas =
+        typeof paginas === 'number' &&
+        Number.isSafeInteger(paginas) &&
+        paginas > 0;
+
       const mappedData: BookFormData = {
         ...INITIAL_BOOK_DATA,
         ...bookToEdit,
         libro_id: bookToEdit.libro_id,
-        paginas_totales: bookToEdit.paginas_totales ?? '',
+        paginas_totales: tienePaginas ? paginas : null,
         imagenUrl:
           bookToEdit.imagenUrl ||
           bookToEdit.portada_url ||
@@ -126,8 +139,12 @@ const BookForm = ({
       };
 
       setFormData(mappedData);
+      setAgregarPaginas(tienePaginas);
+      setPaginasInput(tienePaginas ? String(paginas) : '');
     } else {
       setFormData({ ...INITIAL_BOOK_DATA });
+      setAgregarPaginas(false);
+      setPaginasInput('');
     }
 
     setPageError('');
@@ -146,14 +163,34 @@ const BookForm = ({
     }));
   };
 
+  // SAB-123: habilitar o deshabilitar las páginas.
+  const handleTogglePaginas = (
+    e: ChangeEvent<HTMLInputElement>
+  ) => {
+    const checked = e.target.checked;
+
+    setAgregarPaginas(checked);
+    setPageError('');
+
+    if (!checked) {
+      setPaginasInput('');
+      setFormData((prev) => ({
+        ...prev,
+        paginas_totales: null,
+      }));
+    }
+  };
+
   const handlePagesChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const value = e.target.value;
 
+    setPaginasInput(value);
+
     setFormData((prev) => ({
       ...prev,
-      paginas_totales: value === '' ? '' : Number(value),
+      paginas_totales: value === '' ? null : Number(value),
     }));
 
     setPageError('');
@@ -166,18 +203,26 @@ const BookForm = ({
 
     if (loading) return;
 
-    const paginas = formData.paginas_totales;
+    let paginas: number | null = null;
 
-    if (
-      typeof paginas !== 'number' ||
-      !Number.isSafeInteger(paginas) ||
-      paginas <= 0 ||
-      paginas > 2147483647
-    ) {
-      setPageError(
-        'Ingresá un número entero de páginas mayor que cero.'
-      );
-      return;
+    // SAB-123: validar solamente si se eligió agregar páginas.
+    if (agregarPaginas) {
+      const valor = paginasInput.trim();
+      const numero = Number(valor);
+
+      if (
+        valor === '' ||
+        !Number.isSafeInteger(numero) ||
+        numero <= 0 ||
+        numero > 2147483647
+      ) {
+        setPageError(
+          'Ingresá un número entero de páginas mayor que cero.'
+        );
+        return;
+      }
+
+      paginas = numero;
     }
 
     setPageError('');
@@ -205,10 +250,7 @@ const BookForm = ({
     try {
       await onSave(payload);
     } catch (error) {
-      console.error(
-        'Error al guardar el libro:',
-        error
-      );
+      console.error('Error al guardar el libro:', error);
     } finally {
       setLoading(false);
     }
@@ -358,38 +400,63 @@ const BookForm = ({
               </FormControl>
             </Box>
 
+            {/* SAB-123: páginas opcionales */}
             <Box mb={3}>
               <Typography
                 variant="subtitle1"
                 fontWeight="bold"
                 gutterBottom
               >
-                Número de páginas *
+                Cantidad de páginas
               </Typography>
 
-              <TextField
-                name="paginas_totales"
-                type="number"
-                fullWidth
-                required
-                value={formData.paginas_totales}
-                onChange={handlePagesChange}
-                size="small"
-                variant="outlined"
-                placeholder="Ej: 250"
-                slotProps={{
-                  htmlInput: {
-                    min: 1,
-                    max: 2147483647,
-                    step: 1,
-                  },
-                }}
-                error={Boolean(pageError)}
-                helperText={
-                  pageError ||
-                  'Obligatorio para realizar el seguimiento de lectura.'
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={agregarPaginas}
+                    onChange={handleTogglePaginas}
+                    disabled={loading}
+                  />
                 }
+                label="Agregar cantidad de páginas"
               />
+
+              {agregarPaginas ? (
+                <TextField
+                  name="paginas_totales"
+                  type="number"
+                  fullWidth
+                  required
+                  value={paginasInput}
+                  onChange={handlePagesChange}
+                  size="small"
+                  variant="outlined"
+                  placeholder="Ej: 250"
+                  slotProps={{
+                    htmlInput: {
+                      min: 1,
+                      max: 2147483647,
+                      step: 1,
+                    },
+                  }}
+                  error={Boolean(pageError)}
+                  helperText={
+                    pageError ||
+                    'Esta cantidad se utilizará para el seguimiento de lectura.'
+                  }
+                  sx={{ mt: 1 }}
+                />
+              ) : (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1 }}
+                >
+                  Si no se informa la cantidad de páginas,
+                  el libro se guardará sin ese dato y no
+                  se mostrará el progreso de lectura.
+                </Typography>
+              )}
             </Box>
 
             <Box mb={3}>

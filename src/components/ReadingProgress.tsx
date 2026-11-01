@@ -17,7 +17,7 @@ import SaveIcon from '@mui/icons-material/Save';
 
 interface ReadingProgressProps {
   currentPage: number;
-  totalPages: number;
+  totalPages: number | null | undefined;
   onUpdateProgress: (newPage: number) => void | Promise<void>;
   loading?: boolean;
   saving?: boolean;
@@ -40,14 +40,19 @@ const ReadingProgress: React.FC<ReadingProgressProps> = ({
 
   const [error, setError] = useState('');
 
+  // SAB-123: las páginas son opcionales.
+  // Solo se permite el seguimiento cuando existe
+  // una cantidad válida de páginas.
   const validTotal =
-    Number.isInteger(totalPages) && totalPages > 0;
+    typeof totalPages === 'number' &&
+    Number.isInteger(totalPages) &&
+    totalPages > 0;
 
   const maxPages = validTotal ? totalPages : 0;
 
   const percentage = validTotal
     ? Math.min(
-        Math.max((currentPage / totalPages) * 100, 0),
+        Math.max((currentPage / maxPages) * 100, 0),
         100
       )
     : 0;
@@ -77,7 +82,6 @@ const ReadingProgress: React.FC<ReadingProgressProps> = ({
     if (loading || saving || disabled) return;
 
     if (!validTotal) {
-      setError('El libro no tiene un total de páginas válido.');
       return;
     }
 
@@ -109,6 +113,14 @@ const ReadingProgress: React.FC<ReadingProgressProps> = ({
     Number.isInteger(parsedInput) &&
     parsedInput >= 0 &&
     parsedInput <= maxPages;
+
+  // SAB-123:
+  // No mostrar el seguimiento de lectura cuando
+  // paginas_totales sea null, undefined, 0 o inválido.
+  // Este retorno está después de los hooks de React.
+  if (!validTotal) {
+    return null;
+  }
 
   return (
     <Box
@@ -152,7 +164,7 @@ const ReadingProgress: React.FC<ReadingProgressProps> = ({
         </Box>
       ) : (
         <>
-          {/* BARRA ORIGINAL DE PROGRESO */}
+          {/* BARRA DE PROGRESO */}
           <Box
             sx={{
               display: 'flex',
@@ -166,7 +178,7 @@ const ReadingProgress: React.FC<ReadingProgressProps> = ({
               variant="body2"
               color="text.secondary"
             >
-              Página {currentPage} de {validTotal ? totalPages : '—'}
+              Página {currentPage} de {totalPages}
             </Typography>
 
             <Typography
@@ -192,7 +204,7 @@ const ReadingProgress: React.FC<ReadingProgressProps> = ({
             }}
           />
 
-          {/* SELECTOR DE PÁGINA ORIGINAL CON BOTONES */}
+          {/* SELECTOR DE PÁGINA CON BOTONES */}
           <Box
             component="form"
             onSubmit={handleSave}
@@ -259,7 +271,7 @@ const ReadingProgress: React.FC<ReadingProgressProps> = ({
               label="Total de páginas"
               type="number"
               size="small"
-              value={validTotal ? totalPages : ''}
+              value={totalPages}
               disabled
               sx={{
                 width: 140,
@@ -294,20 +306,8 @@ const ReadingProgress: React.FC<ReadingProgressProps> = ({
           </Box>
 
           {error && (
-            <Alert
-              severity="error"
-              sx={{ mt: 2 }}
-            >
+            <Alert severity="error" sx={{ mt: 2 }}>
               {error}
-            </Alert>
-          )}
-
-          {!validTotal && (
-            <Alert
-              severity="warning"
-              sx={{ mt: 2 }}
-            >
-              Este libro no tiene un total de páginas registrado.
             </Alert>
           )}
         </>
