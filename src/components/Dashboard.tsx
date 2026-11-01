@@ -36,6 +36,7 @@ import GoalTable from './tables/GoalTable';
 import SearchFilterBar from '@/components/ui/SearchFilterBar';
 import { usePagination } from '@/hooks/usePagination';
 import { getHistorialAsignaciones } from '@/services/courseService';
+import type { RoleFilter } from '@/services/userService';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 const DashboardContainer = Box;
@@ -55,6 +56,8 @@ const Dashboard = () => {
 
   const [currentQuery, setCurrentQuery] = useState<string>('');
   const [currentFilter, setCurrentFilter] = useState<string>('');
+  // SAB-119: el rol se filtra en el servidor, para que la paginación cuente bien
+  const [userRoleFilter, setUserRoleFilter] = useState<RoleFilter>('');
 
   // =========================================================
   // PAGINACIÓN DE USUARIOS
@@ -73,8 +76,8 @@ const Dashboard = () => {
         params.append('q', currentQuery);
       }
 
-      if (currentFilter) {
-        params.append('filter', currentFilter);
+      if (userRoleFilter) {
+        params.append('rol', userRoleFilter);
       }
 
       return fetch(
@@ -93,12 +96,13 @@ const Dashboard = () => {
         return res.json();
       });
     },
-    [currentQuery, currentFilter]
+    [currentQuery, userRoleFilter]
   );
 
+  // Al cambiar la búsqueda o el rol, se vuelve a la página 1
   const resetKey = JSON.stringify({
     q: currentQuery,
-    filter: currentFilter,
+    rol: userRoleFilter,
   });
 
   const {
@@ -955,6 +959,9 @@ const Dashboard = () => {
             page={userPage}
             totalPages={userTotalPages}
             onPageChange={goToUserPage}
+            roleFilter={userRoleFilter}
+            onRoleFilterChange={setUserRoleFilter}
+            searchQuery={currentQuery}
           />
         );
 

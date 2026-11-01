@@ -40,6 +40,8 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import type { User } from '@/types';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { downloadCsv } from '@/utils/downloadCsv';
+import { getUsers } from '@/services/userService';
+import type { RoleFilter } from '@/services/userService';
 
 // --------------------------------------------------
 // TIPOS
@@ -53,6 +55,10 @@ interface UserTableProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  // SAB-119: el rol se filtra en el servidor (lo maneja el Dashboard)
+  roleFilter: RoleFilter;
+  onRoleFilterChange: (rol: RoleFilter) => void;
+  searchQuery: string;
 }
 
 interface SnackbarState {
@@ -73,6 +79,9 @@ export default function UserTable({
   page,
   totalPages,
   onPageChange,
+  roleFilter,
+  onRoleFilterChange,
+  searchQuery,
 }: UserTableProps) {
 
   // --------------------------------------------------
@@ -84,8 +93,8 @@ export default function UserTable({
   const [userToEdit, setUserToEdit] =
     useState<User | null>(null);
 
-  const [roleFilter, setRoleFilter] =
-    useState<string>('todos');
+  const [isDownloading, setIsDownloading] =
+    useState<boolean>(false);
 
   const [confirmModalOpen, setConfirmModalOpen] =
     useState<boolean>(false);
@@ -119,49 +128,48 @@ export default function UserTable({
   };
 
   // --------------------------------------------------
-  // FILTRAR USUARIOS POR ROL
-  // --------------------------------------------------
-
-  const filteredUsers: User[] =
-    roleFilter === 'todos'
-      ? users
-      : users.filter(
-          (user) => user.rol === roleFilter
-        );
-
-  const handleRoleFilterChange = (value: string) => {
-    setRoleFilter(value);
-    onPageChange(1);
-  };
-
-  // --------------------------------------------------
   // DESCARGAR CSV
   // --------------------------------------------------
 
-  const handleDownload = () => {
-    downloadCsv(
-      `usuarios-${roleFilter}.csv`,
-      [
-        'ID',
-        'Nombre',
-        'Email',
-        'Rol',
-        'Fecha de registro',
-        'Perfil completo',
-        'URL de avatar',
-        'Nivel educativo',
-      ],
-      filteredUsers.map((user) => [
-        user.usuario_id,
-        user.nombre,
-        user.email,
-        user.rol,
-        user.fecha_registro,
-        user.perfil_completo,
-        user.avatar_url,
-        user.nivel_educativo,
-      ])
-    );
+  // Exporta todos los usuarios del rol y la búsqueda, no solo los de la página actual
+  const handleDownload = async () => {
+    setIsDownloading(true);
+
+    try {
+      const allUsers = await getUsers({ rol: roleFilter, q: searchQuery });
+
+      downloadCsv(
+        `usuarios-${roleFilter ? roleFilter.toLowerCase() : 'todos'}.csv`,
+        [
+          'ID',
+          'Nombre',
+          'Email',
+          'Rol',
+          'Fecha de registro',
+          'Perfil completo',
+          'URL de avatar',
+          'Nivel educativo',
+        ],
+        allUsers.map((user) => [
+          user.usuario_id,
+          user.nombre,
+          user.email,
+          user.rol,
+          user.fecha_registro,
+          user.perfil_completo,
+          user.avatar_url,
+          user.nivel_educativo,
+        ])
+      );
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error instanceof Error ? error.message : 'No se pudo descargar el CSV.',
+        severity: 'error',
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   // --------------------------------------------------
@@ -377,13 +385,14 @@ export default function UserTable({
 
           <Select
             labelId="users-role-filter-label"
-            value={roleFilter}
+            value={roleFilter || 'todos'}
             label="Filtrar por rol"
-            onChange={(event) =>
-              handleRoleFilterChange(
-                event.target.value
-              )
-            }
+            onChange={(event) => {
+              const value = event.target.value;
+              onRoleFilterChange(
+                value === 'todos' ? '' : (value as RoleFilter)
+              );
+            }}
           >
             <MenuItem value="todos">
               Todos los roles
@@ -407,13 +416,13 @@ export default function UserTable({
           variant="contained"
           startIcon={<DownloadIcon />}
           onClick={handleDownload}
-          disabled={filteredUsers.length === 0}
+          disabled={users.length === 0 || isDownloading}
           sx={{
             backgroundColor: 'button.main',
             textTransform: 'none',
           }}
         >
-          Descargar CSV
+          {isDownloading ? 'Descargando...' : 'Descargar CSV'}
         </Button>
       </Box>
 
@@ -447,17 +456,19 @@ export default function UserTable({
           </TableHead>
 
           <TableBody>
-            {filteredUsers.length === 0 ? (
+            {users.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
                   align="center"
                 >
-                  No hay usuarios para el rol seleccionado.
+                  {roleFilter
+                    ? 'No hay usuarios con ese rol.'
+                    : 'No hay usuarios para mostrar.'}
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user: User) => (
+              users.map((user: User) => (
                 <TableRow key={user.usuario_id}>
                   <TableCell>
                     <Avatar
