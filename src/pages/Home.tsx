@@ -21,7 +21,6 @@ import {
 } from "react";
 
 import { useNavigate, useLocation } from "react-router-dom";
-import HomeIcon from "@mui/icons-material/Home";
 
 import AppHeader from "@/components/layout/AppHeader";
 import BookCard from "@/components/ui/BookCard";
@@ -774,17 +773,6 @@ export default function Home() {
               ? "Libros por año y curso"
               : "Libros filtrados"}
           </Typography>
-
-          <Button
-            startIcon={<HomeIcon />}
-            onClick={resetSearch}
-            sx={{
-              textTransform: "none",
-              fontWeight: 600,
-            }}
-          >
-            Volver al inicio
-          </Button>
         </Box>
       )}
 
