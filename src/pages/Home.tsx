@@ -9,6 +9,7 @@ import {
   DialogActions,
   TextField,
   Alert,
+  Snackbar,
 } from "@mui/material";
 
 import {
@@ -19,12 +20,14 @@ import {
   useMemo,
 } from "react";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import HomeIcon from "@mui/icons-material/Home";
 
 import AppHeader from "@/components/layout/AppHeader";
 import BookCard from "@/components/ui/BookCard";
 import FeaturedBookSection from "@/components/ui/FeaturedBookSection";
 import FilterChips from "@/components/ui/FilterChips";
+import type { FilterChipsHandle } from "@/components/ui/FilterChips";
 import SearchBar from "@/components/ui/SearchBar";
 import type { SearchBarHandle } from "@/components/ui/SearchBar";
 import SideMenu from "@/components/layout/SideMenu";
@@ -41,6 +44,8 @@ import { useReadingStatus } from "@/hooks/useReadingStatus";
 
 import type { Book, BookFilters } from "@/types";
 import type { LibroDestacado } from "@/components/ui/FeaturedBookSection";
+
+import type { AlertColor } from "@mui/material";
 
 // --------------------------------------------------
 // TIPOS DE DATOS RECIBIDOS DESDE LA API
@@ -87,6 +92,7 @@ interface UsuarioConRol {
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // --------------------------------------------------
   // ESTADOS DE INTERFAZ
@@ -104,6 +110,7 @@ export default function Home() {
     useState<string>("");
 
   const searchBarRef = useRef<SearchBarHandle>(null);
+  const filterChipsRef = useRef<FilterChipsHandle>(null);
 
   const { user } = useAuth();
 
@@ -175,7 +182,7 @@ export default function Home() {
         ...currentFilters,
       };
 
-      const q = normalizarTexto(currentQuery);
+      const q = currentQuery.trim();
 
       if (q) {
         filtros.query = q;
@@ -238,6 +245,17 @@ export default function Home() {
       isFavorite
     );
   };
+
+  // Avisos de éxito de las recomendaciones
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   // --------------------------------------------------
   // NORMALIZAR LIBROS RECOMENDADOS
@@ -469,6 +487,13 @@ export default function Home() {
         setLibroParaRecomendar(null);
 
         setComentarioRecomendacion("");
+
+        // El aviso sale recién cuando el back guardó la recomendación
+        setNotification({
+          open: true,
+          message: "Libro recomendado correctamente.",
+          severity: "success",
+        });
       } catch (error) {
         setErrorAccionRecomendacion(
           error instanceof Error
@@ -537,8 +562,23 @@ export default function Home() {
   const handleSearch = (
     query: string
   ) => {
-    setCurrentQuery(query);
+    setCurrentQuery(query.trim());
   };
+
+  // Deja la pantalla en el estado inicial: sin búsqueda ni filtros
+  const resetSearch = useCallback(() => {
+    setCurrentQuery("");
+    setCurrentFilters({});
+    searchBarRef.current?.clear();
+    filterChipsRef.current?.clear();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  // "Inicio" del menú lateral navega a /home estando en /home: React Router no
+  // remonta Home, pero sí genera una location.key nueva, así que se resetea acá
+  useEffect(() => {
+    resetSearch();
+  }, [location.key, resetSearch]);
 
   // --------------------------------------------------
   // FILTROS
@@ -604,20 +644,11 @@ export default function Home() {
       {/* FILTROS */}
 
       <FilterChips
+        ref={filterChipsRef}
         onFilterChange={
           handleFilterChange
         }
-        onClearSearch={() => {
-          setCurrentQuery("");
-
-          if (
-            searchBarRef.current &&
-            typeof searchBarRef.current
-              .clear === "function"
-          ) {
-            searchBarRef.current.clear();
-          }
-        }}
+        onClearSearch={resetSearch}
       />
 
       {/* NUESTROS RECOMENDADOS */}
@@ -743,6 +774,17 @@ export default function Home() {
               ? "Libros por año y curso"
               : "Libros filtrados"}
           </Typography>
+
+          <Button
+            startIcon={<HomeIcon />}
+            onClick={resetSearch}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+            }}
+          >
+            Volver al inicio
+          </Button>
         </Box>
       )}
 
@@ -1041,12 +1083,6 @@ export default function Home() {
             onClick={() => {
               void guardarRecomendacionConComentario();
             }}
-            sx={{
-              bgcolor: "#f25600",
-              "&:hover": {
-                bgcolor: "#d64500",
-              },
-            }}
           >
             {guardandoRecomendacion
               ? "Guardando..."
@@ -1054,6 +1090,25 @@ export default function Home() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* AVISOS DE RECOMENDACIONES */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={() =>
+          setNotification((prev) => ({ ...prev, open: false }))
+        }
+      >
+        <Alert
+          onClose={() =>
+            setNotification((prev) => ({ ...prev, open: false }))
+          }
+          severity={notification.severity}
+          sx={{ width: "100%" }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

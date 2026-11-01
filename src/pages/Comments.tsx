@@ -149,9 +149,7 @@ function BookDetailsPageMUI() {
 
   // Calcular Rating y Conteo Promedio. Se maneja el caso de división por cero.
   const commentsCount = comments.length;
-  const totalRating = comments.reduce((sum, c) => sum + c.rating, 0);
-  const averageRating = commentsCount > 0 ? totalRating / commentsCount : 0;
-
+  
   const handleCommentSubmit = (newComment: { rating: number; text: string }) => {
     const submittedComment: CommentEntry = {
       ...newComment,

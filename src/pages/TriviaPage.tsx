@@ -49,7 +49,6 @@ const TriviaPage = () => {
   const [selection, setSelection] = useState<TriviaSelection | null>(null);
   const {
     isAdmin,
-    filters,
     setFilters,
     searchQuery,
     setSearchQuery,

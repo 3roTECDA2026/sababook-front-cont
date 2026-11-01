@@ -9,7 +9,7 @@ const MAX_COMMENT_LENGTH = 250;
 
 interface ForumAddCommentProps {
   forumId: number | string;
-  userId: number | string;
+  userId?: number | string;
   userName?: string;
   userAvatar?: string | null;
   onCommentAdded?: (comment: ForumDetailComment) => void;
@@ -17,7 +17,6 @@ interface ForumAddCommentProps {
 
 const ForumAddComment = ({
   forumId,
-  userId,
   userName,
   userAvatar,
   onCommentAdded,

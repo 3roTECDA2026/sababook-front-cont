@@ -20,7 +20,7 @@ interface LoginProps {
   onLoginClick?: () => void;
 }
 
-const Login = ({ imageUrl, onRegisterClick, onLoginClick }: LoginProps) => {
+const Login = ({ onLoginClick }: LoginProps) => {
   return (
     <Box
       sx={{

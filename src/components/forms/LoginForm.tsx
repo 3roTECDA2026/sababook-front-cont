@@ -1,7 +1,7 @@
 // src/components/forms/LoginForm.tsx
 
 import React, { useState, FormEvent } from 'react';
-import { Alert, Box, Button, TextField, Typography, styled, useTheme } from '@mui/material';
+import { Alert, Box, Button, Link, TextField, Typography, styled, useTheme } from '@mui/material';
 import type { TipoErrorLogin } from '@/contexts/AuthContextDefinition';
 
 // Estilos del contenedor del formulario (simplemente para dar un padding)
@@ -32,11 +32,17 @@ export interface LoginCredentials {
 
 interface LoginFormProps {
   onLoginSubmit: (credentials: LoginCredentials) => void;
+  onRegisterClick?: () => void;
   error?: string | null;
   errorType?: TipoErrorLogin | null;
 }
 
-const LoginForm = ({ onLoginSubmit, error, errorType }: LoginFormProps) => {
+const LoginForm = ({
+  onLoginSubmit,
+  onRegisterClick,
+  error,
+  errorType,
+}: LoginFormProps) => {
   const theme = useTheme();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -123,6 +129,21 @@ const LoginForm = ({ onLoginSubmit, error, errorType }: LoginFormProps) => {
         <StyledIngresarButton variant="contained" type="submit" fullWidth>
           Ingresar
         </StyledIngresarButton>
+
+        {onRegisterClick && (
+          <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+            ¿No tenés cuenta?{' '}
+            <Link
+              component="button"
+              type="button"
+              onClick={onRegisterClick}
+              underline="hover"
+              sx={{ color: theme.palette.button?.main, fontWeight: 'bold' }}
+            >
+              Registrate
+            </Link>
+          </Typography>
+        )}
       </FormContainer>
     </form>
   );

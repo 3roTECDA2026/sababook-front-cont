@@ -14,7 +14,7 @@ export type TriviaPlayPhase = 'entry' | 'play' | 'result';
  * las envía para su corrección.
  */
 export const useTriviaPlay = (bookId: number) => {
-  const { token, user, isStudent, isAdmin } = useAuth();
+  const { token, isStudent, isAdmin } = useAuth();
 
   const [notice, setNotice] = useState<{ message: string; severity: AlertColor } | null>(null);
   const [triviaQuestions, setTriviaQuestions] = useState<PlayQuestion[]>([]);

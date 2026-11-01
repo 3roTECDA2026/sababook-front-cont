@@ -68,7 +68,7 @@ export default function RatingAndCommentForm({
         rating: ratingValue,
         text: commentText.trim(),
       });
-    } catch (err) {
+    } catch {
       setError('Error al enviar la calificación. Inténtalo de nuevo.');
     } finally {
       setIsSubmitting(false);

@@ -32,11 +32,13 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import AssignmentHistoryTable from '@/components/tables/AssignmentHistoryTable';
+import PdfReaderModal from '@/components/ui/PdfReaderModal';
 import { getCatalogoLibros } from '@/services/apiService';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -131,6 +133,11 @@ export default function CourseBooksPage() {
   const [libroAEditar, setLibroAEditar] = useState<CourseBook | null>(null);
   const [puntajeEditado, setPuntajeEditado] = useState<string>('');
   const [libroAQuitar, setLibroAQuitar] = useState<CourseBook | null>(null);
+
+  // Lector de PDF para material de lectura (SAB-67)
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
+  const [selectedPdfTitle, setSelectedPdfTitle] = useState<string>('');
 
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
@@ -395,15 +402,51 @@ export default function CourseBooksPage() {
                                 >
                                   <MenuBookIcon />
                                 </Avatar>
-                                <Typography variant="body2" fontWeight="bold">
-                                  {libro.titulo}
-                                </Typography>
+                                <Box>
+                                  <Typography variant="body2" fontWeight="bold">
+                                    {libro.titulo}
+                                  </Typography>
+                                  {libro.archivo_url && (
+                                    <Box
+                                      component="span"
+                                      sx={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 0.5,
+                                        fontSize: '0.75rem',
+                                        color: '#e53935',
+                                        cursor: 'pointer',
+                                        mt: 0.3,
+                                      }}
+                                      onClick={() => {
+                                        setSelectedPdfUrl(libro.archivo_url ?? null);
+                                        setSelectedPdfTitle(libro.titulo);
+                                        setPdfModalOpen(true);
+                                      }}
+                                    >
+                                      <PictureAsPdfIcon sx={{ fontSize: '0.9rem' }} />
+                                      Material PDF disponible
+                                    </Box>
+                                  )}
+                                </Box>
                               </Box>
                             </TableCell>
                             <TableCell>{libro.autor}</TableCell>
                             <TableCell align="center">{libro.puntaje}</TableCell>
                             <TableCell align="center">
                               <Box display="flex" gap={1} justifyContent="center">
+                                {libro.archivo_url && (
+                                  <ActionButton
+                                    title="Leer material PDF"
+                                    onClick={() => {
+                                      setSelectedPdfUrl(libro.archivo_url ?? null);
+                                      setSelectedPdfTitle(libro.titulo);
+                                      setPdfModalOpen(true);
+                                    }}
+                                  >
+                                    <PictureAsPdfIcon sx={{ fontSize: '1.1rem', color: '#e53935' }} />
+                                  </ActionButton>
+                                )}
                                 <ActionButton
                                   title="Editar puntaje"
                                   onClick={() => abrirDialogoEditar(libro)}
@@ -569,6 +612,14 @@ export default function CourseBooksPage() {
         onConfirm={confirmarQuitar}
         title="Quitar libro del curso"
         message={libroAQuitar ? `¿Querés quitar "${libroAQuitar.titulo}" de este curso?` : ''}
+      />
+
+      {/* Lector de material PDF (SAB-67) */}
+      <PdfReaderModal
+        open={pdfModalOpen}
+        onClose={() => setPdfModalOpen(false)}
+        pdfUrl={selectedPdfUrl}
+        title={selectedPdfTitle || 'Material de lectura'}
       />
 
       <Snackbar

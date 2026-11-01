@@ -20,6 +20,7 @@ export interface CourseBook {
   titulo: string;
   autor: string;
   portada_url: string | null;
+  archivo_url?: string | null;
   puntaje: number;
 }
 
