@@ -35,6 +35,39 @@ export async function getCursos(soloPropios = false, signal?: AbortSignal): Prom
 }
 
 /**
+ * Cursos de un año lectivo, con el docente asignado a cada uno (SAB-117)
+ */
+export async function getCoursesByYear(schoolYear: number, signal?: AbortSignal): Promise<CourseSummary[]> {
+  return await solicitud<CourseSummary[]>(`/courses?anio_lectivo=${schoolYear}`, { signal });
+}
+
+/**
+ * Cursos de un docente en todos los años lectivos (solo administrador)
+ */
+export async function getTeacherCourses(teacherId: number, signal?: AbortSignal): Promise<CourseSummary[]> {
+  return await solicitud<CourseSummary[]>(`/courses?docente_id=${teacherId}`, { signal });
+}
+
+/**
+ * Asignar un docente a un curso (cada curso tiene un solo docente)
+ */
+export async function assignTeacher(courseId: number, teacherId: number) {
+  return await solicitud<{ message: string }>(`/courses/${courseId}/teachers`, {
+    method: 'POST',
+    body: JSON.stringify({ usuario_id: teacherId }),
+  });
+}
+
+/**
+ * Quitar un docente de un curso
+ */
+export async function removeTeacher(courseId: number, teacherId: number) {
+  return await solicitud<{ message: string }>(`/courses/${courseId}/teachers/${teacherId}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
  * Libros asignados a un curso
  */
 export async function getLibrosDelCurso(cursoId: number, signal?: AbortSignal): Promise<CourseBook[]> {
