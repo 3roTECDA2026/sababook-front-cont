@@ -16,10 +16,6 @@ import {
   Snackbar,
   Alert,
   Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
 } from '@mui/material';
 
 import type { AlertColor } from '@mui/material';
@@ -37,11 +33,10 @@ import { API_BASE_URL } from '@/environments/api';
 import UserForm from '@/components/forms/UserForm';
 import type { UserFormData } from '@/components/forms/UserForm';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
-import type { User } from '@/types';
+import type { ListFilters, User } from '@/types';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { downloadCsv } from '@/utils/downloadCsv';
 import { getUsers } from '@/services/userService';
-import type { RoleFilter } from '@/services/userService';
 
 // --------------------------------------------------
 // TIPOS
@@ -55,9 +50,8 @@ interface UserTableProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  // SAB-119: el rol se filtra en el servidor (lo maneja el Dashboard)
-  roleFilter: RoleFilter;
-  onRoleFilterChange: (rol: RoleFilter) => void;
+  // SAB-119 / SAB-060: los filtros se aplican en el servidor (los maneja el Dashboard)
+  filters: ListFilters;
   searchQuery: string;
 }
 
@@ -79,10 +73,12 @@ export default function UserTable({
   page,
   totalPages,
   onPageChange,
-  roleFilter,
-  onRoleFilterChange,
+  filters,
   searchQuery,
 }: UserTableProps) {
+  const hasFilters =
+    Boolean(searchQuery.trim()) ||
+    Object.values(filters).some((value) => value !== undefined && value !== '');
 
   // --------------------------------------------------
   // ESTADOS
@@ -131,15 +127,15 @@ export default function UserTable({
   // DESCARGAR CSV
   // --------------------------------------------------
 
-  // Exporta todos los usuarios del rol y la búsqueda, no solo los de la página actual
+  // Exporta todos los usuarios de la búsqueda y los filtros, no solo los de la página actual
   const handleDownload = async () => {
     setIsDownloading(true);
 
     try {
-      const allUsers = await getUsers({ rol: roleFilter, q: searchQuery });
+      const allUsers = await getUsers({ ...filters, q: searchQuery });
 
       downloadCsv(
-        `usuarios-${roleFilter ? roleFilter.toLowerCase() : 'todos'}.csv`,
+        hasFilters ? 'usuarios-filtrados.csv' : 'usuarios-todos.csv',
         [
           'ID',
           'Nombre',
@@ -363,55 +359,18 @@ export default function UserTable({
 
   return (
     <>
-      {/* FILTROS Y DESCARGA CSV */}
+      {/* DESCARGA CSV (los filtros están en el Dashboard) */}
 
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           alignItems: 'center',
           gap: 2,
           mt: 3,
           flexWrap: 'wrap',
         }}
       >
-        <FormControl
-          size="small"
-          sx={{ minWidth: 180 }}
-        >
-          <InputLabel id="users-role-filter-label">
-            Filtrar por rol
-          </InputLabel>
-
-          <Select
-            labelId="users-role-filter-label"
-            value={roleFilter || 'todos'}
-            label="Filtrar por rol"
-            onChange={(event) => {
-              const value = event.target.value;
-              onRoleFilterChange(
-                value === 'todos' ? '' : (value as RoleFilter)
-              );
-            }}
-          >
-            <MenuItem value="todos">
-              Todos los roles
-            </MenuItem>
-
-            <MenuItem value="ALUMNO">
-              Alumno
-            </MenuItem>
-
-            <MenuItem value="DOCENTE">
-              Docente
-            </MenuItem>
-
-            <MenuItem value="ADMINISTRADOR">
-              Administrador
-            </MenuItem>
-          </Select>
-        </FormControl>
-
         <Button
           variant="contained"
           startIcon={<DownloadIcon />}
@@ -462,8 +421,8 @@ export default function UserTable({
                   colSpan={7}
                   align="center"
                 >
-                  {roleFilter
-                    ? 'No hay usuarios con ese rol.'
+                  {hasFilters
+                    ? 'No hay usuarios que coincidan con los filtros.'
                     : 'No hay usuarios para mostrar.'}
                 </TableCell>
               </TableRow>
