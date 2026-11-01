@@ -53,12 +53,12 @@ interface Recomendacion {
 interface ReadingProgressResponse {
   libro_id?: number;
   pagina_actual?: number;
-  paginas_totales?: number;
+  paginas_totales?: number | null;
   porcentaje?: number;
   data?: {
     libro_id?: number;
     pagina_actual?: number;
-    paginas_totales?: number;
+    paginas_totales?: number | null;
     porcentaje?: number;
   };
   message?: string;
@@ -262,7 +262,16 @@ const BookDetailsPage = () => {
   useEffect(() => {
     setCurrentProgress(null);
 
-    if (!id || !user) {
+    // SAB-123: no consultar progreso si el libro
+    // todavía no tiene una cantidad de páginas válida.
+    const paginas = book?.paginas_totales;
+
+    const tienePaginas =
+      typeof paginas === 'number' &&
+      Number.isInteger(paginas) &&
+      paginas > 0;
+
+    if (!id || !user || !tienePaginas) {
       setLoadingProgress(false);
       return;
     }
@@ -353,7 +362,7 @@ const BookDetailsPage = () => {
     void cargarProgreso();
 
     return () => controller.abort();
-  }, [id, userId, user]);
+  }, [id, userId, user, book?.paginas_totales]);
 
   // =====================================================
   // CONSULTAR RECOMENDACIONES
@@ -592,9 +601,15 @@ const BookDetailsPage = () => {
       return;
     }
 
-    const totalPages = Number(
-      book.paginas_totales
-    );
+    const totalPages = book.paginas_totales;
+
+    if (
+      typeof totalPages !== 'number' ||
+      !Number.isInteger(totalPages) ||
+      totalPages <= 0
+    ) {
+      return;
+    }
 
     if (
       !Number.isInteger(newPage) ||
@@ -772,9 +787,13 @@ const BookDetailsPage = () => {
   const fechaLectura =
     getReadingDate(book.libro_id);
 
-  const totalPages = Number(
-    book.paginas_totales ?? 0
-  );
+  // SAB-123: NULL significa que no se informaron páginas.
+  const totalPages = book.paginas_totales;
+
+  const tienePaginas =
+    typeof totalPages === 'number' &&
+    Number.isInteger(totalPages) &&
+    totalPages > 0;
 
   return (
     <Box
@@ -881,7 +900,12 @@ const BookDetailsPage = () => {
         {/* SAB-91: PROGRESO INDIVIDUAL */}
         {/* ===================================== */}
 
-        {user ? (
+        {!tienePaginas ? (
+          <Alert severity="info" sx={{ mt: 3 }}>
+            Este libro todavía no tiene la cantidad de páginas cargada.
+            El seguimiento de lectura estará disponible cuando se agregue ese dato.
+          </Alert>
+        ) : user ? (
           <ReadingProgress
             currentPage={currentProgress ?? 0}
             totalPages={totalPages}

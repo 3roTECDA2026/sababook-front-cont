@@ -11,7 +11,7 @@ export interface Book {
   activo?: boolean;
   estado_lectura?: 'general' | 'quiero-leer' | 'leyendo' | 'leido';
   pagina_actual?: number;
-  paginas_totales?: number;
+  paginas_totales?: number | null;
 }
 
 export interface BookFilters {
