@@ -44,8 +44,15 @@ async function apiRequest<T>(
   try {
     const response = await fetch(url, config);
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+      let detalle = '';
+      try {
+        const body = await response.json();
+        detalle = body?.mensaje || body?.error || body?.message || '';
+      } catch {
+        // la respuesta no era JSON
+      }
+      throw new Error(detalle || `HTTP error! status: ${response.status}`);
     }
 
     return (await response.json()) as T;

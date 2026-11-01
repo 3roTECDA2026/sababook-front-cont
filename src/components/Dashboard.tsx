@@ -36,6 +36,7 @@ import GoalTable from './tables/GoalTable';
 import SearchFilterBar from '@/components/ui/SearchFilterBar';
 import { usePagination } from '@/hooks/usePagination';
 import { getHistorialAsignaciones } from '@/services/courseService';
+import type { RoleFilter } from '@/services/userService';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 const DashboardContainer = Box;
@@ -55,6 +56,8 @@ const Dashboard = () => {
 
   const [currentQuery, setCurrentQuery] = useState<string>('');
   const [currentFilter, setCurrentFilter] = useState<string>('');
+  // SAB-119: el rol se filtra en el servidor, para que la paginación cuente bien
+  const [userRoleFilter, setUserRoleFilter] = useState<RoleFilter>('');
 
   // =========================================================
   // PAGINACIÓN DE USUARIOS
@@ -73,8 +76,8 @@ const Dashboard = () => {
         params.append('q', currentQuery);
       }
 
-      if (currentFilter) {
-        params.append('filter', currentFilter);
+      if (userRoleFilter) {
+        params.append('rol', userRoleFilter);
       }
 
       return fetch(
@@ -93,12 +96,13 @@ const Dashboard = () => {
         return res.json();
       });
     },
-    [currentQuery, currentFilter]
+    [currentQuery, userRoleFilter]
   );
 
+  // Al cambiar la búsqueda o el rol, se vuelve a la página 1
   const resetKey = JSON.stringify({
     q: currentQuery,
-    filter: currentFilter,
+    rol: userRoleFilter,
   });
 
   const {
@@ -189,18 +193,15 @@ const Dashboard = () => {
         throw new Error('No autenticado.');
       }
 
-      const params = new URLSearchParams();
-
-      if (currentQuery) {
-        params.append('q', currentQuery);
-      }
-
-      if (currentFilter) {
-        params.append('filter', currentFilter);
-      }
+      // SAB-122: GET /books ignora la búsqueda; /libros/buscar busca por título o autor sin tildes.
+      // Sin page/limit devuelve un array, y BookTable sigue paginando en el cliente.
+      const query = currentQuery.trim();
+      const endpoint = query
+        ? `/libros/buscar?${new URLSearchParams({ query }).toString()}`
+        : '/books';
 
       const res = await fetch(
-        `${API_BASE_URL}/api/v1/books?${params.toString()}`,
+        `${API_BASE_URL}/api/v1${endpoint}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -462,6 +463,7 @@ const Dashboard = () => {
   // CREAR O EDITAR LIBRO
   // =========================================================
 
+  // SAB-123: permitir libros sin cantidad de páginas.
   const handleSaveBook = async (
     bookData: {
       libro_id?: number;
@@ -478,13 +480,18 @@ const Dashboard = () => {
       : `${API_BASE_URL}/api/v1/books`;
 
     try {
-      const paginas = bookData.paginas_totales;
+      // Si no se informan páginas, enviar null.
+      const paginas = bookData.paginas_totales ?? null;
 
+      // Validar solamente cuando se indica una cantidad.
       if (
-        typeof paginas !== 'number' ||
-        !Number.isSafeInteger(paginas) ||
-        paginas <= 0 ||
-        paginas > 2147483647
+        paginas !== null &&
+        (
+          typeof paginas !== 'number' ||
+          !Number.isSafeInteger(paginas) ||
+          paginas <= 0 ||
+          paginas > 2147483647
+        )
       ) {
         throw new Error(
           'Ingresá un número entero de páginas mayor que cero.'
@@ -958,6 +965,9 @@ const Dashboard = () => {
             page={userPage}
             totalPages={userTotalPages}
             onPageChange={goToUserPage}
+            roleFilter={userRoleFilter}
+            onRoleFilterChange={setUserRoleFilter}
+            searchQuery={currentQuery}
           />
         );
 
