@@ -124,6 +124,8 @@ function BookPicker({ onSelect }: { onSelect: (book: Book) => void }) {
   const [options, setOptions] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const hasText = inputValue.trim() !== '';
 
   useEffect(() => {
     const text = inputValue.trim();
@@ -159,9 +161,7 @@ function BookPicker({ onSelect }: { onSelect: (book: Book) => void }) {
 
   const noOptionsText = hasError
     ? 'No se pudieron buscar los libros. Intente nuevamente más tarde.'
-    : inputValue.trim()
-      ? 'No se encontraron libros'
-      : 'Escribí el título o el autor';
+    : 'No se encontraron libros';
 
   return (
     <Autocomplete
@@ -176,7 +176,12 @@ function BookPicker({ onSelect }: { onSelect: (book: Book) => void }) {
       loading={isLoading}
       loadingText="Buscando…"
       noOptionsText={noOptionsText}
-      openOnFocus
+      // La lista se abre recién al escribir: si se abre al montar, queda mal ubicada
+      // (el Popover todavía se está animando) y tapa el campo
+      open={isOpen && hasText}
+      onOpen={() => setIsOpen(true)}
+      onClose={() => setIsOpen(false)}
+      forcePopupIcon={false}
       sx={{ width: 320, maxWidth: '80vw' }}
       renderInput={(params) => (
         <TextField
@@ -184,6 +189,7 @@ function BookPicker({ onSelect }: { onSelect: (book: Book) => void }) {
           autoFocus
           size="small"
           label="Buscar libro"
+          placeholder="Título o autor"
           slotProps={{
             input: {
               ...params.InputProps,
