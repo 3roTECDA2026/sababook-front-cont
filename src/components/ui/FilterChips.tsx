@@ -1,6 +1,7 @@
 // src/components/FilterChips.tsx
 import { useState, useEffect, useMemo, forwardRef, useImperativeHandle, MouseEvent } from 'react';
 import { Stack, Chip, Menu, MenuItem, Box, Button, Popover, Autocomplete, TextField, CircularProgress } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import type { SxProps, Theme } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
@@ -459,11 +460,11 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
               sx={{
                 fontWeight: isActive ? 600 : 500,
                 cursor: 'pointer',
-                borderColor: isActive ? '#f25600' : undefined,
-                bgcolor: isActive ? '#f25600' : undefined,
+                borderColor: isActive ? 'button.main' : undefined,
+                bgcolor: isActive ? 'button.main' : undefined,
                 color: isActive ? '#fff' : undefined,
                 '&:hover': {
-                  borderColor: '#f25600',
+                  borderColor: 'button.main',
                 },
               }}
             />
@@ -486,10 +487,10 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
                 variant="outlined"
                 size="small"
                 sx={{
-                  borderColor: '#f25600',
-                  color: '#f25600',
+                  borderColor: 'button.main',
+                  color: 'button.main',
                   fontWeight: 600,
-                  bgcolor: 'rgba(242, 86, 0, 0.06)',
+                  bgcolor: (theme) => alpha(theme.palette.button.main, 0.06),
                 }}
               />
             );
@@ -504,7 +505,7 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
               fontSize: '0.8rem',
               color: 'text.secondary',
               '&:hover': {
-                color: '#f25600',
+                color: 'button.main',
                 bgcolor: 'transparent',
               },
             }}
@@ -584,8 +585,8 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
                 fontSize: '0.9rem',
                 py: 1,
                 '&:hover': {
-                  bgcolor: 'rgba(242, 86, 0, 0.08)',
-                  color: '#f25600',
+                  bgcolor: (theme) => alpha(theme.palette.button.main, 0.08),
+                  color: 'button.main',
                 },
               }}
             >
