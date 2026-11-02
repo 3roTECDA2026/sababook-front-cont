@@ -1,6 +1,6 @@
 // src/components/Dashboard.tsx
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { SyntheticEvent } from 'react';
 
 import {
@@ -64,7 +64,8 @@ const Dashboard = () => {
   // =========================================================
 
   const [currentQuery, setCurrentQuery] = useState<string>('');
-  const [currentFilter, setCurrentFilter] = useState<string>('');
+  // Al cambiar, vuelve a montar el buscador para vaciar lo escrito ("Limpiar filtros")
+  const [searchResetCount, setSearchResetCount] = useState<number>(0);
   // SAB-119 / SAB-060: los filtros de usuarios se aplican en el servidor,
   // para que la paginación cuente bien
   const [userFilters, setUserFilters] = useState<ListFilters>({});
@@ -134,7 +135,11 @@ const Dashboard = () => {
   // SAB-060: filtros del listado de libros (independientes de los de usuarios)
   const [bookFilters, setBookFilters] = useState<ListFilters>({});
   const bookResetKey = JSON.stringify({ q: currentQuery, ...bookFilters });
-  const hasBookFilters = bookResetKey !== JSON.stringify({ q: '' });
+  const hasBookFilters =
+    currentQuery.trim() !== '' ||
+    Object.values(bookFilters).some((value) => value !== undefined && value !== '');
+  // Solo la respuesta del último pedido actualiza la tabla (incluye los que no tienen señal)
+  const booksRequestRef = useRef<number>(0);
   const [booksLoading, setBooksLoading] = useState<boolean>(true);
   const [booksError, setBooksError] = useState<string | null>(null);
 
@@ -192,6 +197,9 @@ const Dashboard = () => {
   // =========================================================
 
   const fetchBooks = async (signal?: AbortSignal) => {
+    const requestId = ++booksRequestRef.current;
+    const isLatest = () => !signal?.aborted && requestId === booksRequestRef.current;
+
     try {
       setBooksLoading(true);
       setBooksError(null);
@@ -232,11 +240,11 @@ const Dashboard = () => {
 
       const data: Book[] = await res.json();
 
-      if (!signal?.aborted) {
+      if (isLatest()) {
         setBooks(data);
       }
     } catch (err) {
-      if ((err as { name?: string })?.name === 'AbortError') {
+      if ((err as { name?: string })?.name === 'AbortError' || !isLatest()) {
         return;
       }
 
@@ -244,7 +252,7 @@ const Dashboard = () => {
         err instanceof Error ? err.message : String(err)
       );
     } finally {
-      if (!signal?.aborted) {
+      if (isLatest()) {
         setBooksLoading(false);
       }
     }
@@ -349,15 +357,14 @@ const Dashboard = () => {
   // BUSCADOR Y FILTROS
   // =========================================================
 
-  const handleDashboardSearch = (
-    searchTerm: string,
-    filterValue?: string
-  ) => {
+  const handleDashboardSearch = (searchTerm: string) => {
     setCurrentQuery(searchTerm);
+  };
 
-    if (filterValue !== undefined) {
-      setCurrentFilter(filterValue);
-    }
+  // "Limpiar filtros" también vacía el buscador de texto
+  const handleClearSearch = () => {
+    setCurrentQuery('');
+    setSearchResetCount((count) => count + 1);
   };
 
   // =========================================================
@@ -378,7 +385,7 @@ const Dashboard = () => {
     return () => {
       controller.abort();
     };
-  }, [activeView, currentQuery, currentFilter, bookFilters]);
+  }, [activeView, currentQuery, bookFilters]);
 
   // =========================================================
   // NAVEGACIÓN
@@ -388,7 +395,6 @@ const Dashboard = () => {
     setActiveView(viewName);
 
     setCurrentQuery('');
-    setCurrentFilter('');
   };
 
   // =========================================================
@@ -1070,7 +1076,7 @@ const Dashboard = () => {
           }}
         >
           <SearchFilterBar
-            key={activeView}
+            key={`${activeView}-${searchResetCount}`}
             placeholder={`Buscar en ${
               activeView === 'users'
                 ? 'usuarios'
@@ -1089,6 +1095,7 @@ const Dashboard = () => {
         categories={USER_FILTER_CATEGORIES}
         includeSchoolYear
         onFilterChange={setUserFilters}
+        onClearSearch={handleClearSearch}
         sx={{
           width: '100%',
           maxWidth: '1200px',
@@ -1104,6 +1111,7 @@ const Dashboard = () => {
         categories={BOOK_FILTER_CATEGORIES}
         includeSchoolYear
         onFilterChange={setBookFilters}
+        onClearSearch={handleClearSearch}
         sx={{
           width: '100%',
           maxWidth: '1200px',

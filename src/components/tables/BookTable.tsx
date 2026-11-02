@@ -1,5 +1,5 @@
 // src/components/BookTable.tsx
-import React, { useState, useEffect, ChangeEvent, MouseEvent } from 'react';
+import React, { useState, ChangeEvent, MouseEvent } from 'react';
 import {
   Box,
   Typography,
@@ -90,10 +90,13 @@ const BookTable = ({
 
   // Estados de UI (Paginación)
   const [page, setPage] = useState<number>(1);
+  const [lastResetKey, setLastResetKey] = useState(resetKey);
 
-  useEffect(() => {
+  // Al cambiar la búsqueda o un filtro, vuelve a la página 1 en el mismo render
+  if (resetKey !== lastResetKey) {
+    setLastResetKey(resetKey);
     setPage(1);
-  }, [resetKey]);
+  }
 
   // Lógica de Paginación
   const pageCount = Math.ceil(books.length / ROWS_PER_PAGE);
