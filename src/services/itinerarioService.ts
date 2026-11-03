@@ -15,7 +15,7 @@ export interface Itinerario {
 
 const BASE_URL = `${API_BASE_URL.trim()
   .replace(/\/+$/, "")
-  .replace(/\/api\/v1$/, "")}/api/v1/listas`;
+  .replace(/\/api\/v1$/, "")}/api/v1/lists`;
 
 export const itinerarioService = {
   async obtenerItinerarios(signal?: AbortSignal): Promise<Itinerario[]> {

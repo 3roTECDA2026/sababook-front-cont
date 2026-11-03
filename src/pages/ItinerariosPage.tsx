@@ -104,10 +104,10 @@ export default function ItinerariosPage() {
             ) : (
               <Grid container spacing={3}>
                 {selectedItinerario.libros.map((libro) => (
-                  <Grid item xs={12} sm={6} md={4} key={libro.libro_id}>
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={libro.libro_id}>
                     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                       <BookCard
-                        id={libro.libro_id}
+                        libro_id={libro.libro_id}
                         title={libro.titulo}
                         autor={libro.autor}
                         image={libro.portada_url}
@@ -195,7 +195,7 @@ export default function ItinerariosPage() {
             {!loading && !error && itinerarios.length > 0 && (
               <Grid container spacing={3}>
                 {itinerarios.map((itinerario) => (
-                  <Grid item xs={12} sm={6} md={4} key={itinerario.lista_id}>
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={itinerario.lista_id}>
                     <Card
                       sx={{
                         height: '100%',
