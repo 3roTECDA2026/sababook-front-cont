@@ -1,5 +1,5 @@
 // src/components/ui/PdfReaderModal.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,42 +11,62 @@ import {
   Button,
   useTheme,
   useMediaQuery,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import DownloadIcon from '@mui/icons-material/Download';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import { API_BASE_URL } from '@/environments/api';
+import { getBookPdfUrl } from '@/services/apiService';
 
+// SAB-67: el PDF de un libro se lee con una URL temporal que se pide al abrir el modal
+// (el bucket es privado). fileUrl es para la vista previa de un archivo local (blob:) aún no subido.
 interface PdfReaderModalProps {
   open: boolean;
   onClose: () => void;
-  pdfUrl?: string | null;
+  bookId?: number | null;
+  fileUrl?: string | null;
   title?: string;
 }
-
-export const resolvePdfUrl = (url?: string | null): string => {
-  if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
-    return url;
-  }
-  // Ruta relativa desde la API (ej: /uploads/pdfs/...)
-  const baseUrl = API_BASE_URL.replace(/\/$/, '');
-  const cleanPath = url.startsWith('/') ? url : `/${url}`;
-  return `${baseUrl}${cleanPath}`;
-};
 
 export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
   open,
   onClose,
-  pdfUrl,
+  bookId,
+  fileUrl,
   title = 'Material de lectura',
 }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  const fullUrl = resolvePdfUrl(pdfUrl);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!pdfUrl) return null;
+  useEffect(() => {
+    if (!open || fileUrl || !bookId) return;
+
+    const controller = new AbortController();
+    setSignedUrl(null);
+    setError(null);
+    setLoading(true);
+
+    getBookPdfUrl(bookId, controller.signal)
+      .then(setSignedUrl)
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        setError(err instanceof Error && err.message ? err.message : 'No se pudo abrir el PDF.');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [open, bookId, fileUrl]);
+
+  const fullUrl = fileUrl || signedUrl || '';
+
+  if (!fileUrl && !bookId) return null;
 
   return (
     <Dialog
@@ -90,6 +110,7 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             size="small"
+            disabled={!fullUrl}
             startIcon={<OpenInNewIcon />}
             sx={{
               display: { xs: 'none', sm: 'inline-flex' },
@@ -106,17 +127,29 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
       </DialogTitle>
 
       <DialogContent sx={{ p: 0, flex: 1, backgroundColor: '#525659', position: 'relative' }}>
-        <Box
-          component="iframe"
-          src={fullUrl}
-          title={title}
-          sx={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            display: 'block',
-          }}
-        />
+        {loading && (
+          <Box display="flex" alignItems="center" justifyContent="center" height="100%">
+            <CircularProgress sx={{ color: '#fff' }} aria-label="Cargando PDF" />
+          </Box>
+        )}
+        {error && (
+          <Box p={3}>
+            <Alert severity="error">{error}</Alert>
+          </Box>
+        )}
+        {fullUrl && (
+          <Box
+            component="iframe"
+            src={fullUrl}
+            title={title}
+            sx={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              display: 'block',
+            }}
+          />
+        )}
       </DialogContent>
 
       <DialogActions
@@ -132,6 +165,7 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
           download
           target="_blank"
           rel="noopener noreferrer"
+          disabled={!fullUrl}
           startIcon={<DownloadIcon />}
           sx={{ textTransform: 'none', fontWeight: 600 }}
         >

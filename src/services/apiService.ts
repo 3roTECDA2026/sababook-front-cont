@@ -26,10 +26,9 @@ async function apiRequest<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}/api/v1${endpoint}`;
 
+  // SAB-67: con FormData, el navegador arma el Content-Type (multipart con su boundary)
   const defaultOptions: RequestInit = {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' },
   };
 
   const config: RequestInit = {
@@ -53,6 +52,11 @@ async function apiRequest<T>(
         // la respuesta no era JSON
       }
       throw new Error(detalle || `HTTP error! status: ${response.status}`);
+    }
+
+    // 204 No Content: no hay cuerpo para leer
+    if (response.status === 204) {
+      return undefined as T;
     }
 
     return (await response.json()) as T;
@@ -561,56 +565,32 @@ export async function deleteReadingGoal(
 // MATERIAL DE LECTURA PDF (SAB-67)
 // =====================================================
 
-export async function uploadPdfMaterial(
-  fileOrBase64: File | string,
-  fileName?: string
-): Promise<{ url: string; mensaje: string }> {
-  let base64 = '';
-  let nombreArchivo = fileName || 'material_lectura.pdf';
-
-  if (typeof fileOrBase64 === 'string') {
-    if (
-      fileOrBase64.startsWith('http://') ||
-      fileOrBase64.startsWith('https://') ||
-      fileOrBase64.startsWith('/')
-    ) {
-      return await apiRequest<{ url: string; mensaje: string }>('/books/upload-pdf', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ url: fileOrBase64 }),
-      });
-    }
-    base64 = fileOrBase64;
-  } else {
-    nombreArchivo = fileOrBase64.name;
-    base64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (err) => reject(err);
-      reader.readAsDataURL(fileOrBase64);
-    });
-  }
-
-  return await apiRequest<{ url: string; mensaje: string }>('/books/upload-pdf', {
-    method: 'POST',
+// El PDF se guarda en un bucket privado: para leerlo se pide una URL temporal.
+export async function getBookPdfUrl(bookId: number, signal?: AbortSignal): Promise<string> {
+  const { url } = await apiRequest<{ url: string }>(`/books/${bookId}/pdf`, {
     headers: getAuthHeaders(),
-    body: JSON.stringify({
-      base64,
-      nombreArchivo,
-    }),
+    signal,
+  });
+  return url;
+}
+
+// Sube o reemplaza el PDF del libro (solo administradores)
+export async function uploadBookPdf(bookId: number, file: File): Promise<Book> {
+  const body = new FormData();
+  body.append('file', file);
+
+  const token = localStorage.getItem('token');
+  return await apiRequest<Book>(`/books/${bookId}/pdf`, {
+    method: 'PUT',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body,
   });
 }
 
-export async function adjuntarPdfLibro(
-  libroId: number,
-  archivoUrl: string
-): Promise<{ mensaje: string; libro: Book }> {
-  return await apiRequest<{ mensaje: string; libro: Book }>(`/books/${libroId}/pdf`, {
-    method: 'POST',
+export async function removeBookPdf(bookId: number): Promise<void> {
+  await apiRequest<void>(`/books/${bookId}/pdf`, {
+    method: 'DELETE',
     headers: getAuthHeaders(),
-    body: JSON.stringify({
-      archivo_url: archivoUrl,
-    }),
   });
 }
 

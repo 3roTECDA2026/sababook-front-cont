@@ -276,7 +276,7 @@ const BookTable = ({
                             <Typography variant="body2" fontWeight="bold">
                               {row.titulo}
                             </Typography>
-                            {row.archivo_url && (
+                            {row.pdf_path && (
                               <Chip
                                 size="small"
                                 icon={<PictureAsPdfIcon sx={{ fontSize: '0.85rem !important' }} />}
