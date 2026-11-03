@@ -209,13 +209,14 @@ export const FeedMuro: React.FC = () => {
         break;
 
       case 'FORO_APL':
+        // Con id va al foro; sin id, a la lista de foros (la ruta /foro sola no existe)
         if (targetId) navigate(`/foro/${targetId}`);
-        else navigate('/foro');
+        else navigate('/foros');
         break;
 
       case 'RADIO_EPISODIO':
-        if (targetId) navigate(`/radio/${targetId}`);
-        else navigate('/radio');
+        // La pantalla de Radio no tiene ruta por episodio (/radio/:id): siempre va a /radio
+        navigate('/radio');
         break;
 
       default:
