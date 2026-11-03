@@ -19,7 +19,11 @@ export const useEvaluations = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/libro/${bookId}`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/trivia/evaluacion/libro/${bookId}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
       if (!res.ok) throw new Error('No se pudieron cargar las evaluaciones del libro.');
       const data: Evaluacion[] = await res.json();
       setEvaluations(data);
@@ -33,7 +37,7 @@ export const useEvaluations = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   // Crear una evaluación con fecha límite
   const createEvaluation = async (bookId: number, deadline: string): Promise<Evaluacion | null> => {
