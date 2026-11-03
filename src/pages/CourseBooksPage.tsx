@@ -444,7 +444,7 @@ export default function CourseBooksPage() {
                                       setPdfModalOpen(true);
                                     }}
                                   >
-                                    <PictureAsPdfIcon sx={{ fontSize: '1.1rem', color: '#e53935' }} />
+                                    <PictureAsPdfIcon sx={{ fontSize: '1.1rem' }} />
                                   </ActionButton>
                                 )}
                                 <ActionButton
