@@ -21,6 +21,7 @@ import CafesLiterarios from './pages/CafesLiterarios';
 import CourseBooksPage from './pages/CourseBooksPage';
 import TeacherPanelPage from './pages/TeacherPanelPage';
 import ItinerariesPage from './pages/ItinerariesPage';
+import ActivateAccountPage from './pages/ActivateAccountPage';
 
 // Importaciones de Nuevos Módulos (Radio Sábato y Feed Muro)
 import { RadioPlayer } from './components/RadioPlayer';
@@ -35,6 +36,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/activar/:token" element={<ActivateAccountPage />} />
 
       {/* Rutas protegidas */}
       <Route

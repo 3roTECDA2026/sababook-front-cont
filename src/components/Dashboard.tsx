@@ -41,6 +41,7 @@ import { buildUserSearchParams } from '@/services/userService';
 import FilterChips from '@/components/ui/FilterChips';
 import type { FilterCategoryId } from '@/components/ui/FilterChips';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import InviteStudentsModal from '@/components/invitations/InviteStudentsModal';
 
 const DashboardContainer = Box;
 
@@ -151,6 +152,7 @@ const Dashboard = () => {
   const [openForumModal, setOpenForumModal] = useState(false);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openCreateBookModal, setOpenCreateBookModal] = useState(false);
+  const [openInviteModal, setOpenInviteModal] = useState(false);
 
   // =========================================================
   // METAS DE LECTURA
@@ -1080,6 +1082,7 @@ const Dashboard = () => {
         activeView={activeView}
         onNavigate={handleNavigate}
         onAddClick={handleAddClick}
+        onInviteClick={() => setOpenInviteModal(true)}
         isLoading={isApiLoading}
       />
 
@@ -1176,6 +1179,12 @@ const Dashboard = () => {
           />
         </Box>
       </Modal>
+
+      <InviteStudentsModal
+        open={openInviteModal}
+        onClose={() => setOpenInviteModal(false)}
+        onImported={reloadUsers}
+      />
 
       {/* =====================================================
           MODAL CREAR O EDITAR LIBRO

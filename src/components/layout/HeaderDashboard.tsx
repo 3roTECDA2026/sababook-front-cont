@@ -46,6 +46,7 @@ interface HeaderDashboardProps {
   activeView?: DashboardView;
   onNavigate?: (view: DashboardView) => void;
   onAddClick?: () => void;
+  onInviteClick?: () => void;
   isLoading?: boolean;
   rachaActual?: number;
   recordRacha?: number;
@@ -56,6 +57,7 @@ const HeaderDashboard = ({
   activeView = 'users',
   onNavigate = () => console.log('Navegación Desactivada'),
   onAddClick = () => console.log('Agregar Desactivado'),
+  onInviteClick,
   rachaActual: rachaProp,
   recordRacha: recordProp,
   mostrarRacha = true,
@@ -115,6 +117,15 @@ const HeaderDashboard = ({
               <StyledAddButton onClick={onAddClick}>
                 {getAddButtonText(activeView)}
               </StyledAddButton>
+              {activeView === 'users' && onInviteClick && (
+                <Button
+                  variant="outlined"
+                  onClick={onInviteClick}
+                  sx={{ fontWeight: 'bold', borderRadius: '8px', textTransform: 'none' }}
+                >
+                  Invitar alumnos
+                </Button>
+              )}
             </Box>
           )}
         </Box>
