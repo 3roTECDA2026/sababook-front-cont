@@ -334,7 +334,7 @@ export default function ItinerariesPage() {
                         <Typography
                           variant="caption"
                           sx={{ color: 'button.main', fontWeight: 700, cursor: 'pointer' }}
-                          onClick={() => setSelectedItinerario(itinerario)}
+                          onClick={() => setSelectedItinerary(itinerario)}
                         >
                           Ver recorrido →
                         </Typography>
