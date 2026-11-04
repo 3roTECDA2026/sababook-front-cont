@@ -32,6 +32,16 @@ const BASE_URL = `${API_BASE_URL.trim()
   .replace(/\/api\/v1$/, '')}/api/v1/lists`;
 
 export const itineraryService = {
+  async getBooksCatalog(limit = 100): Promise<Book[]> {
+    const url = `${API_BASE_URL.trim().replace(/\/+$/, '')}/api/v1/libros?limit=${limit}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Error al cargar catálogo de libros (${res.status})`);
+    }
+    const data = await res.json();
+    return Array.isArray(data) ? (data as Book[]) : [];
+  },
+
   async getItineraries(signal?: AbortSignal): Promise<Itinerary[]> {
     const res = await fetch(`${BASE_URL}?tipo=ITINERARIO`, { signal });
     if (!res.ok) {

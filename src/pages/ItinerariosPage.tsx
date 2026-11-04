@@ -22,6 +22,7 @@ import BookCard from '@/components/ui/BookCard';
 import CreateItineraryDialog from '@/components/forms/CreateItineraryDialog';
 import { useItineraries } from '@/hooks/useItineraries';
 import { useAuth } from '@/hooks/useAuth';
+import { useFavorites } from '@/hooks/useFavorites';
 import { Itinerary } from '@/services/itineraryService';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
@@ -34,6 +35,7 @@ export default function ItinerariosPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const { itineraries, loading, error, createItinerary, deleteItinerary } = useItineraries();
   const { user, isTeacher, isAdmin } = useAuth();
+  const { isBookFavorite, toggleFavorite } = useFavorites();
   const canManage = isTeacher || isAdmin;
 
   const canDelete = (itinerario: Itinerary) => {
@@ -142,6 +144,13 @@ export default function ItinerariosPage() {
                         gender={libro.genero}
                         description={libro.descripcion}
                         rating={libro.calificacion_promedio}
+                        isFavorite={isBookFavorite(libro.libro_id)}
+                        onFavoriteToggle={() =>
+                          toggleFavorite(
+                            libro.libro_id,
+                            isBookFavorite(libro.libro_id),
+                          )
+                        }
                       />
                     </Box>
                     {libro.explicacion && (

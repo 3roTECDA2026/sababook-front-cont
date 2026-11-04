@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { API_BASE_URL } from '@/environments/api';
+import { itineraryService } from '@/services/itineraryService';
 import { Book } from '@/types/book';
 
 interface CreateItineraryDialogProps {
@@ -47,14 +47,18 @@ export default function CreateItineraryDialog({
   useEffect(() => {
     if (!open) return;
     setLoadingBooks(true);
-    fetch(`${API_BASE_URL}/api/v1/libros?limit=100`)
-      .then((res) => res.json())
+    itineraryService
+      .getBooksCatalog(100)
       .then((data) => {
-        if (Array.isArray(data)) {
-          setAvailableBooks(data);
-        }
+        setAvailableBooks(data);
       })
-      .catch(() => {})
+      .catch((err: unknown) => {
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'No se pudo cargar el catálogo de libros.';
+        setError(message);
+      })
       .finally(() => setLoadingBooks(false));
   }, [open]);
 
@@ -81,19 +85,15 @@ export default function CreateItineraryDialog({
   };
 
   const handleBookChange = (index: number, libroId: number) => {
-    setSelectedBooks((prev) => {
-      const copy = [...prev];
-      copy[index].libroId = libroId;
-      return copy;
-    });
+    setSelectedBooks((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, libroId } : item)),
+    );
   };
 
   const handleExplanationChange = (index: number, explicacion: string) => {
-    setSelectedBooks((prev) => {
-      const copy = [...prev];
-      copy[index].explicacion = explicacion;
-      return copy;
-    });
+    setSelectedBooks((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, explicacion } : item)),
+    );
   };
 
   const handleSubmit = async () => {
@@ -245,7 +245,7 @@ export default function CreateItineraryDialog({
         )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} disabled={submitting} sx={{ bgcolor: 'action.hover', color: 'text.primary' }}>
+        <Button onClick={onClose} disabled={submitting}>
           Cancelar
         </Button>
         <Button onClick={handleSubmit} disabled={submitting}>
