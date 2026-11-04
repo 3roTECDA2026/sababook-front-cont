@@ -14,6 +14,18 @@ export interface Itinerary {
   libros: ItineraryBook[];
 }
 
+export interface CreateItineraryBookInput {
+  libroId: number;
+  explicacion: string;
+}
+
+export interface CreateItineraryInput {
+  nombre: string;
+  descripcion: string;
+  tipo?: string;
+  libros: CreateItineraryBookInput[];
+}
+
 const BASE_URL = `${API_BASE_URL.trim()
   .replace(/\/+$/, '')
   .replace(/\/api\/v1$/, '')}/api/v1/lists`;
@@ -29,5 +41,42 @@ export const itineraryService = {
       return [];
     }
     return data as Itinerary[];
+  },
+
+  async createItinerary(input: CreateItineraryInput, token: string): Promise<Itinerary> {
+    const payload = {
+      ...input,
+      tipo: 'ITINERARIO',
+    };
+
+    const res = await fetch(BASE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Error al crear itinerario (${res.status})`);
+    }
+
+    return (await res.json()) as Itinerary;
+  },
+
+  async deleteItinerary(id: number, token: string): Promise<void> {
+    const res = await fetch(`${BASE_URL}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Error al eliminar itinerario (${res.status})`);
+    }
   },
 };

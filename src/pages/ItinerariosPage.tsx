@@ -10,19 +10,26 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  Button,
 } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import CollectionsBookmarkIcon from '@mui/icons-material/CollectionsBookmark';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import BookCard from '@/components/ui/BookCard';
+import CreateItineraryDialog from '@/components/forms/CreateItineraryDialog';
 import { useItineraries } from '@/hooks/useItineraries';
+import { useAuth } from '@/hooks/useAuth';
 import { Itinerary } from '@/services/itineraryService';
 
 export default function ItinerariosPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [selectedItinerario, setSelectedItinerario] = useState<Itinerary | null>(null);
-  const { itineraries, loading, error } = useItineraries();
+  const { itineraries, loading, error, createItinerary } = useItineraries();
+  const { isTeacher, isAdmin } = useAuth();
+  const canManage = isTeacher || isAdmin;
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
@@ -136,22 +143,43 @@ export default function ItinerariosPage() {
         ) : (
           // Vista Principal: Listado de Colecciones e Itinerarios
           <Box>
-            <Box sx={{ mb: 4, textAlign: 'center' }}>
-              <Typography
-                variant="h3"
-                sx={{
-                  fontWeight: 800,
-                  color: 'primary.main',
-                  fontSize: { xs: '1.8rem', md: '2.5rem' },
-                  mb: 1,
-                }}
-              >
-                Itinerarios de Lectura APL
-              </Typography>
-              <Typography variant="body1" sx={{ color: 'body.main', maxWidth: 650, mx: 'auto' }}>
-                Explora el catálogo a través de colecciones transversales y recorridos
-                literarios sugeridos por el equipo docente de la Escuela Sábato.
-              </Typography>
+            <Box
+              sx={{
+                mb: 4,
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'center', sm: 'flex-start' },
+                justifyContent: 'space-between',
+                gap: 2,
+              }}
+            >
+              <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+                <Typography
+                  variant="h3"
+                  sx={{
+                    fontWeight: 800,
+                    color: 'primary.main',
+                    fontSize: { xs: '1.8rem', md: '2.5rem' },
+                    mb: 1,
+                  }}
+                >
+                  Itinerarios de Lectura APL
+                </Typography>
+                <Typography variant="body1" sx={{ color: 'body.main', maxWidth: 650 }}>
+                  Explora el catálogo a través de colecciones transversales y recorridos
+                  literarios sugeridos por el equipo docente de la Escuela Sábato.
+                </Typography>
+              </Box>
+
+              {canManage && (
+                <Button
+                  startIcon={<AddCircleOutlineIcon />}
+                  onClick={() => setCreateOpen(true)}
+                  sx={{ flexShrink: 0 }}
+                >
+                  Crear Itinerario
+                </Button>
+              )}
             </Box>
 
             {loading && (
@@ -259,6 +287,13 @@ export default function ItinerariosPage() {
           </Box>
         )}
       </Container>
+
+      {/* Diálogo para crear itinerario (Solo Docentes y Administradores) */}
+      <CreateItineraryDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSubmit={createItinerary}
+      />
     </Box>
   );
 }
