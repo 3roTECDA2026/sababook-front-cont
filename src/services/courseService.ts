@@ -68,6 +68,32 @@ export async function removeTeacher(courseId: number, teacherId: number) {
 }
 
 /**
+ * Cursos en los que está inscripto un alumno, en todos los años lectivos (solo administrador, SAB-116)
+ */
+export async function getStudentCourses(studentId: number, signal?: AbortSignal): Promise<CourseSummary[]> {
+  return await solicitud<CourseSummary[]>(`/courses?alumno_id=${studentId}`, { signal });
+}
+
+/**
+ * Inscribir a un alumno en un curso (un solo curso por año lectivo)
+ */
+export async function enrollStudent(courseId: number, studentId: number) {
+  return await solicitud<{ message: string }>(`/courses/${courseId}/students`, {
+    method: 'POST',
+    body: JSON.stringify({ usuario_id: studentId }),
+  });
+}
+
+/**
+ * Quitar a un alumno de un curso
+ */
+export async function unenrollStudent(courseId: number, studentId: number) {
+  return await solicitud<{ message: string }>(`/courses/${courseId}/students/${studentId}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
  * Libros asignados a un curso
  */
 export async function getLibrosDelCurso(cursoId: number, signal?: AbortSignal): Promise<CourseBook[]> {

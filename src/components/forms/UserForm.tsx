@@ -36,6 +36,8 @@ interface UserFormProps {
   // Campos extra al final del formulario (ej. cursos del docente, SAB-117)
   extraFields?: ReactNode;
   isSaving?: boolean;
+  // Avisa al padre cuando cambia el rol elegido (en el alta, para mostrar el curso del alumno, SAB-116)
+  onRoleChange?: (rol: string) => void;
 }
 
 export default function UserForm({
@@ -44,6 +46,7 @@ export default function UserForm({
   onCancel,
   extraFields,
   isSaving = false,
+  onRoleChange,
 }: UserFormProps) {
   const [formData, setFormData] = useState<UserFormData>({
     nombre: '',
@@ -72,6 +75,7 @@ export default function UserForm({
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent
   ) => {
     const { name, value } = event.target;
+    if (name === 'rol') onRoleChange?.(String(value));
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
@@ -150,6 +154,10 @@ export default function UserForm({
             {/* SAB-117: los cursos se asignan según el rol guardado */}
             {userToEdit && formData.rol === 'DOCENTE' && userToEdit.rol !== 'DOCENTE' && (
               <FormHelperText>Guardá el rol de docente para poder asignarle cursos.</FormHelperText>
+            )}
+            {/* SAB-116: al editar, el curso del alumno también va según el rol guardado */}
+            {userToEdit && formData.rol === 'ALUMNO' && userToEdit.rol !== 'ALUMNO' && (
+              <FormHelperText>Guardá el rol de alumno para poder asignarle un curso.</FormHelperText>
             )}
           </FormControl>
           <FormControl fullWidth>

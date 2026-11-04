@@ -40,6 +40,8 @@ import { buildUserSearchParams } from '@/services/userService';
 import FilterChips from '@/components/ui/FilterChips';
 import type { FilterCategoryId } from '@/components/ui/FilterChips';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import StudentCourseSelect from '@/components/users/StudentCourseSelect';
+import { useStudentCourse } from '@/hooks/useStudentCourse';
 
 const DashboardContainer = Box;
 
@@ -55,6 +57,9 @@ interface SnackbarState {
   message: string;
   severity: AlertColor;
 }
+
+// Año lectivo en curso, para elegir el curso de un alumno nuevo (SAB-116)
+const CURRENT_SCHOOL_YEAR = new Date().getFullYear();
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState<DashboardView>('users');
@@ -149,6 +154,14 @@ const Dashboard = () => {
 
   const [openForumModal, setOpenForumModal] = useState(false);
   const [openCreateModal, setOpenCreateModal] = useState(false);
+
+  // SAB-116: rol elegido en el alta y curso del alumno nuevo
+  const [newUserRole, setNewUserRole] = useState<string>('');
+  const newStudentCourse = useStudentCourse(
+    null,
+    CURRENT_SCHOOL_YEAR,
+    openCreateModal && newUserRole === 'ALUMNO'
+  );
   const [openCreateBookModal, setOpenCreateBookModal] = useState(false);
 
   // =========================================================
@@ -403,6 +416,7 @@ const Dashboard = () => {
 
   const handleCloseCreateModal = () => {
     setOpenCreateModal(false);
+    setNewUserRole('');
   };
 
   const handleCloseCreateBookModal = () => {
@@ -459,13 +473,33 @@ const Dashboard = () => {
         throw new Error('Error al crear el usuario');
       }
 
+      // SAB-116: si es alumno y se eligió curso, se lo inscribe con el ID del usuario nuevo
+      let courseText = '';
+      let courseFailed = false;
+      if (dataToSend.rol === 'ALUMNO' && newStudentCourse.selectedId !== null) {
+        const created: unknown = await response.json().catch(() => null);
+        const newUserId =
+          created && typeof created === 'object' && 'usuario_id' in created
+            ? Number((created as { usuario_id: unknown }).usuario_id)
+            : NaN;
+
+        if (Number.isInteger(newUserId) && newUserId > 0) {
+          const result = await newStudentCourse.save(newUserId);
+          courseText = result.text;
+          courseFailed = result.failed;
+        } else {
+          courseText = 'No se pudo inscribir en el curso: no llegó el ID del usuario nuevo.';
+          courseFailed = true;
+        }
+      }
+
       reloadUsers();
       handleCloseCreateModal();
 
       setSnackbar({
         open: true,
-        message: 'Usuario creado correctamente',
-        severity: 'success',
+        message: ['Usuario creado correctamente.', courseText].filter(Boolean).join(' '),
+        severity: courseFailed ? 'warning' : 'success',
       });
     } catch (error) {
       console.error('Error al crear usuario:', error);
@@ -1155,6 +1189,21 @@ const Dashboard = () => {
           <UserForm
             onSave={handleSaveNewUser}
             onCancel={handleCloseCreateModal}
+            onRoleChange={setNewUserRole}
+            extraFields={
+              // SAB-116: curso del alumno nuevo
+              newUserRole === 'ALUMNO' ? (
+                <StudentCourseSelect
+                  courses={newStudentCourse.courses}
+                  selectedId={newStudentCourse.selectedId}
+                  onChange={newStudentCourse.setSelectedId}
+                  schoolYear={CURRENT_SCHOOL_YEAR}
+                  isLoading={newStudentCourse.isLoading}
+                  error={newStudentCourse.error}
+                  onRetry={newStudentCourse.reload}
+                />
+              ) : null
+            }
           />
         </Box>
       </Modal>

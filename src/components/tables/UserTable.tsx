@@ -36,6 +36,8 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import TeacherCoursesSelect from '@/components/users/TeacherCoursesSelect';
 import { useTeacherCourses } from '@/hooks/useTeacherCourses';
 import type { TeacherCoursesSaveResult } from '@/hooks/useTeacherCourses';
+import StudentCourseSelect from '@/components/users/StudentCourseSelect';
+import { useStudentCourse } from '@/hooks/useStudentCourse';
 import type { ListFilters, User } from '@/types';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { downloadCsv } from '@/utils/downloadCsv';
@@ -107,6 +109,14 @@ export default function UserTable({
   const teacherCourses = useTeacherCourses(
     userToEdit?.rol === 'DOCENTE' ? userToEdit.usuario_id : null,
     CURRENT_SCHOOL_YEAR
+  );
+
+  // SAB-116: curso del alumno que se está editando (según el rol guardado)
+  const isEditingStudent = userToEdit?.rol === 'ALUMNO';
+  const studentCourse = useStudentCourse(
+    isEditingStudent && userToEdit ? userToEdit.usuario_id : null,
+    CURRENT_SCHOOL_YEAR,
+    isEditingStudent
   );
 
   const [isSaving, setIsSaving] =
@@ -256,6 +266,19 @@ export default function UserTable({
       return;
     }
 
+    // SAB-116: un alumno inscripto en un curso no puede cambiar de rol
+    if (
+      userToEdit.rol === 'ALUMNO' &&
+      dataToSend.rol !== 'ALUMNO' &&
+      studentCourse.currentId !== null
+    ) {
+      showNotification(
+        `Este alumno está inscripto en ${studentCourse.currentLabel}. Quitalo del curso antes de cambiar el rol.`,
+        'error'
+      );
+      return;
+    }
+
     dataToSend.contrasena = dataToSend.password;
 
     delete dataToSend.password;
@@ -265,7 +288,7 @@ export default function UserTable({
     }
 
     // Quitar cursos pide confirmación antes de guardar
-    if (teacherCourses.toRemoveLabels.length > 0) {
+    if (teacherCourses.toRemoveLabels.length > 0 || studentCourse.needsConfirmation) {
       setPendingUserData(dataToSend);
       return;
     }
@@ -307,11 +330,21 @@ export default function UserTable({
           ? await teacherCourses.save()
           : null;
       const coursesText = coursesResult ? describeCoursesResult(coursesResult) : '';
-      const hasFailures = !!coursesResult && coursesResult.failed.length > 0;
+
+      // SAB-116: después de guardar el usuario, se aplica el cambio de curso del alumno
+      const studentResult =
+        userToEdit.rol === 'ALUMNO' && studentCourse.hasChanges
+          ? await studentCourse.save()
+          : null;
+
+      const hasFailures =
+        (!!coursesResult && coursesResult.failed.length > 0) || !!studentResult?.failed;
 
       onUserUpdate();
       showNotification(
-        ['Usuario actualizado correctamente.', coursesText].filter(Boolean).join(' '),
+        ['Usuario actualizado correctamente.', coursesText, studentResult?.text ?? '']
+          .filter(Boolean)
+          .join(' '),
         hasFailures ? 'warning' : 'success'
       );
 
@@ -627,13 +660,25 @@ export default function UserTable({
                   onRetry={teacherCourses.reload}
                   disabled={isSaving}
                 />
+              ) : isEditingStudent ? (
+                // SAB-116: curso del alumno (según el rol guardado)
+                <StudentCourseSelect
+                  courses={studentCourse.courses}
+                  selectedId={studentCourse.selectedId}
+                  onChange={studentCourse.setSelectedId}
+                  schoolYear={CURRENT_SCHOOL_YEAR}
+                  isLoading={studentCourse.isLoading}
+                  error={studentCourse.error}
+                  onRetry={studentCourse.reload}
+                  disabled={isSaving}
+                />
               ) : null
             }
           />
         </Box>
       </Modal>
 
-      {/* SAB-117: CONFIRMAR QUITAR CURSOS */}
+      {/* SAB-117 / SAB-116: CONFIRMAR QUITAR CURSOS */}
 
       <ConfirmationModal
         open={pendingUserData !== null}
@@ -642,8 +687,14 @@ export default function UserTable({
           if (pendingUserData) void saveUserAndCourses(pendingUserData);
         }}
         loading={isSaving}
-        title="Quitar cursos"
-        message={`¿Querés quitar a "${userToEdit?.nombre ?? ''}" de ${teacherCourses.toRemoveLabels.join(', ')}?`}
+        title={studentCourse.needsConfirmation ? 'Cambiar curso' : 'Quitar cursos'}
+        message={
+          studentCourse.needsConfirmation
+            ? studentCourse.selectedId === null
+              ? `¿Querés quitar a "${userToEdit?.nombre ?? ''}" de ${studentCourse.currentLabel}?`
+              : `¿Querés pasar a "${userToEdit?.nombre ?? ''}" de ${studentCourse.currentLabel} a ${studentCourse.selectedLabel}?`
+            : `¿Querés quitar a "${userToEdit?.nombre ?? ''}" de ${teacherCourses.toRemoveLabels.join(', ')}?`
+        }
       />
 
       {/* NOTIFICACIONES */}
