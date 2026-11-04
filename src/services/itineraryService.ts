@@ -11,6 +11,7 @@ export interface Itinerary {
   nombre: string;
   descripcion: string;
   tipo: string;
+  creador_id?: number;
   libros: ItineraryBook[];
 }
 

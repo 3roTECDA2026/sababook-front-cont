@@ -7,6 +7,7 @@ import {
   Grid,
   Card,
   CardActionArea,
+  CardActions,
   Chip,
   CircularProgress,
   Alert,
@@ -30,21 +31,33 @@ export default function ItinerariosPage() {
   const [selectedItinerario, setSelectedItinerario] = useState<Itinerary | null>(null);
   const [itineraryToDelete, setItineraryToDelete] = useState<Itinerary | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const { itineraries, loading, error, createItinerary, deleteItinerary } = useItineraries();
-  const { isTeacher, isAdmin } = useAuth();
+  const { user, isTeacher, isAdmin } = useAuth();
   const canManage = isTeacher || isAdmin;
+
+  const canDelete = (itinerario: Itinerary) => {
+    if (isAdmin) return true;
+    if (isTeacher && itinerario.creador_id && user?.usuario_id === itinerario.creador_id) {
+      return true;
+    }
+    return false;
+  };
 
   const handleDeleteConfirm = async () => {
     if (!itineraryToDelete) return;
     setDeleting(true);
+    setDeleteError(null);
     try {
       await deleteItinerary(itineraryToDelete.lista_id);
       if (selectedItinerario?.lista_id === itineraryToDelete.lista_id) {
         setSelectedItinerario(null);
       }
       setItineraryToDelete(null);
-    } catch {
-      // Error manejado
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'No se pudo eliminar el itinerario.';
+      setDeleteError(message);
     } finally {
       setDeleting(false);
     }
@@ -185,7 +198,7 @@ export default function ItinerariosPage() {
                   Itinerarios de Lectura APL
                 </Typography>
                 <Typography variant="body1" sx={{ color: 'body.main', maxWidth: 650 }}>
-                  Explora el catálogo a través de colecciones transversales y recorridos
+                  Explorá el catálogo a través de colecciones transversales y recorridos
                   literarios sugeridos por el equipo docente de la Escuela Sábato.
                 </Typography>
               </Box>
@@ -200,6 +213,12 @@ export default function ItinerariosPage() {
                 </Button>
               )}
             </Box>
+
+            {deleteError && (
+              <Alert severity="error" onClose={() => setDeleteError(null)} sx={{ mb: 3, borderRadius: 2 }}>
+                {deleteError}
+              </Alert>
+            )}
 
             {loading && (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -242,6 +261,8 @@ export default function ItinerariosPage() {
                         height: '100%',
                         borderRadius: 3,
                         boxShadow: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
                         transition: 'transform 0.2s, box-shadow 0.2s',
                         '&:hover': {
                           transform: 'translateY(-4px)',
@@ -252,7 +273,7 @@ export default function ItinerariosPage() {
                       <CardActionArea
                         onClick={() => setSelectedItinerario(itinerario)}
                         sx={{
-                          height: '100%',
+                          flexGrow: 1,
                           p: 2.5,
                           display: 'flex',
                           flexDirection: 'column',
@@ -285,34 +306,40 @@ export default function ItinerariosPage() {
                             display: '-webkit-box',
                             WebkitLineClamp: 3,
                             WebkitBoxOrient: 'vertical',
-                            mb: 2,
-                            flexGrow: 1,
                           }}
                         >
                           {itinerario.descripcion || 'Colección temática de lectura para la APL.'}
                         </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', mt: 'auto', pt: 1 }}>
-                          <Typography
-                            variant="caption"
-                            sx={{ color: 'button.main', fontWeight: 700 }}
-                          >
-                            Ver recorrido →
-                          </Typography>
-                          {canManage && (
-                            <Button
-                              size="small"
-                              color="error"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setItineraryToDelete(itinerario);
-                              }}
-                              sx={{ py: 0.2, px: 1, minWidth: 0, fontSize: '0.75rem' }}
-                            >
-                              Eliminar
-                            </Button>
-                          )}
-                        </Box>
                       </CardActionArea>
+                      <CardActions
+                        sx={{
+                          px: 2.5,
+                          pb: 2,
+                          pt: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          mt: 'auto',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{ color: 'button.main', fontWeight: 700, cursor: 'pointer' }}
+                          onClick={() => setSelectedItinerario(itinerario)}
+                        >
+                          Ver recorrido →
+                        </Typography>
+                        {canDelete(itinerario) && (
+                          <Button
+                            size="small"
+                            color="error"
+                            onClick={() => setItineraryToDelete(itinerario)}
+                            sx={{ py: 0.2, px: 1, minWidth: 0, fontSize: '0.75rem' }}
+                          >
+                            Eliminar
+                          </Button>
+                        )}
+                      </CardActions>
                     </Card>
                   </Grid>
                 ))}

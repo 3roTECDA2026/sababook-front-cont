@@ -15,9 +15,13 @@ export function useItineraries() {
       const data = await itineraryService.getItineraries(signal);
       setItineraries(data);
       setError(null);
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        setError(err.message || 'No se pudieron cargar los itinerarios APL.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        if (err.name !== 'AbortError') {
+          setError(err.message || 'No se pudieron cargar los itinerarios APL.');
+        }
+      } else {
+        setError('No se pudieron cargar los itinerarios APL.');
       }
     } finally {
       setLoading(false);
