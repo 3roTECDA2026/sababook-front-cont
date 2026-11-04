@@ -9,7 +9,8 @@ export interface Book {
   nivel_educativo: string;
   descripcion: string;
   portada_url: string;
-  archivo_url?: string | null;
+  // SAB-67: ruta del PDF en el bucket (null = sin PDF). Para leerlo se pide la URL con getBookPdfUrl.
+  pdf_path?: string | null;
   calificacion_promedio: number;
   activo?: boolean;
   estado_lectura?: 'general' | 'quiero-leer' | 'leyendo' | 'leido';

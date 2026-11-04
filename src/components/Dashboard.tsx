@@ -22,6 +22,7 @@ import type { UserFormData } from './forms/UserForm';
 
 import ForumForm from './forms/ForumForm';
 import BookForm from './forms/BookForm';
+import { uploadBookPdf } from '@/services/apiService';
 import GoalForm from './GoalForm';
 import ModerationAdmin from './ModerationAdmin';
 
@@ -486,7 +487,8 @@ const Dashboard = () => {
     bookData: {
       libro_id?: number;
       [key: string]: unknown;
-    }
+    },
+    pdfFile: File | null
   ) => {
     setIsApiLoading(true);
 
@@ -538,16 +540,32 @@ const Dashboard = () => {
         );
       }
 
+      // SAB-67: el PDF se sube aparte, cuando el libro ya tiene ID (POST devuelve { libro })
+      let pdfError: string | null = null;
+      if (pdfFile) {
+        const savedData = await response.json().catch(() => ({}));
+        const bookId = isEditing ? bookData.libro_id : savedData?.libro?.libro_id;
+        try {
+          if (!bookId) throw new Error('No se pudo identificar el libro guardado.');
+          await uploadBookPdf(bookId, pdfFile);
+        } catch (error) {
+          pdfError = error instanceof Error ? error.message : String(error);
+        }
+      }
+
       await fetchBooks();
 
       handleCloseCreateBookModal();
 
+      const savedMessage = isEditing
+        ? 'Libro actualizado correctamente.'
+        : 'Libro creado correctamente.';
       setSnackbar({
         open: true,
-        message: isEditing
-          ? 'Libro actualizado correctamente.'
-          : 'Libro creado correctamente.',
-        severity: 'success',
+        message: pdfError
+          ? `${savedMessage} Pero no se pudo subir el PDF: ${pdfError}`
+          : savedMessage,
+        severity: pdfError ? 'warning' : 'success',
       });
     } catch (error) {
       const message =

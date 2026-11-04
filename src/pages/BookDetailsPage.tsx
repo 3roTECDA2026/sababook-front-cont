@@ -2,27 +2,22 @@
 import { API_BASE_URL } from '@/environments/api';
 import { recomendacionService } from '@/services/recomendacionService';
 import ReadingProgress from '@/components/ReadingProgress';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  alpha,
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
   Paper,
   Snackbar,
-  TextField,
   Typography,
   useTheme,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import DownloadIcon from '@mui/icons-material/Download';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useParams } from 'react-router-dom';
@@ -40,8 +35,9 @@ import BookCommentBox from '@/components/BookCommentBox';
 import BookOpinionList from '@/components/ui/BookOpinionList';
 import BookDescription from '@/components/ui/BookDescription';
 import TriviaPlaySection from '@/components/ui/TriviaPlaySection';
-import PdfReaderModal, { resolvePdfUrl } from '@/components/ui/PdfReaderModal';
-import { uploadPdfMaterial, adjuntarPdfLibro } from '@/services/apiService';
+import PdfReaderModal from '@/components/ui/PdfReaderModal';
+import { removeBookPdf, uploadBookPdf } from '@/services/apiService';
+import { validatePdfFile } from '@/utils/pdf';
 
 interface Recomendacion {
   recomendacion_id: number;
@@ -132,12 +128,12 @@ const BookDetailsPage = () => {
     severity: 'success',
   });
 
-  // Estado para visualización y carga de PDF (SAB-67)
+  // Estado para lectura y gestión del PDF (SAB-67)
   const [pdfReaderOpen, setPdfReaderOpen] = useState(false);
-  const [uploadPdfDialogOpen, setUploadPdfDialogOpen] = useState(false);
-  const [pdfInputUrl, setPdfInputUrl] = useState('');
-  const [pdfUploading, setPdfUploading] = useState(false);
-  const [currentArchivoUrl, setCurrentArchivoUrl] = useState<string | null>(null);
+  const [hasPdf, setHasPdf] = useState(false);
+  const [pdfSaving, setPdfSaving] = useState(false);
+  const [removePdfConfirmOpen, setRemovePdfConfirmOpen] = useState(false);
+  const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     book,
@@ -146,10 +142,8 @@ const BookDetailsPage = () => {
   } = useBookDetails(id);
 
   useEffect(() => {
-    if (book?.archivo_url) {
-      setCurrentArchivoUrl(book.archivo_url);
-    }
-  }, [book?.archivo_url]);
+    setHasPdf(Boolean(book?.pdf_path));
+  }, [book?.pdf_path]);
 
   const {
     opinions,
@@ -704,61 +698,54 @@ const BookDetailsPage = () => {
   // =====================================================
   // GESTIÓN DE MATERIAL PDF (SAB-67)
   // =====================================================
-  const handlePdfUploadSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Solo administradores: subir o reemplazar el PDF
+  const handlePdfFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    e.target.value = '';
+    if (!file || !book) return;
 
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setNotification({
-        open: true,
-        message: 'El archivo seleccionado debe ser un documento PDF (.pdf)',
-        severity: 'error',
-      });
+    const validationError = validatePdfFile(file);
+    if (validationError) {
+      setNotification({ open: true, message: validationError, severity: 'error' });
       return;
     }
 
-    setPdfUploading(true);
+    setPdfSaving(true);
     try {
-      const res = await uploadPdfMaterial(file);
-      setPdfInputUrl(res.url);
+      await uploadBookPdf(book.libro_id, file);
       setNotification({
         open: true,
-        message: 'Archivo PDF subido correctamente',
+        message: hasPdf ? 'PDF reemplazado correctamente.' : 'PDF cargado correctamente.',
         severity: 'success',
       });
+      setHasPdf(true);
     } catch (err) {
-      console.error('Error al subir PDF:', err);
       setNotification({
         open: true,
-        message: 'Error al subir el archivo PDF',
+        message: err instanceof Error && err.message ? err.message : 'No se pudo subir el PDF.',
         severity: 'error',
       });
     } finally {
-      setPdfUploading(false);
+      setPdfSaving(false);
     }
   };
 
-  const handleSavePdfMaterial = async () => {
-    if (!book || !pdfInputUrl.trim()) return;
-    setPdfUploading(true);
+  const handleRemovePdf = async () => {
+    if (!book) return;
+    setPdfSaving(true);
     try {
-      await adjuntarPdfLibro(book.libro_id, pdfInputUrl.trim());
-      setCurrentArchivoUrl(pdfInputUrl.trim());
-      setUploadPdfDialogOpen(false);
-      setNotification({
-        open: true,
-        message: 'Material de lectura PDF adjuntado con éxito al libro',
-        severity: 'success',
-      });
+      await removeBookPdf(book.libro_id);
+      setHasPdf(false);
+      setRemovePdfConfirmOpen(false);
+      setNotification({ open: true, message: 'PDF quitado del libro.', severity: 'success' });
     } catch (err) {
-      console.error('Error al adjuntar PDF:', err);
       setNotification({
         open: true,
-        message: 'No se pudo adjuntar el PDF al libro',
+        message: err instanceof Error && err.message ? err.message : 'No se pudo quitar el PDF.',
         severity: 'error',
       });
     } finally {
-      setPdfUploading(false);
+      setPdfSaving(false);
     }
   };
 
@@ -936,7 +923,7 @@ const BookDetailsPage = () => {
             mt: 2,
             border: `1px solid ${theme.palette.divider}`,
             borderRadius: 2,
-            backgroundColor: currentArchivoUrl ? '#fff9f5' : '#fafafa',
+            backgroundColor: hasPdf ? alpha(theme.palette.button.main, 0.05) : theme.palette.grey[50],
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
             alignItems: { xs: 'flex-start', sm: 'center' },
@@ -945,54 +932,63 @@ const BookDetailsPage = () => {
           }}
         >
           <Box display="flex" alignItems="center" gap={1.5}>
-            <PictureAsPdfIcon sx={{ color: '#e53935', fontSize: 36 }} />
+            <PictureAsPdfIcon sx={{ color: 'error.main', fontSize: 36 }} />
             <Box>
               <Typography variant="subtitle1" fontWeight="bold">
                 Material de lectura digital
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {currentArchivoUrl
-                  ? 'Este libro cuenta con archivo PDF disponible para leer o descargar.'
-                  : 'Aún no se ha cargado el material de lectura en PDF para este libro.'}
+                {!hasPdf
+                  ? 'Aún no se cargó el material de lectura en PDF para este libro.'
+                  : user
+                    ? 'Este libro tiene un archivo PDF disponible para leer o descargar.'
+                    : 'Este libro tiene un archivo PDF. Iniciá sesión para leerlo.'}
               </Typography>
             </Box>
           </Box>
 
           <Box display="flex" alignItems="center" flexWrap="wrap" gap={1}>
-            {currentArchivoUrl && (
-              <>
-                <Button
-                  startIcon={<MenuBookIcon />}
-                  onClick={() => setPdfReaderOpen(true)}
-                  sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', px: 2 }}
-                >
-                  Leer PDF
-                </Button>
-                <Button
-                  component="a"
-                  href={resolvePdfUrl(currentArchivoUrl)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  startIcon={<DownloadIcon />}
-                  sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', px: 2 }}
-                >
-                  Descargar
-                </Button>
-              </>
+            {hasPdf && user && (
+              <Button
+                startIcon={<MenuBookIcon />}
+                onClick={() => setPdfReaderOpen(true)}
+                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', px: 2 }}
+              >
+                Leer PDF
+              </Button>
             )}
 
-            {(isAdmin || isTeacher) && (
-              <Button
-                variant="outlined"
-                startIcon={<UploadFileIcon />}
-                onClick={() => {
-                  setPdfInputUrl(currentArchivoUrl || '');
-                  setUploadPdfDialogOpen(true);
-                }}
-                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
-              >
-                {currentArchivoUrl ? 'Cambiar PDF' : 'Cargar PDF'}
-              </Button>
+            {isAdmin && (
+              <>
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  ref={pdfInputRef}
+                  hidden
+                  onChange={(e) => {
+                    void handlePdfFileSelect(e);
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  startIcon={pdfSaving ? <CircularProgress size={18} /> : <UploadFileIcon />}
+                  onClick={() => pdfInputRef.current?.click()}
+                  disabled={pdfSaving}
+                  sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
+                >
+                  {pdfSaving ? 'Guardando...' : hasPdf ? 'Reemplazar PDF' : 'Cargar PDF'}
+                </Button>
+                {hasPdf && (
+                  <Button
+                    color="error"
+                    onClick={() => setRemovePdfConfirmOpen(true)}
+                    disabled={pdfSaving}
+                    sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
+                  >
+                    Quitar PDF
+                  </Button>
+                )}
+              </>
             )}
           </Box>
         </Paper>
@@ -1150,73 +1146,21 @@ const BookDetailsPage = () => {
       <PdfReaderModal
         open={pdfReaderOpen}
         onClose={() => setPdfReaderOpen(false)}
-        pdfUrl={currentArchivoUrl}
+        bookId={hasPdf ? book.libro_id : null}
         title={book.titulo || 'Material de lectura'}
       />
 
-      {/* DIÁLOGO CARGA DE PDF PARA DOCENTES/ADMINISTRADORES */}
-      <Dialog
-        open={uploadPdfDialogOpen}
-        onClose={() => setUploadPdfDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PictureAsPdfIcon sx={{ color: '#e53935' }} />
-          Cargar Material de Lectura (PDF)
-        </DialogTitle>
-        <DialogContent dividers>
-          <Typography variant="body2" color="text.secondary" mb={2}>
-            Selecciona un archivo PDF desde tu dispositivo o ingresa una URL directa.
-          </Typography>
-
-          <Box mb={2.5}>
-            <input
-              type="file"
-              accept="application/pdf,.pdf"
-              id="detail-pdf-file-input"
-              style={{ display: 'none' }}
-              onChange={handlePdfUploadSelect}
-            />
-            <Button
-              variant="outlined"
-              component="label"
-              htmlFor="detail-pdf-file-input"
-              startIcon={pdfUploading ? <CircularProgress size={18} /> : <UploadFileIcon />}
-              disabled={pdfUploading}
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-            >
-              {pdfUploading ? 'Subiendo archivo...' : 'Seleccionar archivo PDF local'}
-            </Button>
-          </Box>
-
-          <TextField
-            fullWidth
-            label="URL del PDF"
-            placeholder="https://ejemplo.com/material.pdf o /uploads/..."
-            value={pdfInputUrl}
-            onChange={(e) => setPdfInputUrl(e.target.value)}
-            size="small"
-            helperText="También puedes pegar un enlace directo si está alojado en internet"
-          />
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button
-            onClick={() => setUploadPdfDialogOpen(false)}
-            variant="outlined"
-            disabled={pdfUploading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSavePdfMaterial}
-            variant="contained"
-            disabled={pdfUploading || !pdfInputUrl.trim()}
-          >
-            {pdfUploading ? 'Guardando...' : 'Guardar Material'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* CONFIRMACIÓN PARA QUITAR EL PDF (SAB-67) */}
+      <ConfirmationModal
+        open={removePdfConfirmOpen}
+        onClose={() => setRemovePdfConfirmOpen(false)}
+        onConfirm={() => {
+          void handleRemovePdf();
+        }}
+        loading={pdfSaving}
+        title="Quitar PDF"
+        message={`¿Querés quitar el PDF de "${book.titulo}"? Los alumnos ya no van a poder leerlo.`}
+      />
 
       {/* CONFIRMACIÓN PARA DEJAR DE RECOMENDAR */}
       <ConfirmationModal

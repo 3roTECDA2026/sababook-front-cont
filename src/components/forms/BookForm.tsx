@@ -25,7 +25,6 @@ import {
   Paper,
   Grid,
   Alert,
-  CircularProgress,
   Chip,
 } from '@mui/material';
 
@@ -36,8 +35,8 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import type { Book } from '@/types';
-import { uploadPdfMaterial } from '@/services/apiService';
 import PdfReaderModal from '@/components/ui/PdfReaderModal';
+import { validatePdfFile } from '@/utils/pdf';
 
 // Opciones del formulario
 const GENEROS = [
@@ -65,9 +64,6 @@ interface BookFormData {
   imagenUrl?: string;
   portada_url?: string;
 
-  // SAB-67: material de lectura PDF.
-  archivo_url?: string;
-
   id?: number;
   [key: string]: unknown;
 }
@@ -81,7 +77,6 @@ const INITIAL_BOOK_DATA: BookFormData = {
   descripcion: '',
   paginas_totales: null,
   imagenUrl: '',
-  archivo_url: '',
 };
 
 // Componentes estilizados
@@ -112,12 +107,12 @@ const StyledTextarea = styled(TextareaAutosize)(({ theme }) => ({
 type BookToEdit = Partial<Book> & {
   imagenUrl?: string;
   paginas_totales?: number | null;
-  archivo_url?: string | null;
 };
 
 interface BookFormProps {
   bookToEdit?: BookToEdit | null;
-  onSave: (payload: BookFormData) => Promise<void> | void;
+  // SAB-67: pdfFile es el PDF elegido en el formulario; se sube después de guardar el libro
+  onSave: (payload: BookFormData, pdfFile: File | null) => Promise<void> | void;
   onCancel: () => void;
   title?: string;
 }
@@ -145,13 +140,22 @@ const BookForm = ({
   // Estado del guardado
   const [loading, setLoading] = useState(false);
 
-  // SAB-67: estado de archivos PDF
-  const [uploadingPdf, setUploadingPdf] = useState(false);
+  // SAB-67: PDF elegido (todavía no subido) y su vista previa local
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [previewPdfOpen, setPreviewPdfOpen] = useState(false);
-  const [selectedFileName, setSelectedFileName] = useState<
-    string | null
-  >(null);
+  const hasSavedPdf = Boolean(bookToEdit?.pdf_path);
+
+  useEffect(() => {
+    if (!pdfFile) {
+      setPdfPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(pdfFile);
+    setPdfPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pdfFile]);
 
   // Inicializar el formulario al crear o editar un libro.
   useEffect(() => {
@@ -176,8 +180,6 @@ const BookForm = ({
           bookToEdit.imagenUrl ||
           bookToEdit.portada_url ||
           '',
-
-        archivo_url: bookToEdit.archivo_url || '',
       };
 
       setFormData(mappedData);
@@ -188,20 +190,14 @@ const BookForm = ({
         tienePaginas ? String(paginas) : ''
       );
 
-      // SAB-67: conservar el PDF existente.
-      setSelectedFileName(
-        bookToEdit.archivo_url
-          ? 'Archivo PDF cargado'
-          : null
-      );
     } else {
       setFormData({ ...INITIAL_BOOK_DATA });
 
       setAgregarPaginas(false);
       setPaginasInput('');
-
-      setSelectedFileName(null);
     }
+
+    setPdfFile(null);
 
     setPageError('');
     setPdfError(null);
@@ -257,69 +253,23 @@ const BookForm = ({
     }));
   };
 
-  // SAB-67: seleccionar y subir un PDF.
-  const handlePdfFileSelect = async (
-    e: ChangeEvent<HTMLInputElement>
-  ) => {
+  // SAB-67: elegir un PDF. Se sube recién al guardar, cuando el libro ya tiene ID.
+  const handlePdfFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
     if (!file) return;
 
-    const esPdf =
-      file.type === 'application/pdf' ||
-      file.name.toLowerCase().endsWith('.pdf');
+    const error = validatePdfFile(file);
+    setPdfError(error);
+    setPdfFile(error ? null : file);
 
-    if (!esPdf) {
-      setPdfError(
-        'El archivo seleccionado debe ser un documento PDF (.pdf)'
-      );
-      return;
-    }
-
-    // Tamaño máximo: 25 MB.
-    if (file.size > 25 * 1024 * 1024) {
-      setPdfError(
-        'El tamaño del PDF no debe superar los 25 MB'
-      );
-      return;
-    }
-
-    setPdfError(null);
-    setUploadingPdf(true);
-
-    try {
-      const res = await uploadPdfMaterial(file);
-
-      setFormData((prev) => ({
-        ...prev,
-        archivo_url: res.url,
-      }));
-
-      setSelectedFileName(file.name);
-    } catch (err) {
-      console.error('Error al subir PDF:', err);
-
-      setPdfError(
-        'No se pudo subir el archivo PDF. Intenta de nuevo.'
-      );
-    } finally {
-      setUploadingPdf(false);
-    }
+    // Permite volver a elegir el mismo archivo
+    e.target.value = '';
   };
 
-  // SAB-67: quitar el PDF adjunto.
-  const handleClearPdf = () => {
-    setFormData((prev) => ({
-      ...prev,
-      archivo_url: '',
-    }));
-
-    setSelectedFileName(null);
+  // Descarta el PDF elegido (no toca el que ya está guardado)
+  const handleDiscardPdf = () => {
+    setPdfFile(null);
     setPdfError(null);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
 
   // Guardar libro: integra SAB-123 y SAB-67.
@@ -328,7 +278,7 @@ const BookForm = ({
   ) => {
     e.preventDefault();
 
-    if (loading || uploadingPdf) return;
+    if (loading) return;
 
     let paginas: number | null = null;
 
@@ -373,10 +323,8 @@ const BookForm = ({
 
     delete payload.imagenUrl;
 
-    // SAB-67: conservar URL del PDF.
-    if (payload.archivo_url) {
-      payload.archivo_url = payload.archivo_url.trim();
-    }
+    // SAB-67: el PDF no viaja en el JSON del libro; tiene su propio endpoint
+    delete payload.pdf_path;
 
     // Conservar ID cuando se está editando.
     if (bookToEdit?.libro_id) {
@@ -384,7 +332,7 @@ const BookForm = ({
     }
 
     try {
-      await onSave(payload);
+      await onSave(payload, pdfFile);
     } catch (err) {
       console.error(
         'Error al guardar en el formulario:',
@@ -680,9 +628,7 @@ const BookForm = ({
                 p: 2.5,
                 border: `1px solid ${theme.palette.grey[300]}`,
                 borderRadius: '8px',
-                backgroundColor:
-                  theme.palette.grey[50] ||
-                  '#fafafa',
+                backgroundColor: theme.palette.grey[50],
               }}
             >
               <Box
@@ -692,7 +638,7 @@ const BookForm = ({
                 mb={1.5}
               >
                 <PictureAsPdfIcon
-                  sx={{ color: '#e53935' }}
+                  sx={{ color: 'error.main' }}
                 />
 
                 <Typography
@@ -708,9 +654,9 @@ const BookForm = ({
                 color="text.secondary"
                 mb={2}
               >
-                Carga el archivo PDF del libro para que
+                Cargá el archivo PDF del libro para que
                 los alumnos puedan leerlo directamente
-                desde la plataforma.
+                desde la plataforma. Se sube al guardar.
               </Typography>
 
               {pdfError && (
@@ -741,38 +687,29 @@ const BookForm = ({
 
                 <Button
                   variant="outlined"
-                  startIcon={
-                    uploadingPdf ? (
-                      <CircularProgress size={18} />
-                    ) : (
-                      <UploadFileIcon />
-                    )
-                  }
+                  startIcon={<UploadFileIcon />}
                   onClick={() =>
                     fileInputRef.current?.click()
                   }
-                  disabled={uploadingPdf}
+                  disabled={loading}
                   sx={{
                     textTransform: 'none',
                     fontWeight: 600,
                   }}
                 >
-                  {uploadingPdf
-                    ? 'Subiendo PDF...'
+                  {hasSavedPdf || pdfFile
+                    ? 'Reemplazar PDF'
                     : 'Seleccionar archivo PDF'}
                 </Button>
 
-                {formData.archivo_url && (
+                {(pdfFile || hasSavedPdf) && (
                   <>
                     <Chip
                       icon={<PictureAsPdfIcon />}
-                      label={
-                        selectedFileName ||
-                        'PDF adjunto'
-                      }
+                      label={pdfFile ? pdfFile.name : 'PDF cargado'}
                       color="primary"
                       variant="outlined"
-                      onDelete={handleClearPdf}
+                      onDelete={pdfFile ? handleDiscardPdf : undefined}
                     />
 
                     <Button
@@ -792,28 +729,11 @@ const BookForm = ({
                 )}
               </Box>
 
-              {/* URL directa del PDF */}
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  display="block"
-                  mb={0.5}
-                >
-                  O ingresa la URL directa del documento
-                  PDF si está alojado externamente:
+              {hasSavedPdf && (
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Para quitar el PDF, usá la ficha del libro.
                 </Typography>
-
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  placeholder="https://ejemplo.com/material-de-lectura.pdf"
-                  name="archivo_url"
-                  value={formData.archivo_url || ''}
-                  onChange={handleChange}
-                />
-              </Box>
+              )}
             </Box>
           </Grid>
         </Grid>
@@ -838,7 +758,7 @@ const BookForm = ({
           <Button
             type="submit"
             variant="contained"
-            disabled={loading || uploadingPdf}
+            disabled={loading}
           >
             {loading
               ? 'Guardando...'
@@ -850,7 +770,8 @@ const BookForm = ({
         <PdfReaderModal
           open={previewPdfOpen}
           onClose={() => setPreviewPdfOpen(false)}
-          pdfUrl={formData.archivo_url}
+          fileUrl={pdfPreviewUrl}
+          bookId={pdfPreviewUrl ? null : bookToEdit?.libro_id}
           title={
             formData.titulo ||
             'Material de lectura'

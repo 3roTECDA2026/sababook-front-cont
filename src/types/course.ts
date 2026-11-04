@@ -28,7 +28,7 @@ export interface CourseBook {
   titulo: string;
   autor: string;
   portada_url: string | null;
-  archivo_url?: string | null;
+  pdf_path?: string | null;
   puntaje: number;
 }
 

@@ -136,7 +136,7 @@ export default function CourseBooksPage() {
 
   // Lector de PDF para material de lectura (SAB-67)
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
-  const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
+  const [selectedPdfBookId, setSelectedPdfBookId] = useState<number | null>(null);
   const [selectedPdfTitle, setSelectedPdfTitle] = useState<string>('');
 
   const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -406,7 +406,7 @@ export default function CourseBooksPage() {
                                   <Typography variant="body2" fontWeight="bold">
                                     {libro.titulo}
                                   </Typography>
-                                  {libro.archivo_url && (
+                                  {libro.pdf_path && (
                                     <Box
                                       component="span"
                                       sx={{
@@ -414,12 +414,12 @@ export default function CourseBooksPage() {
                                         alignItems: 'center',
                                         gap: 0.5,
                                         fontSize: '0.75rem',
-                                        color: '#e53935',
+                                        color: 'error.main',
                                         cursor: 'pointer',
                                         mt: 0.3,
                                       }}
                                       onClick={() => {
-                                        setSelectedPdfUrl(libro.archivo_url ?? null);
+                                        setSelectedPdfBookId(libro.libro_id);
                                         setSelectedPdfTitle(libro.titulo);
                                         setPdfModalOpen(true);
                                       }}
@@ -435,16 +435,16 @@ export default function CourseBooksPage() {
                             <TableCell align="center">{libro.puntaje}</TableCell>
                             <TableCell align="center">
                               <Box display="flex" gap={1} justifyContent="center">
-                                {libro.archivo_url && (
+                                {libro.pdf_path && (
                                   <ActionButton
                                     title="Leer material PDF"
                                     onClick={() => {
-                                      setSelectedPdfUrl(libro.archivo_url ?? null);
+                                      setSelectedPdfBookId(libro.libro_id);
                                       setSelectedPdfTitle(libro.titulo);
                                       setPdfModalOpen(true);
                                     }}
                                   >
-                                    <PictureAsPdfIcon sx={{ fontSize: '1.1rem', color: '#e53935' }} />
+                                    <PictureAsPdfIcon sx={{ fontSize: '1.1rem' }} />
                                   </ActionButton>
                                 )}
                                 <ActionButton
@@ -618,7 +618,7 @@ export default function CourseBooksPage() {
       <PdfReaderModal
         open={pdfModalOpen}
         onClose={() => setPdfModalOpen(false)}
-        pdfUrl={selectedPdfUrl}
+        bookId={selectedPdfBookId}
         title={selectedPdfTitle || 'Material de lectura'}
       />
 
