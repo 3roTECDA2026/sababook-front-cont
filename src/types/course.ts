@@ -50,3 +50,10 @@ export interface PreviousAssignment {
   anio_lectivo: number;
   curso: { curso_id: number; anio: number; division: string };
 }
+
+// Alumno inscripto en un curso (SAB-135)
+export interface CourseStudent {
+  usuario_id: number;
+  nombre: string;
+  email: string;
+}
