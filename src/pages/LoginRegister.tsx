@@ -1,3 +1,4 @@
+// src/pages/LoginRegister.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
