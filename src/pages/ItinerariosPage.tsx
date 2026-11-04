@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/ItinerariosPage.tsx
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -6,52 +7,29 @@ import {
   Grid,
   Card,
   CardActionArea,
-  CardContent,
   Chip,
   CircularProgress,
   Alert,
-  IconButton,
-  Button,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import CollectionsBookmarkIcon from '@mui/icons-material/CollectionsBookmark';
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import BookCard from '@/components/ui/BookCard';
-import { itinerarioService, Itinerario } from '@/services/itinerarioService';
+import { useItineraries } from '@/hooks/useItineraries';
+import { Itinerary } from '@/services/itineraryService';
 
 export default function ItinerariosPage() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [itinerarios, setItinerarios] = useState<Itinerario[]>([]);
-  const [selectedItinerario, setSelectedItinerario] = useState<Itinerario | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    itinerarioService
-      .obtenerItinerarios(controller.signal)
-      .then((data) => {
-        setItinerarios(data);
-        setError(null);
-      })
-      .catch((err) => {
-        if (err.name !== 'AbortError') {
-          setError(err.message || 'No se pudieron cargar los itinerarios APL.');
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-
-    return () => controller.abort();
-  }, []);
+  const [selectedItinerario, setSelectedItinerario] = useState<Itinerary | null>(null);
+  const { itineraries, loading, error } = useItineraries();
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#fbf9f6', pb: 6 }}>
-      <AppHeader onMenuClick={() => setMenuOpen(true)} />
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
+      <AppHeader
+        onMenuClick={() => setMenuOpen(true)}
+        onBack={selectedItinerario ? () => setSelectedItinerario(null) : undefined}
+      />
       <SideMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
@@ -62,38 +40,35 @@ export default function ItinerariosPage() {
         {selectedItinerario ? (
           // Vista Detalle del Itinerario seleccionado
           <Box>
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={() => setSelectedItinerario(null)}
-              sx={{ mb: 3, color: '#4b2c15', fontWeight: 600 }}
-            >
-              Volver a colecciones
-            </Button>
-
             <Box
               sx={{
                 p: 3,
                 mb: 4,
                 borderRadius: 3,
-                bgcolor: '#fff',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-                borderLeft: '6px solid #ff8a00',
+                bgcolor: 'background.paper',
+                boxShadow: 2,
+                borderLeft: (theme) => `6px solid ${theme.palette.button.main}`,
               }}
             >
               <Chip
                 icon={<CollectionsBookmarkIcon />}
                 label="Itinerario Pedagógico APL"
                 size="small"
-                sx={{ bgcolor: '#ffe8cc', color: '#b25900', mb: 1, fontWeight: 600 }}
+                sx={{
+                  bgcolor: 'action.hover',
+                  color: 'primary.main',
+                  mb: 1,
+                  fontWeight: 600,
+                }}
               />
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#4b2c15', mb: 1 }}>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
                 {selectedItinerario.nombre}
               </Typography>
-              <Typography variant="body1" sx={{ color: '#6d5a4d', maxWidth: 800 }}>
+              <Typography variant="body1" sx={{ color: 'body.main', maxWidth: 800 }}>
                 {selectedItinerario.descripcion || 'Sin descripción disponible.'}
               </Typography>
-              <Typography variant="caption" sx={{ color: '#a08e82', mt: 1, display: 'block' }}>
-                Total de lecturas sugeridas: {selectedItinerario.libros.length}
+              <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
+                {`Total de lecturas sugeridas: ${selectedItinerario.libros.length}`}
               </Typography>
             </Box>
 
@@ -121,14 +96,18 @@ export default function ItinerariosPage() {
                             mt: 1,
                             p: 1.5,
                             borderRadius: 2,
-                            bgcolor: '#f4ede6',
-                            border: '1px dashed #d1c1b3',
+                            bgcolor: 'action.hover',
+                            border: '1px dashed',
+                            borderColor: 'divider',
                           }}
                         >
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: '#7a4b27', display: 'block' }}>
+                          <Typography
+                            variant="caption"
+                            sx={{ fontWeight: 700, color: 'primary.main', display: 'block' }}
+                          >
                             Eje / Enfoque pedagógico:
                           </Typography>
-                          <Typography variant="body2" sx={{ color: '#4b2c15', fontSize: '0.85rem' }}>
+                          <Typography variant="body2" sx={{ color: 'body.main', fontSize: '0.85rem' }}>
                             {libro.explicacion}
                           </Typography>
                         </Box>
@@ -147,14 +126,14 @@ export default function ItinerariosPage() {
                 variant="h3"
                 sx={{
                   fontWeight: 800,
-                  color: '#4b2c15',
+                  color: 'primary.main',
                   fontSize: { xs: '1.8rem', md: '2.5rem' },
                   mb: 1,
                 }}
               >
                 Itinerarios de Lectura APL
               </Typography>
-              <Typography variant="body1" sx={{ color: '#7a6759', maxWidth: 650, mx: 'auto' }}>
+              <Typography variant="body1" sx={{ color: 'body.main', maxWidth: 650, mx: 'auto' }}>
                 Explora el catálogo a través de colecciones transversales y recorridos
                 literarios sugeridos por el equipo docente de la Escuela Sábato.
               </Typography>
@@ -162,7 +141,7 @@ export default function ItinerariosPage() {
 
             {loading && (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                <CircularProgress sx={{ color: '#ff8a00' }} />
+                <CircularProgress color="primary" />
               </Box>
             )}
 
@@ -172,62 +151,73 @@ export default function ItinerariosPage() {
               </Alert>
             )}
 
-            {!loading && !error && itinerarios.length === 0 && (
+            {!loading && !error && itineraries.length === 0 && (
               <Box
                 sx={{
                   p: 6,
                   textAlign: 'center',
-                  bgcolor: '#fff',
+                  bgcolor: 'background.paper',
                   borderRadius: 3,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                  boxShadow: 1,
                 }}
               >
-                <MenuBookIcon sx={{ fontSize: 60, color: '#d0c2b5', mb: 2 }} />
-                <Typography variant="h6" sx={{ color: '#6d5a4d', fontWeight: 600 }}>
+                <MenuBookIcon sx={{ fontSize: 60, color: 'text.disabled', mb: 2 }} />
+                <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>
                   Aún no hay itinerarios publicados
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#9f8d80', mt: 0.5 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
                   Los docentes y administradores cargarán nuevos recorridos literarios a la brevedad.
                 </Typography>
               </Box>
             )}
 
-            {!loading && !error && itinerarios.length > 0 && (
+            {!loading && !error && itineraries.length > 0 && (
               <Grid container spacing={3}>
-                {itinerarios.map((itinerario) => (
+                {itineraries.map((itinerario) => (
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={itinerario.lista_id}>
                     <Card
                       sx={{
                         height: '100%',
                         borderRadius: 3,
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                        boxShadow: 1,
                         transition: 'transform 0.2s, box-shadow 0.2s',
                         '&:hover': {
                           transform: 'translateY(-4px)',
-                          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                          boxShadow: 3,
                         },
                       }}
                     >
                       <CardActionArea
                         onClick={() => setSelectedItinerario(itinerario)}
-                        sx={{ height: '100%', p: 2.5, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
+                        sx={{
+                          height: '100%',
+                          p: 2.5,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-start',
+                        }}
                       >
                         <Chip
                           icon={<CollectionsBookmarkIcon />}
                           label={`${itinerario.libros?.length || 0} libros`}
                           size="small"
-                          sx={{ mb: 2, bgcolor: '#ffe8cc', color: '#b25900', fontWeight: 600 }}
+                          sx={{
+                            mb: 2,
+                            bgcolor: 'action.hover',
+                            color: 'primary.main',
+                            fontWeight: 600,
+                          }}
                         />
                         <Typography
                           variant="h6"
-                          sx={{ fontWeight: 700, color: '#4b2c15', mb: 1, minHeight: 56 }}
+                          sx={{ fontWeight: 700, color: 'primary.main', mb: 1, minHeight: 56 }}
                         >
                           {itinerario.nombre}
                         </Typography>
                         <Typography
                           variant="body2"
                           sx={{
-                            color: '#7a6759',
+                            color: 'body.main',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             display: '-webkit-box',
@@ -239,7 +229,10 @@ export default function ItinerariosPage() {
                         >
                           {itinerario.descripcion || 'Colección temática de lectura para la APL.'}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: '#ff8a00', fontWeight: 700 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: 'button.main', fontWeight: 700 }}
+                        >
                           Ver recorrido →
                         </Typography>
                       </CardActionArea>
