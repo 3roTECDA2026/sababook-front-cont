@@ -22,14 +22,33 @@ import CreateItineraryDialog from '@/components/forms/CreateItineraryDialog';
 import { useItineraries } from '@/hooks/useItineraries';
 import { useAuth } from '@/hooks/useAuth';
 import { Itinerary } from '@/services/itineraryService';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 export default function ItinerariosPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedItinerario, setSelectedItinerario] = useState<Itinerary | null>(null);
-  const { itineraries, loading, error, createItinerary } = useItineraries();
+  const [itineraryToDelete, setItineraryToDelete] = useState<Itinerary | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { itineraries, loading, error, createItinerary, deleteItinerary } = useItineraries();
   const { isTeacher, isAdmin } = useAuth();
   const canManage = isTeacher || isAdmin;
+
+  const handleDeleteConfirm = async () => {
+    if (!itineraryToDelete) return;
+    setDeleting(true);
+    try {
+      await deleteItinerary(itineraryToDelete.lista_id);
+      if (selectedItinerario?.lista_id === itineraryToDelete.lista_id) {
+        setSelectedItinerario(null);
+      }
+      setItineraryToDelete(null);
+    } catch {
+      // Error manejado
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
@@ -272,12 +291,27 @@ export default function ItinerariosPage() {
                         >
                           {itinerario.descripcion || 'Colección temática de lectura para la APL.'}
                         </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: 'button.main', fontWeight: 700 }}
-                        >
-                          Ver recorrido →
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', mt: 'auto', pt: 1 }}>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: 'button.main', fontWeight: 700 }}
+                          >
+                            Ver recorrido →
+                          </Typography>
+                          {canManage && (
+                            <Button
+                              size="small"
+                              color="error"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setItineraryToDelete(itinerario);
+                              }}
+                              sx={{ py: 0.2, px: 1, minWidth: 0, fontSize: '0.75rem' }}
+                            >
+                              Eliminar
+                            </Button>
+                          )}
+                        </Box>
                       </CardActionArea>
                     </Card>
                   </Grid>
@@ -293,6 +327,16 @@ export default function ItinerariosPage() {
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         onSubmit={createItinerary}
+      />
+
+      {/* Modal de confirmación para eliminar itinerario */}
+      <ConfirmationModal
+        open={!!itineraryToDelete}
+        onClose={() => setItineraryToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Eliminar Itinerario APL"
+        message={`¿Estás seguro de que deseas eliminar el itinerario "${itineraryToDelete?.nombre}"? Esta acción no se puede deshacer.`}
+        loading={deleting}
       />
     </Box>
   );
