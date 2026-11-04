@@ -69,6 +69,9 @@ interface BookTableProps {
   onBookUpdate?: () => void;
   onEditBook: (book: BookRow) => void;
   onDeleteBook: (libroId: number) => void;
+  // SAB-060: al cambiar la búsqueda o los filtros se vuelve a la página 1
+  resetKey?: string;
+  hasFilters?: boolean;
 }
 
 // 3. Componente Principal
@@ -79,12 +82,21 @@ const BookTable = ({
   error,
   onEditBook, // 💡 Nuevo prop: función que abre el modal de edición en el padre
   onDeleteBook, // 💡 Nuevo prop: función que ejecuta el DELETE en el padre
+  resetKey,
+  hasFilters = false,
 }: BookTableProps) => {
   const theme = useTheme();
   const navigate = useNavigate();
 
   // Estados de UI (Paginación)
   const [page, setPage] = useState<number>(1);
+  const [lastResetKey, setLastResetKey] = useState(resetKey);
+
+  // Al cambiar la búsqueda o un filtro, vuelve a la página 1 en el mismo render
+  if (resetKey !== lastResetKey) {
+    setLastResetKey(resetKey);
+    setPage(1);
+  }
 
   // Lógica de Paginación
   const pageCount = Math.ceil(books.length / ROWS_PER_PAGE);
@@ -113,7 +125,7 @@ const BookTable = ({
 
   const handleDownload = () => {
     downloadCsv(
-      'libros.csv',
+      hasFilters ? 'libros-filtrados.csv' : 'libros.csv',
       [
         'ID',
         'Título',
@@ -198,7 +210,9 @@ const BookTable = ({
               <TableRow>
                 <TableCell colSpan={columns.length} align="center" sx={{ py: 5 }}>
                   <Typography variant="subtitle1" color="textSecondary">
-                    No se encontraron libros.
+                    {hasFilters
+                      ? 'No hay libros que coincidan con los filtros.'
+                      : 'No se encontraron libros.'}
                   </Typography>
                 </TableCell>
               </TableRow>
