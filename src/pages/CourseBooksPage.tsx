@@ -46,6 +46,7 @@ import {
   getLibrosDelCurso,
   asignarLibroACurso,
   actualizarPuntajeLibro,
+  actualizarPuntajeAnual,
   quitarLibroDeCurso,
   getAsignacionesAnteriores,
 } from '@/services/courseService';
@@ -93,11 +94,18 @@ interface SnackbarState {
 const etiquetaCurso = (curso: CourseSummary) =>
   `${curso.anio}°${curso.division} · ${curso.anio_lectivo} · ${curso.materia.nombre}`;
 
-// Devuelve el puntaje como entero entre 1 y 100 (misma regla que el back), o null si no es válido
-const parsearPuntaje = (valor: string): number | null => {
-  if (valor.trim() === '') return null;
+const parsearPuntaje = (valor: string): { valido: boolean; puntaje: number | null } => {
+  if (valor.trim() === '') return { valido: true, puntaje: null };
   const numero = Number(valor);
-  return Number.isInteger(numero) && numero >= 1 && numero <= 100 ? numero : null;
+  if (!Number.isInteger(numero) || numero < 1 || numero > 100) {
+    return { valido: false, puntaje: null };
+  }
+  return { valido: true, puntaje: numero };
+};
+
+const parsearPuntajeAnual = (valor: string): number | null => {
+  const numero = Number(valor);
+  return Number.isInteger(numero) && numero >= 140 && numero <= 200 ? numero : null;
 };
 
 const mensajeDeError = (error: unknown) =>
@@ -133,6 +141,9 @@ export default function CourseBooksPage() {
   const [libroAEditar, setLibroAEditar] = useState<CourseBook | null>(null);
   const [puntajeEditado, setPuntajeEditado] = useState<string>('');
   const [libroAQuitar, setLibroAQuitar] = useState<CourseBook | null>(null);
+
+  const [dialogoPuntajeAnualAbierto, setDialogoPuntajeAnualAbierto] = useState<boolean>(false);
+  const [puntajeAnualEditado, setPuntajeAnualEditado] = useState<string>('');
 
   // Lector de PDF para material de lectura (SAB-67)
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
@@ -191,6 +202,8 @@ export default function CourseBooksPage() {
     (libro) => !libros.some((asignado) => asignado.libro_id === libro.libro_id)
   );
 
+  const cursoSeleccionado = cursos.find((curso) => curso.curso_id === cursoId) ?? null;
+
   const abrirDialogoAsignar = async () => {
     setLibroElegido(null);
     setPuntajeNuevo('');
@@ -209,8 +222,8 @@ export default function CourseBooksPage() {
   const realizarAsignacion = async () => {
     if (cursoId === null || !libroElegido) return;
 
-    const puntaje = parsearPuntaje(puntajeNuevo);
-    if (puntaje === null) return;
+    const { valido, puntaje } = parsearPuntaje(puntajeNuevo);
+    if (!valido) return;
 
     setGuardando(true);
     try {
@@ -231,8 +244,8 @@ export default function CourseBooksPage() {
   const confirmarAsignacion = async () => {
     if (cursoId === null || !libroElegido) return;
 
-    const puntaje = parsearPuntaje(puntajeNuevo);
-    if (puntaje === null) {
+    const { valido } = parsearPuntaje(puntajeNuevo);
+    if (!valido) {
       mostrarMensaje('El puntaje debe ser un número entero entre 1 y 100.', 'warning');
       return;
     }
@@ -255,14 +268,14 @@ export default function CourseBooksPage() {
 
   const abrirDialogoEditar = (libro: CourseBook) => {
     setLibroAEditar(libro);
-    setPuntajeEditado(String(libro.puntaje));
+    setPuntajeEditado(libro.puntaje === null ? '' : String(libro.puntaje));
   };
 
   const confirmarEdicion = async () => {
     if (cursoId === null || !libroAEditar) return;
 
-    const puntaje = parsearPuntaje(puntajeEditado);
-    if (puntaje === null) {
+    const { valido, puntaje } = parsearPuntaje(puntajeEditado);
+    if (!valido) {
       mostrarMensaje('El puntaje debe ser un número entero entre 1 y 100.', 'warning');
       return;
     }
@@ -293,6 +306,37 @@ export default function CourseBooksPage() {
     } finally {
       setGuardando(false);
       setLibroAQuitar(null);
+    }
+  };
+
+  const abrirDialogoPuntajeAnual = () => {
+    setPuntajeAnualEditado(String(cursoSeleccionado?.puntaje_anual ?? 140));
+    setDialogoPuntajeAnualAbierto(true);
+  };
+
+  const confirmarPuntajeAnual = async () => {
+    if (cursoId === null) return;
+
+    const puntajeAnual = parsearPuntajeAnual(puntajeAnualEditado);
+    if (puntajeAnual === null) {
+      mostrarMensaje('El puntaje anual debe ser un número entero entre 140 y 200.', 'warning');
+      return;
+    }
+
+    setGuardando(true);
+    try {
+      const curso = await actualizarPuntajeAnual(cursoId, puntajeAnual);
+      setCursos((prev) =>
+        prev.map((c) =>
+          c.curso_id === curso.curso_id ? { ...c, puntaje_anual: curso.puntaje_anual } : c
+        )
+      );
+      setDialogoPuntajeAnualAbierto(false);
+      mostrarMensaje('Puntaje anual actualizado correctamente.', 'success');
+    } catch (error) {
+      mostrarMensaje(mensajeDeError(error), 'error');
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -360,6 +404,15 @@ export default function CourseBooksPage() {
                   sx={estiloBotonPrincipal}
                 >
                   Asignar libro
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  startIcon={<EditIcon />}
+                  onClick={abrirDialogoPuntajeAnual}
+                  sx={estiloBotonPrincipal}
+                >
+                  Puntaje anual: {cursoSeleccionado?.puntaje_anual ?? 140}
                 </Button>
               </Box>
 
@@ -432,7 +485,9 @@ export default function CourseBooksPage() {
                               </Box>
                             </TableCell>
                             <TableCell>{libro.autor}</TableCell>
-                            <TableCell align="center">{libro.puntaje}</TableCell>
+                            <TableCell align="center">
+                              {libro.puntaje ?? 'Sin puntaje'}
+                            </TableCell>
                             <TableCell align="center">
                               <Box display="flex" gap={1} justifyContent="center">
                                 {libro.pdf_path && (
@@ -500,6 +555,7 @@ export default function CourseBooksPage() {
               type="number"
               value={puntajeNuevo}
               onChange={(e) => setPuntajeNuevo(e.target.value)}
+              helperText="Dejalo vacío para dejarlo sin puntaje."
               slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
             />
           </Box>
@@ -567,6 +623,48 @@ export default function CourseBooksPage() {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={dialogoPuntajeAnualAbierto}
+        onClose={() => !guardando && setDialogoPuntajeAnualAbierto(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Puntaje anual del curso</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            {cursoSeleccionado ? etiquetaCurso(cursoSeleccionado) : ''}
+          </Typography>
+          <TextField
+            id="puntaje-anual"
+            name="puntaje_anual"
+            label="Puntaje anual"
+            type="number"
+            fullWidth
+            value={puntajeAnualEditado}
+            onChange={(e) => setPuntajeAnualEditado(e.target.value)}
+            helperText="Entre 140 y 200 puntos."
+            slotProps={{ htmlInput: { min: 140, max: 200, step: 1 } }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setDialogoPuntajeAnualAbierto(false)}
+            disabled={guardando}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={confirmarPuntajeAnual}
+            disabled={guardando}
+            sx={estiloBotonPrincipal}
+          >
+            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Guardar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Diálogo para editar el puntaje */}
       <Dialog
         open={libroAEditar !== null}
@@ -587,6 +685,7 @@ export default function CourseBooksPage() {
             fullWidth
             value={puntajeEditado}
             onChange={(e) => setPuntajeEditado(e.target.value)}
+            helperText="Dejalo vacío para dejarlo sin puntaje."
             slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
           />
         </DialogContent>

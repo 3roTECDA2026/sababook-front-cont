@@ -30,6 +30,7 @@ import type { FilterChipsHandle } from "@/components/ui/FilterChips";
 import SearchBar from "@/components/ui/SearchBar";
 import type { SearchBarHandle } from "@/components/ui/SearchBar";
 import SideMenu from "@/components/layout/SideMenu";
+import AnnualProgressCard from "@/components/ui/AnnualProgressCard";
 
 import { normalizarTexto } from "@/utils/normalize";
 import { buscarLibrosPaginado } from "@/services/apiService";
@@ -630,6 +631,8 @@ export default function Home() {
         }
         active="Inicio"
       />
+
+      {rol === "ALUMNO" && <AnnualProgressCard />}
 
       {/* BUSCADOR */}
 
