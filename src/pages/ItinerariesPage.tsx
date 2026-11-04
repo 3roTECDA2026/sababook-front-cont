@@ -1,4 +1,4 @@
-// src/pages/ItinerariosPage.tsx
+// src/pages/ItinerariesPage.tsx
 import { useState } from 'react';
 import {
   Box,
@@ -26,10 +26,10 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { Itinerary } from '@/services/itineraryService';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
-export default function ItinerariosPage() {
+export default function ItinerariesPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [selectedItinerario, setSelectedItinerario] = useState<Itinerary | null>(null);
+  const [selectedItinerary, setSelectedItinerary] = useState<Itinerary | null>(null);
   const [itineraryToDelete, setItineraryToDelete] = useState<Itinerary | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -52,8 +52,8 @@ export default function ItinerariosPage() {
     setDeleteError(null);
     try {
       await deleteItinerary(itineraryToDelete.lista_id);
-      if (selectedItinerario?.lista_id === itineraryToDelete.lista_id) {
-        setSelectedItinerario(null);
+      if (selectedItinerary?.lista_id === itineraryToDelete.lista_id) {
+        setSelectedItinerary(null);
       }
       setItineraryToDelete(null);
     } catch (err: unknown) {
@@ -69,7 +69,7 @@ export default function ItinerariosPage() {
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
       <AppHeader
         onMenuClick={() => setMenuOpen(true)}
-        onBack={selectedItinerario ? () => setSelectedItinerario(null) : undefined}
+        onBack={selectedItinerary ? () => setSelectedItinerary(null) : undefined}
       />
       <SideMenu
         open={menuOpen}
@@ -78,7 +78,7 @@ export default function ItinerariosPage() {
       />
 
       <Container maxWidth="lg" sx={{ mt: 4 }}>
-        {selectedItinerario ? (
+        {selectedItinerary ? (
           // Vista Detalle del Itinerario seleccionado
           <Box>
             <Box
@@ -103,17 +103,17 @@ export default function ItinerariosPage() {
                 }}
               />
               <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
-                {selectedItinerario.nombre}
+                {selectedItinerary.nombre}
               </Typography>
               <Typography variant="body1" sx={{ color: 'body.main', maxWidth: 800 }}>
-                {selectedItinerario.descripcion || 'Sin descripción disponible.'}
+                {selectedItinerary.descripcion || 'Sin descripción disponible.'}
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
-                {`Total de lecturas sugeridas: ${selectedItinerario.libros.length}`}
+                {`Total de lecturas sugeridas: ${selectedItinerary.libros.length}`}
               </Typography>
             </Box>
 
-            {selectedItinerario.libros.length === 0 ? (
+            {selectedItinerary.libros.length === 0 ? (
               <Alert severity="info" sx={{ borderRadius: 2 }}>
                 Este itinerario aún no tiene libros asignados.
               </Alert>
@@ -126,7 +126,7 @@ export default function ItinerariosPage() {
                   gap: 3,
                 }}
               >
-                {selectedItinerario.libros.map((libro) => (
+                {selectedItinerary.libros.map((libro) => (
                   <Box
                     key={libro.libro_id}
                     sx={{
@@ -280,7 +280,7 @@ export default function ItinerariosPage() {
                       }}
                     >
                       <CardActionArea
-                        onClick={() => setSelectedItinerario(itinerario)}
+                        onClick={() => setSelectedItinerary(itinerario)}
                         sx={{
                           flexGrow: 1,
                           p: 2.5,

@@ -34,8 +34,8 @@ export default function CreateItineraryDialog({
   onClose,
   onSubmit,
 }: CreateItineraryDialogProps) {
-  const [nombre, setNombre] = useState('');
-  const [descripcion, setDescripcion] = useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [selectedBooks, setSelectedBooks] = useState<
     { libroId: number; explicacion: string }[]
   >([]);
@@ -97,7 +97,7 @@ export default function CreateItineraryDialog({
   };
 
   const handleSubmit = async () => {
-    if (!nombre.trim()) {
+    if (!name.trim()) {
       setError('El nombre del itinerario es obligatorio.');
       return;
     }
@@ -118,12 +118,12 @@ export default function CreateItineraryDialog({
     setError(null);
     try {
       await onSubmit({
-        nombre: nombre.trim(),
-        descripcion: descripcion.trim(),
+        nombre: name.trim(),
+        descripcion: description.trim(),
         libros: validBooks,
       });
-      setNombre('');
-      setDescripcion('');
+      setName('');
+      setDescription('');
       setSelectedBooks([]);
       onClose();
     } catch (err: unknown) {
@@ -153,8 +153,8 @@ export default function CreateItineraryDialog({
           autoFocus
           label="Título del itinerario"
           fullWidth
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           sx={{ mb: 2 }}
           placeholder="Ej: Memoria, Dictadura y Derechos Humanos"
         />
@@ -164,8 +164,8 @@ export default function CreateItineraryDialog({
           fullWidth
           multiline
           rows={3}
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           sx={{ mb: 3 }}
           placeholder="Explicación del eje transversal que articula estas lecturas..."
         />

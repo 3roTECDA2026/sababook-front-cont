@@ -20,7 +20,7 @@ import ForumCommentsAdmin from './pages/ForumCommentsAdmin';
 import CafesLiterarios from './pages/CafesLiterarios';
 import CourseBooksPage from './pages/CourseBooksPage';
 import TeacherPanelPage from './pages/TeacherPanelPage';
-import ItinerariosPage from './pages/ItinerariosPage';
+import ItinerariesPage from './pages/ItinerariesPage';
 
 // Importaciones de Nuevos Módulos (Radio Sábato y Feed Muro)
 import { RadioPlayer } from './components/RadioPlayer';
@@ -194,7 +194,7 @@ function App() {
         path="/itinerarios"
         element={
           <ProtectedRoute>
-            <ItinerariosPage />
+            <ItinerariesPage />
           </ProtectedRoute>
         }
       />
