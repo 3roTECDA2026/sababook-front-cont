@@ -5,6 +5,7 @@ import ReadingProgress from '@/components/ReadingProgress';
 import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  alpha,
   Box,
   Button,
   CircularProgress,
@@ -922,7 +923,7 @@ const BookDetailsPage = () => {
             mt: 2,
             border: `1px solid ${theme.palette.divider}`,
             borderRadius: 2,
-            backgroundColor: hasPdf ? '#fff9f5' : '#fafafa',
+            backgroundColor: hasPdf ? alpha(theme.palette.button.main, 0.05) : theme.palette.grey[50],
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
             alignItems: { xs: 'flex-start', sm: 'center' },
@@ -931,7 +932,7 @@ const BookDetailsPage = () => {
           }}
         >
           <Box display="flex" alignItems="center" gap={1.5}>
-            <PictureAsPdfIcon sx={{ color: '#e53935', fontSize: 36 }} />
+            <PictureAsPdfIcon sx={{ color: 'error.main', fontSize: 36 }} />
             <Box>
               <Typography variant="subtitle1" fontWeight="bold">
                 Material de lectura digital

@@ -628,9 +628,7 @@ const BookForm = ({
                 p: 2.5,
                 border: `1px solid ${theme.palette.grey[300]}`,
                 borderRadius: '8px',
-                backgroundColor:
-                  theme.palette.grey[50] ||
-                  '#fafafa',
+                backgroundColor: theme.palette.grey[50],
               }}
             >
               <Box
@@ -640,7 +638,7 @@ const BookForm = ({
                 mb={1.5}
               >
                 <PictureAsPdfIcon
-                  sx={{ color: '#e53935' }}
+                  sx={{ color: 'error.main' }}
                 />
 
                 <Typography

@@ -414,7 +414,7 @@ export default function CourseBooksPage() {
                                         alignItems: 'center',
                                         gap: 0.5,
                                         fontSize: '0.75rem',
-                                        color: '#e53935',
+                                        color: 'error.main',
                                         cursor: 'pointer',
                                         mt: 0.3,
                                       }}

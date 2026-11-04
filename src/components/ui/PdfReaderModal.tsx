@@ -98,7 +98,7 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
         }}
       >
         <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0 }}>
-          <PictureAsPdfIcon sx={{ color: '#e53935' }} />
+          <PictureAsPdfIcon sx={{ color: 'error.main' }} />
           <Typography variant="h6" component="div" noWrap sx={{ fontWeight: 'bold' }}>
             {title}
           </Typography>
@@ -126,10 +126,10 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 0, flex: 1, backgroundColor: '#525659', position: 'relative' }}>
+      <DialogContent sx={{ p: 0, flex: 1, backgroundColor: 'grey.700', position: 'relative' }}>
         {loading && (
           <Box display="flex" alignItems="center" justifyContent="center" height="100%">
-            <CircularProgress sx={{ color: '#fff' }} aria-label="Cargando PDF" />
+            <CircularProgress sx={{ color: 'common.white' }} aria-label="Cargando PDF" />
           </Box>
         )}
         {error && (
