@@ -1,7 +1,6 @@
 // src/services/courseService.ts
 import { API_BASE_URL } from '@/environments/api';
-import type { CourseSummary, CourseBook, TeacherPanel, AssignmentHistoryEntry, PreviousAssignment } from '@/types';
-
+import type { CourseSummary, CourseBook, TeacherPanel, AssignmentHistoryEntry, PreviousAssignment, CourseStudent } from '@/types';
 
 // Hace la petición con el token y devuelve el mensaje de error real del back si falla
 async function solicitud<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -163,4 +162,14 @@ export async function getAsignacionesAnteriores(
   return await solicitud<PreviousAssignment[]>(
     `/courses/${cursoId}/books/${libroId}/previous-assignments`
   );
+}
+
+/**
+ * Alumnos inscriptos en un curso (solo el administrador o el docente del curso) (SAB-135)
+ */
+export async function getCourseStudents(
+  courseId: number,
+  signal?: AbortSignal
+): Promise<CourseStudent[]> {
+  return await solicitud<CourseStudent[]>(`/courses/${courseId}/students`, { signal });
 }
