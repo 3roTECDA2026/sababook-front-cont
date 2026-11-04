@@ -1,7 +1,7 @@
 // src/pages/LoginRegister.tsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Box } from "@mui/material";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Alert, Box } from "@mui/material";
 import { styled } from "@mui/system";
 
 import logoImage from "@/assets/logo.png";
@@ -23,6 +23,8 @@ const StyledPageContainer = styled(Box)(({ theme }) => ({
 // Solo inicio de sesión: las cuentas las crea el administrador (SAB-079)
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const cuentaActivada = searchParams.get("activada") === "1";
   const { login } = useAuth();
 
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +76,12 @@ const LoginPage = () => {
           width: "350px",
         }}
       />
+
+      {cuentaActivada && (
+        <Alert severity="success" sx={{ mb: 2, maxWidth: 350 }}>
+          Cuenta activada. Ya podés iniciar sesión con tu contraseña.
+        </Alert>
+      )}
 
       {/* Formulario de acceso */}
       <LoginForm
