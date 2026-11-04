@@ -77,10 +77,24 @@ export default function ItinerariosPage() {
                 Este itinerario aún no tiene libros asignados.
               </Alert>
             ) : (
-              <Grid container spacing={3}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: { xs: 'center', md: 'space-between' },
+                  gap: 3,
+                }}
+              >
                 {selectedItinerario.libros.map((libro) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={libro.libro_id}>
-                    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Box
+                    key={libro.libro_id}
+                    sx={{
+                      width: { xs: '100%', md: '48%' },
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <Box sx={{ width: '100%', '& > .MuiCard-root': { width: '100%', minWidth: '100%' } }}>
                       <BookCard
                         libro_id={libro.libro_id}
                         title={libro.titulo}
@@ -90,32 +104,33 @@ export default function ItinerariosPage() {
                         description={libro.descripcion}
                         rating={libro.calificacion_promedio}
                       />
-                      {libro.explicacion && (
-                        <Box
-                          sx={{
-                            mt: 1,
-                            p: 1.5,
-                            borderRadius: 2,
-                            bgcolor: 'action.hover',
-                            border: '1px dashed',
-                            borderColor: 'divider',
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
-                            sx={{ fontWeight: 700, color: 'primary.main', display: 'block' }}
-                          >
-                            Eje / Enfoque pedagógico:
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: 'body.main', fontSize: '0.85rem' }}>
-                            {libro.explicacion}
-                          </Typography>
-                        </Box>
-                      )}
                     </Box>
-                  </Grid>
+                    {libro.explicacion && (
+                      <Box
+                        sx={{
+                          mt: -1,
+                          mb: 2,
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: 'action.hover',
+                          border: '1px dashed',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 700, color: 'primary.main', display: 'block' }}
+                        >
+                          Eje / Enfoque pedagógico:
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'body.main', fontSize: '0.85rem' }}>
+                          {libro.explicacion}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
             )}
           </Box>
         ) : (
