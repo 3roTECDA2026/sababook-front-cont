@@ -266,7 +266,7 @@ export default function UserTable({
       return;
     }
 
-        // SAB-116: no se guarda mientras se cargan los cursos del alumno, ni si no se pudieron cargar
+    // SAB-116: no se guarda mientras se cargan los cursos del alumno, ni si no se pudieron cargar
     if (userToEdit.rol === 'ALUMNO' && studentCourse.isLoading) {
       showNotification('Esperá a que terminen de cargarse los cursos del alumno.', 'warning');
       return;
@@ -294,6 +294,15 @@ export default function UserTable({
       );
       return;
     }
+
+    dataToSend.contrasena = dataToSend.password;
+
+    delete dataToSend.password;
+
+    if (!dataToSend.contrasena) {
+      delete dataToSend.contrasena;
+    }
+
     // Quitar cursos pide confirmación antes de guardar
     if (teacherCourses.toRemoveLabels.length > 0 || studentCourse.needsConfirmation) {
       setPendingUserData(dataToSend);
@@ -325,7 +334,7 @@ export default function UserTable({
         }
       );
 
-            if (!response.ok) {
+      if (!response.ok) {
         // SAB-116: se muestra el mensaje del back (por ejemplo, el 409 por cambio de rol)
         const body: unknown = await response.json().catch(() => null);
         const message =
@@ -368,7 +377,7 @@ export default function UserTable({
         error
       );
 
-            showNotification(
+      showNotification(
         error instanceof Error ? error.message : 'Error al guardar el usuario',
         'error'
       );
