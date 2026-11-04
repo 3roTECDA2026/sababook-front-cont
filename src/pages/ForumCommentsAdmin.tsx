@@ -21,16 +21,13 @@ import {
   Button,
   Snackbar,
   Alert,
-  TextField,
   styled,
   Chip,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SaveIcon from '@mui/icons-material/Save';
-import CancelIcon from '@mui/icons-material/Cancel';
-import { ActionButton, DeleteButton } from '@/components/ui/ActionButton';
+import { DeleteButton } from '@/components/ui/ActionButton';
 import { useForumComments } from '@/hooks/useForumComments';
 import { useForumCommentsAdmin } from '@/hooks/useForumCommentsAdmin';
 import type { ForumComment } from '@/types';
@@ -70,10 +67,6 @@ interface DisplayComment {
   usuario_id: number | null;
 }
 
-interface EditedComment {
-  comentario: string;
-}
-
 interface SnackbarState {
   open: boolean;
   message: string;
@@ -83,10 +76,6 @@ interface SnackbarState {
 const ForumCommentsAdmin = () => {
   const { foroId } = useParams<{ foroId: string }>();
   const navigate = useNavigate();
-
-  // Estados de edición
-  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
-  const [editedComment, setEditedComment] = useState<EditedComment>({ comentario: '' });
 
   // Estados de eliminación
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
@@ -111,9 +100,7 @@ const ForumCommentsAdmin = () => {
     forumInfo,
     loadingForum,
     errorForum,
-    updateComment,
     deleteComment,
-    isUpdating,
     isDeleting,
   } = useForumCommentsAdmin(foroId, refetch);
 
@@ -126,27 +113,6 @@ const ForumCommentsAdmin = () => {
     destacado: c.destacado || false,
     usuario_id: c.usuario_id ?? c.usuario?.id ?? null,
   }));
-
-
-  const handleCancelEdit = () => {
-    setEditingCommentId(null);
-    setEditedComment({ comentario: '' });
-  };
-  const handleSaveEdit = async (comentarioId: number) => {
-    try {
-      await updateComment(comentarioId, editedComment.comentario);
-      setEditingCommentId(null);
-      setSnackbar({
-        open: true,
-        message: '✅ Comentario actualizado correctamente',
-        severity: 'success',
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(err);
-      setSnackbar({ open: true, message: `❌ Error: ${message}`, severity: 'error' });
-    }
-  };
 
   // Eliminar comentario
   const handleDeleteClick = (comment: DisplayComment) => {
@@ -266,50 +232,16 @@ const ForumCommentsAdmin = () => {
                   <TableRow key={comment.comentario_id} hover>
                     <TableCell>{comment.usuario_nombre || 'Usuario'}</TableCell>
                     <TableCell>
-                      {editingCommentId === comment.comentario_id ? (
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={2}
-                          value={editedComment.comentario}
-                          onChange={(e) =>
-                            setEditedComment({ ...editedComment, comentario: e.target.value })
-                          }
-                          size="small"
-                        />
-                      ) : (
-                        <Typography variant="body2">{comment.comentario}</Typography>
-                      )}
+                      <Typography variant="body2">{comment.comentario}</Typography>
                     </TableCell>
                     <TableCell>
                       {comment.fecha ? new Date(comment.fecha).toLocaleDateString('es-ES') : 'N/A'}
                     </TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                        {editingCommentId === comment.comentario_id ? (
-                          <>
-                            <ActionButton
-                              onClick={() => handleSaveEdit(comment.comentario_id)}
-                              title="Guardar"
-                              disabled={isUpdating}
-                            >
-                              {isUpdating ? (
-                                <CircularProgress size={18} color="inherit" />
-                              ) : (
-                                <SaveIcon sx={{ fontSize: '1.1rem' }} />
-                              )}
-                            </ActionButton>
-                            <ActionButton onClick={handleCancelEdit} title="Cancelar" disabled={isUpdating}>
-                              <CancelIcon sx={{ fontSize: '1.1rem' }} />
-                            </ActionButton>
-                          </>
-                        ) : (
-                          <>
-                            <DeleteButton onClick={() => handleDeleteClick(comment)} title="Eliminar">
-                              <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                            </DeleteButton>
-                          </>
-                        )}
+                        <DeleteButton onClick={() => handleDeleteClick(comment)} title="Eliminar">
+                          <DeleteIcon sx={{ fontSize: '1.1rem' }} />
+                        </DeleteButton>
                       </Box>
                     </TableCell>
                   </TableRow>
