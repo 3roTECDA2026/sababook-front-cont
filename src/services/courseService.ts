@@ -75,12 +75,11 @@ export async function getStudentCourses(studentId: number, signal?: AbortSignal)
 }
 
 /**
- * Inscribir a un alumno en un curso (un solo curso por año lectivo)
+ * Poner a un alumno en un curso. Si ya tenía otro curso en el año, el back lo pasa en una sola operación
  */
-export async function enrollStudent(courseId: number, studentId: number) {
-  return await solicitud<{ message: string }>(`/courses/${courseId}/students`, {
-    method: 'POST',
-    body: JSON.stringify({ usuario_id: studentId }),
+export async function moveStudent(courseId: number, studentId: number) {
+  return await solicitud<{ message: string }>(`/courses/${courseId}/students/${studentId}`, {
+    method: 'PUT',
   });
 }
 

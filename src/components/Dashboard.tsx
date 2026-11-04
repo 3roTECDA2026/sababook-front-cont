@@ -450,6 +450,15 @@ const Dashboard = () => {
     if (dataToSend.rol) {
       dataToSend.rol = String(dataToSend.rol).toUpperCase();
     }
+    // SAB-116: si es alumno, se espera a que carguen los cursos para poder inscribirlo
+    if (dataToSend.rol === 'ALUMNO' && newStudentCourse.isLoading) {
+      setSnackbar({
+        open: true,
+        message: 'Esperá a que terminen de cargarse los cursos.',
+        severity: 'warning',
+      });
+      return;
+    }
 
     dataToSend.contrasena = dataToSend.password;
     delete dataToSend.password;

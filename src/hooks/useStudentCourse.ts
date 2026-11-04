@@ -1,9 +1,9 @@
 // src/hooks/useStudentCourse.ts
 import { useEffect, useState } from 'react';
 import {
-  enrollStudent,
   getCoursesByYear,
   getStudentCourses,
+  moveStudent,
   unenrollStudent,
 } from '@/services/courseService';
 import { formatCourseLabel } from '@/utils/course';
@@ -21,6 +21,8 @@ export function useStudentCourse(studentId: number | null, schoolYear: number, e
   const [courses, setCourses] = useState<CourseSummary[]>([]);
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  // Inscripciones del alumno en todos los años: para no dejar cambiarle el rol si tiene alguna
+  const [totalEnrollments, setTotalEnrollments] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [reloads, setReloads] = useState<number>(0);
@@ -29,6 +31,7 @@ export function useStudentCourse(studentId: number | null, schoolYear: number, e
     setCourses([]);
     setCurrentId(null);
     setSelectedId(null);
+    setTotalEnrollments(0);
     setError(null);
     if (!enabled) return;
 
@@ -48,6 +51,7 @@ export function useStudentCourse(studentId: number | null, schoolYear: number, e
         const current = studentCourses.find((c) => c.anio_lectivo === schoolYear)?.curso_id ?? null;
         setCurrentId(current);
         setSelectedId(current);
+        setTotalEnrollments(studentCourses.length);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -73,14 +77,18 @@ export function useStudentCourse(studentId: number | null, schoolYear: number, e
   // Sacarlo de su curso actual (o pasarlo a otro) pide confirmación
   const needsConfirmation = currentId !== null && hasChanges;
 
-  // Guarda el curso elegido. Primero lo quita del actual (un curso por año) y después lo inscribe en el nuevo.
+  // Guarda el curso elegido. Elegir un curso lo inscribe o lo pasa de curso en una sola operación del back,
+  // así nunca queda sin curso a mitad de camino. "Sin curso" lo quita del actual.
   // En el alta se pasa el ID del usuario recién creado.
   const save = async (targetStudentId: number | null = studentId): Promise<StudentCourseSaveResult> => {
     if (targetStudentId === null || !hasChanges) return { text: '', failed: false };
 
     try {
-      if (currentId !== null) await unenrollStudent(currentId, targetStudentId);
-      if (selectedId !== null) await enrollStudent(selectedId, targetStudentId);
+      if (selectedId !== null) {
+        await moveStudent(selectedId, targetStudentId);
+      } else if (currentId !== null) {
+        await unenrollStudent(currentId, targetStudentId);
+      }
 
       const text =
         selectedId === null
@@ -102,6 +110,7 @@ export function useStudentCourse(studentId: number | null, schoolYear: number, e
     currentLabel: labelOf(currentId),
     selectedId,
     selectedLabel: labelOf(selectedId),
+    totalEnrollments,
     setSelectedId,
     isLoading,
     error,

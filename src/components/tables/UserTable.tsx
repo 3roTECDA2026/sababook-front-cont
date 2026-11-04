@@ -266,27 +266,34 @@ export default function UserTable({
       return;
     }
 
-    // SAB-116: un alumno inscripto en un curso no puede cambiar de rol
-    if (
-      userToEdit.rol === 'ALUMNO' &&
-      dataToSend.rol !== 'ALUMNO' &&
-      studentCourse.currentId !== null
-    ) {
+        // SAB-116: no se guarda mientras se cargan los cursos del alumno, ni si no se pudieron cargar
+    if (userToEdit.rol === 'ALUMNO' && studentCourse.isLoading) {
+      showNotification('Esperá a que terminen de cargarse los cursos del alumno.', 'warning');
+      return;
+    }
+    if (userToEdit.rol === 'ALUMNO' && studentCourse.error) {
       showNotification(
-        `Este alumno está inscripto en ${studentCourse.currentLabel}. Quitalo del curso antes de cambiar el rol.`,
+        `No se pudieron cargar los cursos del alumno: ${studentCourse.error} Reintentá antes de guardar.`,
         'error'
       );
       return;
     }
 
-    dataToSend.contrasena = dataToSend.password;
-
-    delete dataToSend.password;
-
-    if (!dataToSend.contrasena) {
-      delete dataToSend.contrasena;
+    // SAB-116: un alumno inscripto en un curso (de cualquier año) no puede cambiar de rol.
+    // El back también lo valida.
+    if (
+      userToEdit.rol === 'ALUMNO' &&
+      dataToSend.rol !== 'ALUMNO' &&
+      studentCourse.totalEnrollments > 0
+    ) {
+      showNotification(
+        studentCourse.currentId !== null
+          ? `Este alumno está inscripto en ${studentCourse.currentLabel}. Quitalo del curso antes de cambiar el rol.`
+          : 'Este alumno está inscripto en un curso de otro año. Quitalo del curso antes de cambiar el rol.',
+        'error'
+      );
+      return;
     }
-
     // Quitar cursos pide confirmación antes de guardar
     if (teacherCourses.toRemoveLabels.length > 0 || studentCourse.needsConfirmation) {
       setPendingUserData(dataToSend);
@@ -318,10 +325,14 @@ export default function UserTable({
         }
       );
 
-      if (!response.ok) {
-        throw new Error(
-          'Error al actualizar el usuario'
-        );
+            if (!response.ok) {
+        // SAB-116: se muestra el mensaje del back (por ejemplo, el 409 por cambio de rol)
+        const body: unknown = await response.json().catch(() => null);
+        const message =
+          body && typeof body === 'object' && 'error' in body
+            ? String((body as { error: unknown }).error)
+            : 'Error al actualizar el usuario';
+        throw new Error(message);
       }
 
       // SAB-117: después de guardar el usuario, se aplican los cambios de cursos
@@ -357,7 +368,10 @@ export default function UserTable({
         error
       );
 
-      showNotification('Error al guardar el usuario', 'error');
+            showNotification(
+        error instanceof Error ? error.message : 'Error al guardar el usuario',
+        'error'
+      );
     } finally {
       setIsSaving(false);
       setPendingUserData(null);
