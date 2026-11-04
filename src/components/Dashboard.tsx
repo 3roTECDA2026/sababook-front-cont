@@ -26,7 +26,7 @@ import GoalForm from './GoalForm';
 import ModerationAdmin from './ModerationAdmin';
 
 import { API_BASE_URL } from '@/environments/api';
-import type { Book, Forum, User, ReadingGoal } from '@/types';
+import type { Book, Forum, User, ReadingGoal, ListFilters } from '@/types';
 
 import UserTable from './tables/UserTable';
 import BookTable from './tables/BookTable';
@@ -36,10 +36,15 @@ import GoalTable from './tables/GoalTable';
 import SearchFilterBar from '@/components/ui/SearchFilterBar';
 import { usePagination } from '@/hooks/usePagination';
 import { getHistorialAsignaciones } from '@/services/courseService';
-import type { RoleFilter } from '@/services/userService';
+import { buildUserSearchParams } from '@/services/userService';
+import FilterChips from '@/components/ui/FilterChips';
+import type { FilterCategoryId } from '@/components/ui/FilterChips';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 const DashboardContainer = Box;
+
+// SAB-060: chips de filtro del listado de usuarios (fuera del componente para que no cambie en cada render)
+const USER_FILTER_CATEGORIES: FilterCategoryId[] = ['year', 'course', 'role', 'readingStatus', 'book'];
 
 interface SnackbarState {
   open: boolean;
@@ -56,8 +61,9 @@ const Dashboard = () => {
 
   const [currentQuery, setCurrentQuery] = useState<string>('');
   const [currentFilter, setCurrentFilter] = useState<string>('');
-  // SAB-119: el rol se filtra en el servidor, para que la paginación cuente bien
-  const [userRoleFilter, setUserRoleFilter] = useState<RoleFilter>('');
+  // SAB-119 / SAB-060: los filtros de usuarios se aplican en el servidor,
+  // para que la paginación cuente bien
+  const [userFilters, setUserFilters] = useState<ListFilters>({});
 
   // =========================================================
   // PAGINACIÓN DE USUARIOS
@@ -67,18 +73,13 @@ const Dashboard = () => {
     (page: number, limit: number, signal?: AbortSignal) => {
       const token = localStorage.getItem('token');
 
-      const params = new URLSearchParams();
+      const params = buildUserSearchParams({
+        q: currentQuery,
+        ...userFilters,
+      });
 
       params.append('page', page.toString());
       params.append('limit', limit.toString());
-
-      if (currentQuery) {
-        params.append('q', currentQuery);
-      }
-
-      if (userRoleFilter) {
-        params.append('rol', userRoleFilter);
-      }
 
       return fetch(
         `${API_BASE_URL}/api/v1/users?${params.toString()}`,
@@ -96,13 +97,13 @@ const Dashboard = () => {
         return res.json();
       });
     },
-    [currentQuery, userRoleFilter]
+    [currentQuery, userFilters]
   );
 
-  // Al cambiar la búsqueda o el rol, se vuelve a la página 1
+  // Al cambiar la búsqueda o cualquier filtro, se vuelve a la página 1
   const resetKey = JSON.stringify({
     q: currentQuery,
-    rol: userRoleFilter,
+    ...userFilters,
   });
 
   const {
@@ -965,8 +966,7 @@ const Dashboard = () => {
             page={userPage}
             totalPages={userTotalPages}
             onPageChange={goToUserPage}
-            roleFilter={userRoleFilter}
-            onRoleFilterChange={setUserRoleFilter}
+            filters={userFilters}
             searchQuery={currentQuery}
           />
         );
@@ -1069,6 +1069,21 @@ const Dashboard = () => {
           />
         </Box>
       )}
+
+      {/* FILTROS DE USUARIOS (SAB-060): quedan montados al cambiar de vista para conservar la selección */}
+
+      <FilterChips
+        categories={USER_FILTER_CATEGORIES}
+        includeSchoolYear
+        onFilterChange={setUserFilters}
+        sx={{
+          width: '100%',
+          maxWidth: '1200px',
+          mt: 2,
+          mb: 0,
+          display: activeView === 'users' ? 'block' : 'none',
+        }}
+      />
 
       {/* TABLA ACTIVA */}
 

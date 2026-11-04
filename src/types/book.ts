@@ -1,3 +1,6 @@
+import type { TipoRol } from './user';
+import type { ReadingStatus } from '@/hooks/useReadingStatus';
+
 export interface Book {
   libro_id: number;
   titulo: string;
@@ -22,6 +25,15 @@ export interface BookFilters {
   nivel_educativo?: string;
   anio?: string | number;
   curso_id?: string | number;
+}
+
+// SAB-060: filtros de los listados del Dashboard (amplían los del catálogo)
+export interface ListFilters extends BookFilters {
+  rol?: TipoRol;
+  libro_id?: number;
+  estado_lectura?: ReadingStatus;
+  // Se manda junto con el año de cursada, para que el back no use el año del calendario
+  anio_lectivo?: number;
 }
 
 export interface FeaturedBook {

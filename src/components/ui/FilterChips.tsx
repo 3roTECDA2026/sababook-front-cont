@@ -1,20 +1,47 @@
 // src/components/FilterChips.tsx
 import { useState, useEffect, useMemo, forwardRef, useImperativeHandle, MouseEvent } from 'react';
-import { Stack, Chip, Menu, MenuItem, Box, Button } from '@mui/material';
+import { Stack, Chip, Menu, MenuItem, Box, Button, Popover, Autocomplete, TextField, CircularProgress } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import { getCursos } from '@/services/courseService';
-import { getCatalogoLibros } from '@/services/apiService';
-import type { BookFilters, CourseSummary } from '@/types';
+import { buscarLibrosPaginado, getCatalogoLibros } from '@/services/apiService';
+import type { Book, CourseSummary, ListFilters, TipoRol } from '@/types';
+import type { ReadingStatus } from '@/hooks/useReadingStatus';
 
 interface FilterOption {
   label: string;
   value: string | number;
 }
 
-export type FilterCategoryId = 'year' | 'course' | 'genre' | 'level';
+export type FilterCategoryId = 'year' | 'course' | 'genre' | 'level' | 'role' | 'readingStatus' | 'book';
+
+// Sin la prop categories se muestran estas (Home y Trivia). Las de SAB-060 son opcionales.
+const DEFAULT_CATEGORIES: FilterCategoryId[] = ['year', 'course', 'genre', 'level'];
+
+// Clave del filtro que maneja cada categoría
+const CATEGORY_KEYS: Record<FilterCategoryId, keyof ListFilters> = {
+  year: 'anio',
+  course: 'curso_id',
+  genre: 'genero',
+  level: 'nivel_educativo',
+  role: 'rol',
+  readingStatus: 'estado_lectura',
+  book: 'libro_id',
+};
+
+const ROLE_LABELS: Record<TipoRol, string> = {
+  ALUMNO: 'Alumno',
+  DOCENTE: 'Docente',
+  ADMINISTRADOR: 'Administrador',
+};
+
+const READING_STATUS_LABELS: Record<Exclude<ReadingStatus, 'general'>, string> = {
+  'quiero-leer': 'Quiero leer',
+  leyendo: 'Leyendo',
+  leido: 'Leído',
+};
 
 interface FilterCategory {
   id: FilterCategoryId;
@@ -22,7 +49,7 @@ interface FilterCategory {
   icon?: React.ReactElement;
   getOptions: (
     cursos: CourseSummary[],
-    selectedFilters: BookFilters,
+    selectedFilters: ListFilters,
     dynamicOptions?: { genres: string[]; levels: string[] }
   ) => FilterOption[];
 }
@@ -71,12 +98,114 @@ const FILTERS_CONFIG: FilterCategory[] = [
       return levels.map((l) => ({ label: l, value: l }));
     },
   },
+  // SAB-060
+  {
+    id: 'role',
+    name: 'Rol',
+    getOptions: () => Object.entries(ROLE_LABELS).map(([value, label]) => ({ label, value })),
+  },
+  {
+    id: 'readingStatus',
+    name: 'Estado de lectura',
+    getOptions: () => Object.entries(READING_STATUS_LABELS).map(([value, label]) => ({ label, value })),
+  },
+  {
+    // Son cientos de libros: en lugar de una lista se muestra un buscador (BookPicker)
+    id: 'book',
+    name: 'Libro',
+    getOptions: () => [],
+  },
 ];
 
+// SAB-060: buscador de libros para el chip "Libro"
+function BookPicker({ onSelect }: { onSelect: (book: Book) => void }) {
+  const [inputValue, setInputValue] = useState('');
+  const [options, setOptions] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const text = inputValue.trim();
+    if (!text) {
+      setOptions([]);
+      setIsLoading(false);
+      return;
+    }
+
+    // Se espera a que termine de escribir y se cancela la búsqueda anterior
+    const controller = new AbortController();
+    setIsLoading(true);
+    setHasError(false);
+    const timer = setTimeout(() => {
+      buscarLibrosPaginado({ query: text }, 1, 10, controller.signal)
+        .then((result) => setOptions(result.data))
+        .catch((error) => {
+          if (controller.signal.aborted) return;
+          console.error('Error al buscar libros para el filtro:', error);
+          setOptions([]);
+          setHasError(true);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setIsLoading(false);
+        });
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [inputValue]);
+
+  const noOptionsText = hasError
+    ? 'No se pudieron buscar los libros. Intente nuevamente más tarde.'
+    : inputValue.trim()
+      ? 'No se encontraron libros'
+      : 'Escribí el título o el autor';
+
+  return (
+    <Autocomplete
+      options={options}
+      // Las opciones ya vienen filtradas por el back
+      filterOptions={(x) => x}
+      getOptionLabel={(book) => `${book.titulo} · ${book.autor}`}
+      isOptionEqualToValue={(a, b) => a.libro_id === b.libro_id}
+      inputValue={inputValue}
+      onInputChange={(_event, value) => setInputValue(value)}
+      onChange={(_event, book) => book && onSelect(book)}
+      loading={isLoading}
+      loadingText="Buscando…"
+      noOptionsText={noOptionsText}
+      openOnFocus
+      sx={{ width: 320, maxWidth: '80vw' }}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          autoFocus
+          size="small"
+          label="Buscar libro"
+          slotProps={{
+            input: {
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {isLoading ? <CircularProgress color="inherit" size={18} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            },
+          }}
+        />
+      )}
+    />
+  );
+}
+
 interface FilterChipsProps {
-  onFilterChange?: (filtros: BookFilters) => void;
+  onFilterChange?: (filtros: ListFilters) => void;
   onClearSearch?: () => void;
   categories?: FilterCategoryId[];
+  // SAB-060: emite también anio_lectivo (el vigente) cuando se elige un año
+  includeSchoolYear?: boolean;
   sx?: SxProps<Theme>;
 }
 
@@ -85,31 +214,37 @@ export interface FilterChipsHandle {
 }
 
 const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function FilterChips(
-  { onFilterChange, onClearSearch, categories, sx },
+  { onFilterChange, onClearSearch, categories, includeSchoolYear = false, sx },
   ref
 ) {
   const [cursos, setCursos] = useState<CourseSummary[]>([]);
   const [cargandoCursos, setCargandoCursos] = useState(true);
   const [errorCursos, setErrorCursos] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
-  const [selectedFilters, setSelectedFilters] = useState<BookFilters>({});
+  const [activeFilterId, setActiveFilterId] = useState<FilterCategoryId | null>(null);
+  const [selectedFilters, setSelectedFilters] = useState<ListFilters>({});
+  // Título del libro elegido, para la etiqueta del chip activo
+  const [selectedBookTitle, setSelectedBookTitle] = useState<string | null>(null);
 
   // Permite que la pantalla vacíe los chips sin volver a disparar onFilterChange
   useImperativeHandle(ref, () => ({
-    clear: () => setSelectedFilters({}),
+    clear: () => {
+      setSelectedFilters({});
+      setSelectedBookTitle(null);
+    },
   }));
   const [dynamicGenres, setDynamicGenres] = useState<string[]>([]);
   const [dynamicLevels, setDynamicLevels] = useState<string[]>([]);
   const [cargandoOpciones, setCargandoOpciones] = useState(true);
   const [errorOpciones, setErrorOpciones] = useState(false);
 
-  const openMenu = Boolean(anchorEl);
+  const filtrosVisibles = useMemo(() => {
+    const ids = categories ?? DEFAULT_CATEGORIES;
+    return FILTERS_CONFIG.filter((f) => ids.includes(f.id));
+  }, [categories]);
 
-  const filtrosVisibles = useMemo(
-    () => (categories ? FILTERS_CONFIG.filter((f) => categories.includes(f.id)) : FILTERS_CONFIG),
-    [categories]
-  );
+  // Género y Nivel salen del catálogo: solo se pide si se muestra alguno de los dos
+  const needsCatalogOptions = filtrosVisibles.some((f) => f.id === 'genre' || f.id === 'level');
 
   useEffect(() => {
     let montado = true;
@@ -134,6 +269,7 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
   }, []);
 
   useEffect(() => {
+    if (!needsCatalogOptions) return;
     let montado = true;
     getCatalogoLibros()
       .then((libros) => {
@@ -170,20 +306,20 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
     return () => {
       montado = false;
     };
-  }, []);
+  }, [needsCatalogOptions]);
 
   // Solo se muestran los cursos del año lectivo vigente (el más reciente),
   // para no mezclar libros asignados en años anteriores.
-  const cursosVigentes = useMemo(() => {
-    if (cursos.length === 0) return [];
-    const anioLectivoVigente = cursos.reduce(
-      (max, c) => (c.anio_lectivo > max ? c.anio_lectivo : max),
-      Number.NEGATIVE_INFINITY
-    );
-    return cursos.filter((c) => c.anio_lectivo === anioLectivoVigente);
-  }, [cursos]);
+  const anioLectivoVigente = useMemo(
+    () => (cursos.length === 0 ? null : Math.max(...cursos.map((c) => c.anio_lectivo))),
+    [cursos]
+  );
+  const cursosVigentes = useMemo(
+    () => cursos.filter((c) => c.anio_lectivo === anioLectivoVigente),
+    [cursos, anioLectivoVigente]
+  );
 
-  const handleChipClick = (event: MouseEvent<HTMLDivElement>, filterId: string) => {
+  const handleChipClick = (event: MouseEvent<HTMLDivElement>, filterId: FilterCategoryId) => {
     setAnchorEl(event.currentTarget);
     setActiveFilterId(filterId);
   };
@@ -193,14 +329,17 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
     setActiveFilterId(null);
   };
 
-  const aplicarFiltros = (filtros: BookFilters) => {
-    if (onFilterChange) {
-      onFilterChange(filtros);
+  const aplicarFiltros = (filtros: ListFilters) => {
+    if (!onFilterChange) return;
+    if (includeSchoolYear && filtros.anio !== undefined && anioLectivoVigente !== null) {
+      onFilterChange({ ...filtros, anio_lectivo: anioLectivoVigente });
+      return;
     }
+    onFilterChange(filtros);
   };
 
-  const handleOptionSelect = (filterId: string, option: FilterOption) => {
-    const newFilters: BookFilters = { ...selectedFilters };
+  const handleOptionSelect = (filterId: FilterCategoryId, option: FilterOption) => {
+    const newFilters: ListFilters = { ...selectedFilters };
 
     if (filterId === 'year') {
       newFilters.anio = option.value;
@@ -222,6 +361,10 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
       newFilters.genero = String(option.value);
     } else if (filterId === 'level') {
       newFilters.nivel_educativo = String(option.value);
+    } else if (filterId === 'role') {
+      newFilters.rol = option.value as TipoRol;
+    } else if (filterId === 'readingStatus') {
+      newFilters.estado_lectura = option.value as ReadingStatus;
     }
 
     setSelectedFilters(newFilters);
@@ -229,13 +372,24 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
     aplicarFiltros(newFilters);
   };
 
-  const handleDeleteFilter = (filterKey: keyof BookFilters) => {
-    const newFilters: BookFilters = { ...selectedFilters };
+  const handleBookSelect = (book: Book) => {
+    const newFilters: ListFilters = { ...selectedFilters, libro_id: book.libro_id };
+    setSelectedBookTitle(book.titulo);
+    setSelectedFilters(newFilters);
+    handleMenuClose();
+    aplicarFiltros(newFilters);
+  };
+
+  const handleDeleteFilter = (filterKey: keyof ListFilters) => {
+    const newFilters: ListFilters = { ...selectedFilters };
     delete newFilters[filterKey];
 
     // Si se quita el año y el curso pertenecía a él, también se limpia curso
     if (filterKey === 'anio' && newFilters.curso_id) {
       delete newFilters.curso_id;
+    }
+    if (filterKey === 'libro_id') {
+      setSelectedBookTitle(null);
     }
 
     setSelectedFilters(newFilters);
@@ -244,12 +398,13 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
 
   const handleLimpiarTodo = () => {
     setSelectedFilters({});
+    setSelectedBookTitle(null);
     if (onClearSearch) onClearSearch();
     aplicarFiltros({});
   };
 
   // Helper para generar texto descriptivo del chip activo
-  const obtenerEtiquetaChipActivo = (key: keyof BookFilters, value: unknown): string => {
+  const obtenerEtiquetaChipActivo = (key: keyof ListFilters, value: unknown): string => {
     if (key === 'anio') {
       return `Año: ${value}° Año`;
     }
@@ -263,6 +418,15 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
     if (key === 'nivel_educativo') {
       return `Nivel: ${value}`;
     }
+    if (key === 'rol') {
+      return `Rol: ${ROLE_LABELS[value as TipoRol] ?? value}`;
+    }
+    if (key === 'estado_lectura') {
+      return `Estado: ${READING_STATUS_LABELS[value as keyof typeof READING_STATUS_LABELS] ?? value}`;
+    }
+    if (key === 'libro_id') {
+      return selectedBookTitle ? `Libro: ${selectedBookTitle}` : `Libro #${value}`;
+    }
     return `${key}: ${value}`;
   };
 
@@ -270,17 +434,16 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
   const currentOptions = activeCategory
     ? activeCategory.getOptions(cursosVigentes, selectedFilters, { genres: dynamicGenres, levels: dynamicLevels })
     : [];
+  const isCourseCategory = activeFilterId === 'year' || activeFilterId === 'course';
+  const isCatalogCategory = activeFilterId === 'genre' || activeFilterId === 'level';
 
   return (
     <Box sx={[{ mb: 2 }, ...(sx ? [sx] : [])] as SxProps<Theme>}>
       {/* Botones selectores de filtros */}
       <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 0.5 }}>
         {filtrosVisibles.map((filter) => {
-          const isActive =
-            (filter.id === 'year' && selectedFilters.anio !== undefined) ||
-            (filter.id === 'course' && selectedFilters.curso_id !== undefined) ||
-            (filter.id === 'genre' && Boolean(selectedFilters.genero)) ||
-            (filter.id === 'level' && Boolean(selectedFilters.nivel_educativo));
+          const value = selectedFilters[CATEGORY_KEYS[filter.id]];
+          const isActive = value !== undefined && value !== '';
 
           return (
             <Chip
@@ -313,7 +476,7 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
         <Stack direction="row" spacing={1} mt={1.5} alignItems="center" flexWrap="wrap" sx={{ gap: 1 }}>
           {Object.entries(selectedFilters).map(([key, val]) => {
             if (val === undefined || val === '') return null;
-            const filterKey = key as keyof BookFilters;
+            const filterKey = key as keyof ListFilters;
             return (
               <Chip
                 key={key}
@@ -351,11 +514,31 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
         </Stack>
       )}
 
+      {/* Buscador para el chip "Libro" */}
+      <Popover
+        open={Boolean(anchorEl) && activeFilterId === 'book'}
+        anchorEl={anchorEl}
+        onClose={handleMenuClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        slotProps={{
+          paper: {
+            sx: {
+              p: 2,
+              borderRadius: '12px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+            },
+          },
+        }}
+      >
+        <BookPicker onSelect={handleBookSelect} />
+      </Popover>
+
       {/* Menú desplegable para opciones del filtro seleccionado */}
       <Menu
         id="filter-menu"
         anchorEl={anchorEl}
-        open={openMenu}
+        open={Boolean(anchorEl) && activeFilterId !== 'book'}
         onClose={handleMenuClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
@@ -370,19 +553,19 @@ const FilterChips = forwardRef<FilterChipsHandle, FilterChipsProps>(function Fil
           },
         }}
       >
-        {cargandoCursos && (activeFilterId === 'year' || activeFilterId === 'course') ? (
+        {cargandoCursos && isCourseCategory ? (
           <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
             Cargando cursos…
           </MenuItem>
-        ) : errorCursos && (activeFilterId === 'year' || activeFilterId === 'course') ? (
+        ) : errorCursos && isCourseCategory ? (
           <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'error.main' }}>
             No se pudieron cargar los cursos. Intente nuevamente más tarde.
           </MenuItem>
-        ) : cargandoOpciones && (activeFilterId === 'genre' || activeFilterId === 'level') ? (
+        ) : cargandoOpciones && isCatalogCategory ? (
           <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
             Cargando opciones…
           </MenuItem>
-        ) : errorOpciones && (activeFilterId === 'genre' || activeFilterId === 'level') ? (
+        ) : errorOpciones && isCatalogCategory ? (
           <MenuItem disabled sx={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'error.main' }}>
             No se pudieron cargar las opciones. Intente nuevamente más tarde.
           </MenuItem>
