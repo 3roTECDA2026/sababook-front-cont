@@ -63,7 +63,8 @@ export const itineraryService = {
       throw new Error(errData.error || `Error al crear itinerario (${res.status})`);
     }
 
-    return (await res.json()) as Itinerary;
+    const data = await res.json();
+    return (data.lista || data) as Itinerary;
   },
 
   async deleteItinerary(id: number, token: string): Promise<void> {
