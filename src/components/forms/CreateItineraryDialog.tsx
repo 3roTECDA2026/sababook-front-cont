@@ -68,6 +68,14 @@ export default function CreateItineraryDialog({
     ]);
   };
 
+  // Un libro no puede repetirse dentro del itinerario: la tabla lista_libro
+  // tiene clave compuesta (lista_id, libro_id) y el back rechaza el guardado.
+  const isBookUsedElsewhere = (libroId: number, index: number) =>
+    selectedBooks.some((sb, i) => i !== index && sb.libroId === libroId);
+
+  const hasBooksLeft = availableBooks.some(
+    (b) => !selectedBooks.some((sb) => sb.libroId === b.libro_id),
+  );
   const handleRemoveBookField = (index: number) => {
     setSelectedBooks((prev) => prev.filter((_, i) => i !== index));
   };
@@ -93,7 +101,14 @@ export default function CreateItineraryDialog({
       setError('El nombre del itinerario es obligatorio.');
       return;
     }
-    const validBooks = selectedBooks.filter((b) => b.libroId > 0);
+    // Se descartan duplicados por si quedó un borrador viejo con el mismo libro
+    // elegido en dos filas: la clave (lista_id, libro_id) no los admite.
+    const seenBookIds = new Set<number>();
+    const validBooks = selectedBooks.filter((b) => {
+      if (b.libroId <= 0 || seenBookIds.has(b.libroId)) return false;
+      seenBookIds.add(b.libroId);
+      return true;
+    });
     if (validBooks.length === 0) {
       setError('Debes agregar al menos un libro al itinerario.');
       return;
@@ -163,7 +178,7 @@ export default function CreateItineraryDialog({
             size="small"
             startIcon={<AddCircleOutlineIcon />}
             onClick={handleAddBookField}
-            disabled={loadingBooks || availableBooks.length === 0}
+            disabled={loadingBooks || availableBooks.length === 0 || !hasBooksLeft}
           >
             Agregar libro
           </Button>
@@ -196,11 +211,15 @@ export default function CreateItineraryDialog({
                 value={item.libroId || ''}
                 onChange={(e) => handleBookChange(index, Number(e.target.value))}
               >
-                {availableBooks.map((b) => (
-                  <MenuItem key={b.libro_id} value={b.libro_id}>
-                    {b.titulo} — {b.autor}
-                  </MenuItem>
-                ))}
+                {availableBooks.map((b) => {
+                  const usedElsewhere = isBookUsedElsewhere(b.libro_id, index);
+                  return (
+                    <MenuItem key={b.libro_id} value={b.libro_id} disabled={usedElsewhere}>
+                      {b.titulo} — {b.autor}
+                      {usedElsewhere ? ' (ya agregado)' : ''}
+                    </MenuItem>
+                  );
+                })}
               </TextField>
               <IconButton color="error" onClick={() => handleRemoveBookField(index)}>
                 <DeleteOutlineIcon />
