@@ -1,6 +1,6 @@
 // src/pages/Profile.tsx
 import React, { useState, useEffect } from 'react';
-import { Box, Button, styled, Avatar, Typography } from '@mui/material';
+import { Alert, Box, Button, styled, Avatar, Typography } from '@mui/material';
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import UserProfileForm from '@/components/forms/UserProfileForm';
@@ -34,9 +34,12 @@ interface ProfileSaveData {
 }
 
 const Profile = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, isAdmin } = useAuth();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ViewState>('menu');
+  // SAB-136: estado del guardado y mensaje del back si falla
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [userData, setUserData] = useState<UserData>({
     userName: '',
@@ -66,16 +69,27 @@ const Profile = () => {
 
   // Funciones para cambiar de vista
   const handleModifyProfileClick = () => setCurrentView('form');
-  const handleCancel = () => setCurrentView('menu');
+  const handleCancel = () => {
+    setSaveError(null);
+    setCurrentView('menu');
+  };
   const handleSave = async (updatedData: { nombre: string; email: string; avatar_url: string }) => {
-    // Enviar userData actualizado a la API
-    const result = await updateUser(updatedData as ProfileSaveData);
+    // SAB-136: el email solo lo puede cambiar un administrador; para el resto no se envía
+    const payload: ProfileSaveData = {
+      nombre: updatedData.nombre,
+      avatar_url: updatedData.avatar_url,
+      ...(isAdmin ? { email: updatedData.email } : {}),
+    };
+
+    setIsSaving(true);
+    setSaveError(null);
+    const result = await updateUser(payload);
+    setIsSaving(false);
 
     if (result.success) {
       handleCancel();
     } else {
-      console.error('Error al guardar:', result.error);
-      // Aquí podrías mostrar un mensaje de error al usuario
+      setSaveError(result.error || 'No se pudo guardar el perfil.');
     }
   };
 
@@ -88,14 +102,27 @@ const Profile = () => {
     if (currentView === 'form') {
       // Muestra el formulario de edición
       return (
-        <UserProfileForm
-          userName={userName}
-          userEmail={userEmail}
-          onCancel={handleCancel}
-          onSave={handleSave}
-          onAvatarChange={handleChangeAvatar}
-          currentAvatarUrl={avatarUrl}
-        />
+        <>
+          {saveError && (
+            <Alert
+              severity="error"
+              onClose={() => setSaveError(null)}
+              sx={{ maxWidth: '480px', mx: 'auto', mb: 2 }}
+            >
+              {saveError}
+            </Alert>
+          )}
+          <UserProfileForm
+            userName={userName}
+            userEmail={userEmail}
+            onCancel={handleCancel}
+            onSave={handleSave}
+            onAvatarChange={handleChangeAvatar}
+            currentAvatarUrl={avatarUrl}
+            canEditEmail={isAdmin}
+            isSaving={isSaving}
+          />
+        </>
       );
     }
     return (
