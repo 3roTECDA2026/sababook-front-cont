@@ -38,6 +38,7 @@ import { useTeacherCourses } from '@/hooks/useTeacherCourses';
 import type { TeacherCoursesSaveResult } from '@/hooks/useTeacherCourses';
 import StudentCourseSelect from '@/components/users/StudentCourseSelect';
 import { useStudentCourse } from '@/hooks/useStudentCourse';
+import { useAuth } from '@/hooks/useAuth';
 import type { ListFilters, User } from '@/types';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { downloadCsv } from '@/utils/downloadCsv';
@@ -92,6 +93,9 @@ export default function UserTable({
   filters,
   searchQuery,
 }: UserTableProps) {
+  // SAB-136: el admin no puede eliminar su propia cuenta
+  const { user: currentUser } = useAuth();
+
   const hasFilters =
     Boolean(searchQuery.trim()) ||
     Object.values(filters).some((value) => value !== undefined && value !== '');
@@ -418,9 +422,13 @@ export default function UserTable({
       );
 
       if (!response.ok) {
-        throw new Error(
-          'Error al eliminar el usuario'
-        );
+        // SAB-136: se muestra el mensaje del back (por ejemplo, el 409 al intentar eliminarse a sí mismo)
+        const body: unknown = await response.json().catch(() => null);
+        const message =
+          body && typeof body === 'object' && 'error' in body
+            ? String((body as { error: unknown }).error)
+            : 'Error al eliminar el usuario';
+        throw new Error(message);
       }
 
       onUserUpdate();
@@ -439,7 +447,7 @@ export default function UserTable({
 
       setSnackbar({
         open: true,
-        message: 'Error al eliminar el usuario',
+        message: error instanceof Error ? error.message : 'Error al eliminar el usuario',
         severity: 'error',
       });
 
@@ -621,7 +629,12 @@ export default function UserTable({
                         onClick={() =>
                           handleDelete(user)
                         }
-                        title="Eliminar"
+                        title={
+                          user.usuario_id === currentUser?.usuario_id
+                            ? 'No podés eliminar tu propia cuenta'
+                            : 'Eliminar'
+                        }
+                        disabled={user.usuario_id === currentUser?.usuario_id}
                         size="small"
                       >
                         <DeleteIcon
