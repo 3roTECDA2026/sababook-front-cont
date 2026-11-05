@@ -218,7 +218,7 @@ export async function obtenerLibrosFiltradosPorCursoOAnio(
     titulo: string;
     autor: string;
     portada_url: string | null;
-    puntaje: number;
+    puntaje: number | null;
   }[] = [];
 
   for (const lista of listasLibros) {

@@ -1,3 +1,4 @@
+// src/components/teacherPanel/StudentScoresTable.tsx
 import {
   Alert,
   Box,
@@ -11,6 +12,7 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { StyledTableCellHeader, StyledTableContainer } from '@/components/ui/StyledTable';
 import { useCourseScores } from '@/hooks/useCourseScores';
@@ -20,6 +22,7 @@ interface StudentScoresTableProps {
 }
 
 export default function StudentScoresTable({ cursoId }: StudentScoresTableProps) {
+  const theme = useTheme();
   const { puntajes, cargando, error } = useCourseScores(cursoId);
 
   if (cursoId === null) {
@@ -56,7 +59,7 @@ export default function StudentScoresTable({ cursoId }: StudentScoresTableProps)
         </Box>
       ) : cargando ? (
         <Box display="flex" justifyContent="center" py={4}>
-          <CircularProgress size={30} sx={{ color: '#f25600' }} />
+          <CircularProgress size={30} sx={{ color: theme.palette.button.main }} />
         </Box>
       ) : (
         <TableContainer>

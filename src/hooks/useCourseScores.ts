@@ -1,3 +1,4 @@
+// src/hooks/useCourseScores.ts
 import { useEffect, useState } from 'react';
 import { getPuntajesCurso } from '@/services/courseService';
 import type { CourseScores } from '@/types';

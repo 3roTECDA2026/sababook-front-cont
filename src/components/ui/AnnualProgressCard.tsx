@@ -1,3 +1,4 @@
+// src/components/ui/AnnualProgressCard.tsx
 import { useEffect, useState } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import StyledCard from './StyledCard';
@@ -42,7 +43,7 @@ export default function AnnualProgressCard() {
         <Typography
           variant="h4"
           fontWeight="bold"
-          sx={{ color: theme.palette.button?.main || '#f25600' }}
+          sx={{ color: theme.palette.button.main }}
         >
           {puntaje_acumulado}
         </Typography>
