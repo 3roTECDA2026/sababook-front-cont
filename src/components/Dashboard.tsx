@@ -1121,6 +1121,7 @@ const Dashboard = () => {
 
       <HeaderDashboard
         activeView={activeView}
+        mostrarRacha={false}
         onNavigate={handleNavigate}
         onAddClick={handleAddClick}
         isLoading={isApiLoading}

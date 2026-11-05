@@ -182,7 +182,7 @@ const TriviaPage = () => {
             : undefined
         }
       />
-      <SideMenu open={menuOpen} onClose={handleMenuClose} active="Trivia" />
+      <SideMenu open={menuOpen} onClose={handleMenuClose} active="Generar trivia" />
 
       {!selection && (
         <>
