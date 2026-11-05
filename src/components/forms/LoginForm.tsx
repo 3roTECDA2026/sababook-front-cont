@@ -1,7 +1,9 @@
 // src/components/forms/LoginForm.tsx
 
 import React, { useState, FormEvent } from 'react';
-import { Alert, Box, Button, TextField, Typography, styled, useTheme } from '@mui/material';
+import { Alert, Box, Button, IconButton, InputAdornment, TextField, Typography, styled, useTheme } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import type { TipoErrorLogin } from '@/contexts/AuthContextDefinition';
 
 // Estilos del contenedor del formulario (simplemente para dar un padding)
@@ -44,9 +46,10 @@ const LoginForm = ({
   const theme = useTheme();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-
-  // Usamos el color 'body.main' de tu tema para el texto del label
+ const [showPassword, setShowPassword] = useState<boolean>(false);
   const labelColor = theme.palette.body?.main || '#4A4C52';
+
+  
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -91,18 +94,33 @@ const LoginForm = ({
             Contraseña
           </Typography>
           <TextField
-            id="password"
-            name="password"
-            autoComplete="current-password"
-            variant="outlined"
-            type="password"
-            fullWidth
-            margin="dense"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </Box>
+  id="password"
+  name="password"
+  autoComplete="current-password"
+  variant="outlined"
+  type={showPassword ? 'text' : 'password'}
+  fullWidth
+  margin="dense"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  required
+  slotProps={{
+    input: {
+      endAdornment: (
+        <InputAdornment position="end">
+          <IconButton
+            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            onClick={() => setShowPassword((prev) => !prev)}
+            edge="end"
+          >
+            {showPassword ? <VisibilityOff /> : <Visibility />}
+          </IconButton>
+        </InputAdornment>
+      ),
+    },
+  }}
+/>
+</Box>   
 
         {/* Error de conexión: cartel azul informativo */}
         {error && errorType === 'conexion' && (
