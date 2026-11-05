@@ -21,7 +21,6 @@ import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ForumIcon from '@mui/icons-material/Forum';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import LocalCafeIcon from '@mui/icons-material/LocalCafe';
 import QuizIcon from '@mui/icons-material/Quiz';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -84,7 +83,6 @@ export default function SideMenu({
       { text: 'Radio Sábato', icon: <RadioIcon />, path: '/radio' },
 
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
-      { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
       { text: 'Libros por curso', icon: <MenuBookIcon />, path: '/cursos/libros' },
       { text: 'Panel docente', icon: <InsightsIcon />, path: '/panel-docente' },
       { text: 'Generar trivia', icon: <QuizIcon />, path: '/trivia' },
@@ -100,7 +98,6 @@ export default function SideMenu({
       { text: 'Radio Sábato', icon: <RadioIcon />, path: '/radio' },
       { text: 'Mi Biblioteca', icon: <FavoriteIcon />, path: '/favoritos' },
       { text: 'Foros', icon: <ForumIcon />, path: '/foros' },
-      { text: 'Insignias', icon: <EmojiEventsIcon />, path: '/insignias' },
     ];
   }
 
@@ -152,7 +149,7 @@ export default function SideMenu({
                     sx={{
                       borderRadius: 3,
                       bgcolor: isActive ? '#ff8a00' : 'transparent',
-                      color: isActive ? '#837878' : '#4b2c15',
+                      color: isActive ? '#fff' : '#4b2c15',
                       '&:hover': {
                         bgcolor: isActive
                           ? '#ff9e2a'
