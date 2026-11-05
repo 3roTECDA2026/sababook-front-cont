@@ -12,7 +12,6 @@ import DashboardPage from './pages/DashboardPage';
 import BookDetailsPage from './pages/BookDetailsPage';
 import MyComments from './pages/MyComments';
 import Comments from './pages/Comments';
-import Insignias from './pages/Insignias';
 import ForumDetailsPage from './pages/ForumDetailsPage';
 import TriviaPage from './pages/TriviaPage';
 import BookCommentsAdmin from './pages/BookCommentsAdmin';
@@ -178,15 +177,6 @@ function App() {
           <RoleGuard allowedRoles={['ADMINISTRADOR']}>
             <BookCommentsAdmin />
           </RoleGuard>
-        }
-      />
-
-      <Route
-        path="/insignias"
-        element={
-          <ProtectedRoute>
-            <Insignias />
-          </ProtectedRoute>
         }
       />
 
