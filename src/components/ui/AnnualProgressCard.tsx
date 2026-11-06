@@ -43,6 +43,9 @@ export default function AnnualProgressCard() {
         <Typography variant="body2" fontWeight="bold" color="text.secondary">
           {user?.nombre}
         </Typography>
+        <Typography variant="body2" fontWeight="bold" color="text.secondary">
+          :
+        </Typography>
         <Typography
           variant="h4"
           fontWeight="bold"
@@ -51,7 +54,7 @@ export default function AnnualProgressCard() {
           {puntaje_acumulado}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          puntos acumulados en el año ({puntaje_acumulado} / {minimo_requerido})
+          puntos ({puntaje_acumulado} / {minimo_requerido})
         </Typography>
       </Box>
     </StyledCard>
