@@ -101,8 +101,9 @@ const etiquetaCurso = (curso: CourseSummary) =>
 
 const parsearPuntaje = (valor: string): { valido: boolean; puntaje: number | null } => {
   if (valor.trim() === '') return { valido: true, puntaje: null };
+  if (!/^\d+$/.test(valor.trim())) return { valido: false, puntaje: null };
   const numero = Number(valor);
-  if (!Number.isInteger(numero) || numero < 1 || numero > 100) {
+  if (numero < 1 || numero > 100) {
     return { valido: false, puntaje: null };
   }
   return { valido: true, puntaje: numero };
@@ -364,112 +365,107 @@ export default function CourseBooksPage() {
         title="Libros por curso"
         subtitle={esAdmin ? 'Asigná libros a los cursos' : 'Asigná libros a tus cursos'}
       />
-      <SideMenu
-        open={menuAbierto}
-        onClose={() => setMenuAbierto(false)}
-        active="Libros por curso"
-      />
+      <SideMenu open={menuAbierto} onClose={() => setMenuAbierto(false)} active="Libros por curso" />
 
-      {cargandoCursos ? (
-        <Box display="flex" justifyContent="center" mt={4}>
-          <CircularProgress sx={{ color: '#f25600' }} />
-        </Box>
-      ) : cursos.length === 0 ? (
-        <Typography color="text.secondary" textAlign="center" mt={4}>
-          {esAdmin ? 'Todavía no hay cursos creados.' : 'No tenés cursos asignados.'}
-        </Typography>
-      ) : (
-        <>
-          <Tabs
-            value={pestana}
-            onChange={(_, valor: Pestana) => setPestana(valor)}
-            sx={{
-              mt: 2,
-              mb: 3,
-              '& .MuiTabs-indicator': { backgroundColor: '#f25600' },
-              '& .MuiTab-root.Mui-selected': { color: '#f25600' },
-            }}
-          >
-            <Tab
-              value="libros"
-              label="Libros del curso"
-              sx={{ textTransform: 'none', fontWeight: 'bold' }}
-            />
-            <Tab
-              value="historial"
-              label="Historial"
-              sx={{ textTransform: 'none', fontWeight: 'bold' }}
-            />
-            <Tab
-              value="puntajes"
-              label="Puntajes de alumnos"
-              sx={{ textTransform: 'none', fontWeight: 'bold' }}
-            />
-          </Tabs>
-
-          {pestana !== 'historial' && cursoSeleccionado && (
-            <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
-              <TextField
-                select
-                id="curso"
-                name="curso"
-                label="Curso"
-                value={cursoId ?? ''}
-                onChange={(e) => setCursoId(Number(e.target.value))}
-                sx={{ minWidth: 260, flexGrow: 1 }}
-              >
-                {cursos.map((curso) => (
-                  <MenuItem key={curso.curso_id} value={curso.curso_id}>
-                    {etiquetaCurso(curso)}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              {esAdmin ? (
-                <Button
-                  variant="outlined"
-                  startIcon={<EditIcon />}
-                  onClick={abrirDialogoPuntajeAnual}
-                  sx={estiloBotonPrincipal}
-                >
-                  Puntaje anual: {cursoSeleccionado?.puntaje_anual ?? 140}
-                </Button>
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  Puntaje anual: {cursoSeleccionado?.puntaje_anual ?? 140}
-                </Typography>
-              )}
+          {cargandoCursos ? (
+            <Box display="flex" justifyContent="center" mt={4}>
+              <CircularProgress sx={{ color: '#f25600' }} />
             </Box>
-          )}
-
-          {pestana === 'historial' ? (
-            <AssignmentHistoryTable
-              cursos={cursos}
-              onError={(mensaje) => mostrarMensaje(mensaje, 'error')}
-            />
-          ) : pestana === 'puntajes' ? (
-            <>
-              {cursoSeleccionado && (
-                <Box p={2}>
-                  <Typography variant="body2" color="text.secondary" mt={1}>
-                    Curso: {etiquetaCurso(cursoSeleccionado)}
-                  </Typography>
-                </Box>
-              )}
-              <StudentScoresTable cursoId={cursoId} />
-            </>
+          ) : cursos.length === 0 ? (
+            <Typography color="text.secondary" textAlign="center" mt={4}>
+              {esAdmin ? 'Todavía no hay cursos creados.' : 'No tenés cursos asignados.'}
+            </Typography>
           ) : (
             <>
-              <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={abrirDialogoAsignar}
-                  sx={estiloBotonPrincipal}
-                >
-                  Asignar libro
-                </Button>
-              </Box>
+              {cursoSeleccionado && (
+                <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
+                  <TextField
+                    select
+                    id="curso"
+                    name="curso"
+                    label="Curso"
+                    value={cursoId ?? ''}
+                    onChange={(e) => setCursoId(Number(e.target.value))}
+                    sx={{ minWidth: 260, flexGrow: 1 }}
+                  >
+                    {cursos.map((curso) => (
+                      <MenuItem key={curso.curso_id} value={curso.curso_id}>
+                        {etiquetaCurso(curso)}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  <Button
+                    variant="outlined"
+                    startIcon={<EditIcon />}
+                    onClick={abrirDialogoPuntajeAnual}
+                    sx={estiloBotonPrincipal}
+                  >
+                    Puntaje anual: {cursoSeleccionado?.puntaje_anual ?? 140}
+                  </Button>
+                </Box>
+              )}
+
+              <Tabs
+                value={pestana}
+                onChange={(_, valor: Pestana) => setPestana(valor)}
+                sx={{
+                  mt: 2,
+                  mb: 3,
+                  '& .MuiTabs-indicator': { backgroundColor: '#f25600' },
+                  '& .MuiTab-root.Mui-selected': { color: '#f25600' },
+                }}
+              >
+                <Tab value="libros" label="Libros del curso" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+                <Tab value="historial" label="Historial" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+                <Tab value="puntajes" label="Puntajes de alumnos" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+              </Tabs>
+
+              {pestana === 'historial' ? (
+                <AssignmentHistoryTable
+                  cursos={cursos}
+                  onError={(mensaje) => mostrarMensaje(mensaje, 'error')}
+                />
+              ) : pestana === 'puntajes' ? (
+                <>
+                  <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
+                    <TextField
+                      select
+                      id="curso-puntajes"
+                      name="curso"
+                      label="Curso"
+                      value={cursoId ?? ''}
+                      onChange={(e) => setCursoId(Number(e.target.value))}
+                      sx={{ minWidth: 260, flexGrow: 1 }}
+                    >
+                      {cursos.map((curso) => (
+                        <MenuItem key={curso.curso_id} value={curso.curso_id}>
+                          {etiquetaCurso(curso)}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+                  {cursoSeleccionado && (
+                    <Box p={2}>
+                      <Typography variant="body2" color="text.secondary" mt={1}>
+                        Curso: {etiquetaCurso(cursoSeleccionado)}
+                      </Typography>
+                    </Box>
+                  )}
+                  <StudentScoresTable cursoId={cursoId} />
+                </>
+              ) : (
+                <>
+                  <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={abrirDialogoAsignar}
+                      sx={estiloBotonPrincipal}
+                    >
+                      Asignar libro
+                    </Button>
+                  </Box>
 
               <StyledTableContainer>
                 <TableContainer>
@@ -589,6 +585,213 @@ export default function CourseBooksPage() {
           )}
         </>
       )}
+
+      {/* Diálogo para asignar un libro */}
+      <Dialog
+        open={dialogoAsignarAbierto}
+        onClose={() => !guardando && setDialogoAsignarAbierto(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Asignar libro al curso</DialogTitle>
+        <DialogContent>
+          <Box display="flex" flexDirection="column" gap={2} mt={1}>
+            <Autocomplete
+              id="libro-a-asignar"
+              options={librosDisponibles}
+              value={libroElegido}
+              onChange={(_, valor) => setLibroElegido(valor)}
+              getOptionLabel={(libro) => `${libro.titulo} — ${libro.autor}`}
+              isOptionEqualToValue={(a, b) => a.libro_id === b.libro_id}
+              noOptionsText="No hay libros disponibles"
+              renderInput={(params) => <TextField {...params} name="libro" label="Libro" />}
+            />
+            <TextField
+              id="puntaje-nuevo"
+              name="puntaje"
+              label="Puntaje"
+              type="number"
+              value={puntajeNuevo}
+              onChange={(e) => setPuntajeNuevo(e.target.value)}
+              helperText="Dejalo vacío para dejarlo sin puntaje."
+              slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setDialogoAsignarAbierto(false)}
+            disabled={guardando}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={confirmarAsignacion}
+            disabled={guardando || !libroElegido}
+            sx={estiloBotonPrincipal}
+          >
+            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Asignar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Alerta: el libro ya se asignó en años anteriores (no bloquea) */}
+      <Dialog
+        open={asignacionesAnteriores !== null}
+        onClose={() => !guardando && setAsignacionesAnteriores(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Este libro ya se asignó antes</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" mb={1}>
+            "{libroElegido?.titulo}" ya se asignó en años anteriores a:
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 3 }}>
+            {asignacionesAnteriores?.map((anterior) => (
+              <li key={anterior.curso.curso_id}>
+                <Typography variant="body2">
+                  {`${anterior.anio_lectivo} · ${anterior.curso.anio}°${anterior.curso.division}`}
+                </Typography>
+              </li>
+            ))}
+          </Box>
+          <Typography variant="body2" color="text.secondary" mt={2}>
+            ¿Querés asignarlo igual?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setAsignacionesAnteriores(null)}
+            disabled={guardando}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={realizarAsignacion}
+            disabled={guardando}
+            sx={estiloBotonPrincipal}
+          >
+            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Asignar igual'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={dialogoPuntajeAnualAbierto}
+        onClose={() => !guardando && setDialogoPuntajeAnualAbierto(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Puntaje anual del curso</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            {cursoSeleccionado ? etiquetaCurso(cursoSeleccionado) : ''}
+          </Typography>
+          <TextField
+            id="puntaje-anual"
+            name="puntaje_anual"
+            label="Puntaje anual"
+            type="number"
+            fullWidth
+            value={puntajeAnualEditado}
+            onChange={(e) => setPuntajeAnualEditado(e.target.value)}
+            helperText="Entre 140 y 200 puntos."
+            slotProps={{ htmlInput: { min: 140, max: 200, step: 1 } }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setDialogoPuntajeAnualAbierto(false)}
+            disabled={guardando}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={confirmarPuntajeAnual}
+            disabled={guardando}
+            sx={estiloBotonPrincipal}
+          >
+            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Guardar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo para editar el puntaje */}
+      <Dialog
+        open={libroAEditar !== null}
+        onClose={() => !guardando && setLibroAEditar(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Editar puntaje</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            {libroAEditar?.titulo}
+          </Typography>
+          <TextField
+            id="puntaje-editado"
+            name="puntaje"
+            label="Puntaje"
+            type="number"
+            fullWidth
+            value={puntajeEditado}
+            onChange={(e) => setPuntajeEditado(e.target.value)}
+            helperText="Dejalo vacío para dejarlo sin puntaje."
+            slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="outlined" onClick={() => setLibroAEditar(null)} disabled={guardando}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={confirmarEdicion}
+            disabled={guardando}
+            sx={estiloBotonPrincipal}
+          >
+            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Guardar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirmación para quitar un libro */}
+      <ConfirmationModal
+        open={libroAQuitar !== null}
+        onClose={() => setLibroAQuitar(null)}
+        onConfirm={confirmarQuitar}
+        title="Quitar libro del curso"
+        message={libroAQuitar ? `¿Querés quitar "${libroAQuitar.titulo}" de este curso?` : ''}
+      />
+
+      {/* Lector de material PDF (SAB-67) */}
+      <PdfReaderModal
+        open={pdfModalOpen}
+        onClose={() => setPdfModalOpen(false)}
+        bookId={selectedPdfBookId}
+        title={selectedPdfTitle || 'Material de lectura'}
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

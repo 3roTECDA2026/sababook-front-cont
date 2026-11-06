@@ -23,15 +23,12 @@ interface StudentScoresTableProps {
 
 export default function StudentScoresTable({ cursoId }: StudentScoresTableProps) {
   const theme = useTheme();
-  const { puntajes, cargando, error } = useCourseScores(cursoId);
+  const { puntajes, cargando, error, recargar } = useCourseScores(cursoId);
 
   if (cursoId === null) {
     return (
       <StyledTableContainer>
         <Box p={2}>
-          <Typography variant="h6" fontWeight="bold">
-            Puntajes de los alumnos
-          </Typography>
           <Typography variant="body2" color="text.secondary">
             Elegí un curso para ver sus puntajes.
           </Typography>
@@ -53,7 +50,7 @@ export default function StudentScoresTable({ cursoId }: StudentScoresTableProps)
       {error ? (
         <Box p={2} display="flex" flexDirection="column" gap={1} alignItems="center">
           <Alert severity="error">{error}</Alert>
-          <Button variant="outlined" onClick={() => window.location.reload()}>
+          <Button variant="outlined" onClick={recargar}>
             Reintentar
           </Button>
         </Box>

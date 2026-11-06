@@ -1,5 +1,5 @@
 // src/hooks/useCourseScores.ts
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getPuntajesCurso } from '@/services/courseService';
 import type { CourseScores } from '@/types';
 
@@ -7,8 +7,9 @@ export function useCourseScores(cursoId: number | null) {
   const [puntajes, setPuntajes] = useState<CourseScores | null>(null);
   const [cargando, setCargando] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const canceladoRef = useRef<boolean>(false);
 
-  useEffect(() => {
+  const cargarPuntajes = useCallback(() => {
     if (cursoId === null) {
       setPuntajes(null);
       setError(null);
@@ -16,27 +17,34 @@ export function useCourseScores(cursoId: number | null) {
       return;
     }
 
-    let cancelado = false;
+    canceladoRef.current = false;
     setCargando(true);
     setError(null);
 
     getPuntajesCurso(cursoId)
       .then((data) => {
-        if (!cancelado) setPuntajes(data);
+        if (!canceladoRef.current) setPuntajes(data);
       })
       .catch((err) => {
-        if (cancelado) return;
+        if (canceladoRef.current) return;
         setPuntajes(null);
         setError(err instanceof Error ? err.message : 'No se pudieron cargar los puntajes.');
       })
       .finally(() => {
-        if (!cancelado) setCargando(false);
+        if (!canceladoRef.current) setCargando(false);
       });
-
-    return () => {
-      cancelado = true;
-    };
   }, [cursoId]);
 
-  return { puntajes, cargando, error };
+  useEffect(() => {
+    cargarPuntajes();
+    return () => {
+      canceladoRef.current = true;
+    };
+  }, [cargarPuntajes]);
+
+  const recargar = useCallback(() => {
+    cargarPuntajes();
+  }, [cargarPuntajes]);
+
+  return { puntajes, cargando, error, recargar };
 }
