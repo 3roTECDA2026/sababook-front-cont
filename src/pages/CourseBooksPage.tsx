@@ -39,6 +39,7 @@ import SideMenu from '@/components/layout/SideMenu';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import AssignmentHistoryTable from '@/components/tables/AssignmentHistoryTable';
 import PdfReaderModal from '@/components/ui/PdfReaderModal';
+import PaginationControls from '@/components/ui/PaginationControls';
 import { getCatalogoLibros } from '@/services/apiService';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -81,6 +82,9 @@ const estiloBotonPrincipal = {
   borderRadius: '8px',
 };
 
+// Cantidad de libros por página en la tabla del curso
+const BOOKS_PER_PAGE = 10;
+
 type Pestana = 'libros' | 'historial';
 
 interface SnackbarState {
@@ -115,6 +119,8 @@ export default function CourseBooksPage() {
   const [cursoId, setCursoId] = useState<number | null>(null);
   const [libros, setLibros] = useState<CourseBook[]>([]);
   const [catalogo, setCatalogo] = useState<Book[]>([]);
+  // Paginado de la tabla de libros
+  const [page, setPage] = useState<number>(1);
   const [cargandoCursos, setCargandoCursos] = useState<boolean>(true);
   const [cargandoLibros, setCargandoLibros] = useState<boolean>(false);
   const [guardando, setGuardando] = useState<boolean>(false);
@@ -181,10 +187,20 @@ export default function CourseBooksPage() {
     }
   };
 
-  // Cada vez que cambia el curso elegido, se recargan sus libros
+  // Cada vez que cambia el curso elegido, se recargan sus libros y se vuelve a la primera página
   useEffect(() => {
+    setPage(1);
     if (cursoId !== null) cargarLibros(cursoId);
   }, [cursoId]);
+
+  // Paginado en el front: el curso trae todos sus libros y se muestran de a BOOKS_PER_PAGE
+  const totalPages = Math.max(1, Math.ceil(libros.length / BOOKS_PER_PAGE));
+  // Si se quita el último libro de la última página, se queda en la anterior
+  const currentPage = Math.min(page, totalPages);
+  const visibleBooks = libros.slice(
+    (currentPage - 1) * BOOKS_PER_PAGE,
+    currentPage * BOOKS_PER_PAGE
+  );
 
   // Libros del catálogo que todavía no están en el curso
   const librosDisponibles = catalogo.filter(
@@ -390,7 +406,7 @@ export default function CourseBooksPage() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        libros.map((libro) => (
+                        visibleBooks.map((libro) => (
                           <TableRow key={libro.libro_id} hover>
                             <TableCell>
                               <Box display="flex" alignItems="center" gap={1.5}>
@@ -468,6 +484,13 @@ export default function CourseBooksPage() {
                   </Table>
                 </TableContainer>
               </StyledTableContainer>
+
+              <PaginationControls
+                page={currentPage}
+                totalPages={totalPages}
+                onChange={setPage}
+                disabled={cargandoLibros}
+              />
             </>
           )}
         </>
