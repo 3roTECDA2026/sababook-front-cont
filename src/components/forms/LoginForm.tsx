@@ -46,13 +46,16 @@ const LoginForm = ({
   const theme = useTheme();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
- const [showPassword, setShowPassword] = useState<boolean>(false);
-  const labelColor = theme.palette.body?.main || '#4A4C52';
+  // Mostrar u ocultar la contraseña con el botón del ojo (SAB-138)
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  
+  // Usamos el color 'body.main' de tu tema para el texto del label
+  const labelColor = theme.palette.body?.main || '#4A4C52';
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // Se vuelve a ocultar al enviar: si el login falla, no queda la contraseña a la vista
+    setShowPassword(false);
     onLoginSubmit({ email, password });
   };
 
@@ -94,33 +97,46 @@ const LoginForm = ({
             Contraseña
           </Typography>
           <TextField
-  id="password"
-  name="password"
-  autoComplete="current-password"
-  variant="outlined"
-  type={showPassword ? 'text' : 'password'}
-  fullWidth
-  margin="dense"
-  value={password}
-  onChange={(e) => setPassword(e.target.value)}
-  required
-  slotProps={{
-    input: {
-      endAdornment: (
-        <InputAdornment position="end">
-          <IconButton
-            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-            onClick={() => setShowPassword((prev) => !prev)}
-            edge="end"
-          >
-            {showPassword ? <VisibilityOff /> : <Visibility />}
-          </IconButton>
-        </InputAdornment>
-      ),
-    },
-  }}
-/>
-</Box>   
+            id="password"
+            name="password"
+            autoComplete="current-password"
+            variant="outlined"
+            type={showPassword ? 'text' : 'password'}
+            fullWidth
+            margin="dense"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            sx={{
+              // Oculta el ojo propio de Edge para que no aparezcan dos
+              '& input::-ms-reveal, & input::-ms-clear': { display: 'none' },
+            }}
+            slotProps={{
+              // Con la contraseña visible, el teclado del celular no debe corregirla ni
+              // ponerle mayúsculas, y el navegador no debe revisar su ortografía
+              htmlInput: {
+                spellCheck: false,
+                autoCapitalize: 'none',
+                autoCorrect: 'off',
+              },
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {/* onMouseDown evita que el campo pierda el foco y se cierre el teclado del celular */}
+                    <IconButton
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      onMouseDown={(e) => e.preventDefault()}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </Box>
 
         {/* Error de conexión: cartel azul informativo */}
         {error && errorType === 'conexion' && (
