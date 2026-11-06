@@ -43,9 +43,6 @@ export default function StudentScoresTable({ cursoId }: StudentScoresTableProps)
   return (
     <StyledTableContainer>
       <Box p={2} pb={1}>
-        <Typography variant="h6" fontWeight="bold">
-          Puntajes de los alumnos
-        </Typography>
         <Typography variant="body2" color="text.secondary">
           {puntajes
             ? `Puntaje anual del curso: ${puntajes.curso.puntaje_anual} puntos.`
@@ -74,45 +71,45 @@ export default function StudentScoresTable({ cursoId }: StudentScoresTableProps)
               </TableRow>
             </TableHead>
             <TableBody>
-                {!puntajes || puntajes.alumnos.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={2} align="center" sx={{ py: 4 }}>
-                      <Typography color="text.secondary">
-                        Este curso todavía no tiene alumnos inscriptos.
-                      </Typography>
+              {!puntajes || puntajes.alumnos.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={2} align="center" sx={{ py: 4 }}>
+                    <Typography color="text.secondary">
+                      Este curso todavía no tiene alumnos inscriptos.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                puntajes.alumnos.map((alumno) => (
+                  <TableRow key={alumno.usuario_id} hover>
+                    <TableCell>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Typography variant="body2" fontWeight="bold">
+                          {alumno.nombre}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {alumno.puntaje_acumulado} / {alumno.minimo_requerido}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      {alumno.cumplido ? (
+                        <Chip label="Cumplido" color="success" size="small" />
+                      ) : (
+                        <Chip
+                          label={`Faltan ${alumno.faltante}`}
+                          color="warning"
+                          size="small"
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
-                ) : (
-                  puntajes.alumnos.map((alumno) => (
-                    <TableRow key={alumno.usuario_id} hover>
-                      <TableCell>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography variant="body2" fontWeight="bold">
-                            {alumno.nombre}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {alumno.puntaje_acumulado} / {alumno.minimo_requerido}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell align="center">
-                        {alumno.cumplido ? (
-                          <Chip label="Cumplido" color="success" size="small" />
-                        ) : (
-                          <Chip
-                            label={`Faltan ${alumno.faltante}`}
-                            color="warning"
-                            size="small"
-                          />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>
