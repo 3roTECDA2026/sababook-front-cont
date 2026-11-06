@@ -27,6 +27,7 @@ const LoginPage = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [errorType, setErrorType] = useState<TipoErrorLogin | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
   const handleLoginSubmit = async ({
     email,
@@ -34,6 +35,7 @@ const LoginPage = () => {
   }: LoginCredentials) => {
     setError(null);
     setErrorType(null);
+    setIsLoggingIn(true);
 
     try {
       const result = await login(email, password);
@@ -56,6 +58,8 @@ const LoginPage = () => {
         "No pudimos conectar con el servidor. Inténtalo en un momento."
       );
       setErrorType("conexion");
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -80,6 +84,7 @@ const LoginPage = () => {
         onLoginSubmit={handleLoginSubmit}
         error={error}
         errorType={errorType}
+        loading={isLoggingIn}
       />
     </StyledPageContainer>
   );

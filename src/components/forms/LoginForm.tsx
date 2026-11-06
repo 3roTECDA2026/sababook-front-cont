@@ -1,7 +1,7 @@
 // src/components/forms/LoginForm.tsx
 
 import React, { useState, FormEvent } from 'react';
-import { Alert, Box, Button, IconButton, InputAdornment, TextField, Typography, styled, useTheme } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, IconButton, InputAdornment, TextField, Typography, styled, useTheme } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import type { TipoErrorLogin } from '@/contexts/AuthContextDefinition';
@@ -36,12 +36,14 @@ interface LoginFormProps {
   onLoginSubmit: (credentials: LoginCredentials) => void;
   error?: string | null;
   errorType?: TipoErrorLogin | null;
+  loading?: boolean;
 }
 
 const LoginForm = ({
   onLoginSubmit,
   error,
   errorType,
+  loading = false,
 }: LoginFormProps) => {
   const theme = useTheme();
   const [email, setEmail] = useState<string>('');
@@ -158,8 +160,19 @@ const LoginForm = ({
         )}
 
         {/* Botón de Ingresar */}
-        <StyledIngresarButton variant="contained" type="submit" fullWidth>
-          Ingresar
+        {/* Deshabilitado mientras se procesa, para evitar envíos repetidos (SAB-143) */}
+        <StyledIngresarButton
+          variant="contained"
+          type="submit"
+          fullWidth
+          disabled={loading}
+        >
+          {/* El spinner mide lo mismo que la línea de texto, así el botón no cambia de alto */}
+          {loading ? (
+            <CircularProgress size={28} color="inherit" aria-label="Ingresando" />
+          ) : (
+            'Ingresar'
+          )}
         </StyledIngresarButton>
 
         {/* No hay registro público: las cuentas las crea el administrador (SAB-079) */}
