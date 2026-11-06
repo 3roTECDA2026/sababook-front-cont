@@ -52,6 +52,7 @@ export interface PreviousAssignment {
   curso: { curso_id: number; anio: number; division: string };
 }
 
+// Puntaje acumulado del alumno en un curso (SAB-120)
 export interface StudentProgress {
   anio_lectivo: number;
   curso: { curso_id: number; anio: number; division: string } | null;
@@ -59,4 +60,11 @@ export interface StudentProgress {
   minimo_requerido: number;
   faltante: number;
   cumplido: boolean;
+}
+
+// Alumno inscripto en un curso (SAB-135)
+export interface CourseStudent {
+  usuario_id: number;
+  nombre: string;
+  email: string;
 }

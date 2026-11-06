@@ -6,10 +6,10 @@ import type {
   TeacherPanel,
   AssignmentHistoryEntry,
   PreviousAssignment,
+  CourseStudent,
   StudentProgress,
   CourseScores,
 } from '@/types';
-
 
 // Hace la petición con el token y devuelve el mensaje de error real del back si falla
 async function solicitud<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -71,6 +71,31 @@ export async function assignTeacher(courseId: number, teacherId: number) {
  */
 export async function removeTeacher(courseId: number, teacherId: number) {
   return await solicitud<{ message: string }>(`/courses/${courseId}/teachers/${teacherId}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Cursos en los que está inscripto un alumno, en todos los años lectivos (solo administrador, SAB-116)
+ */
+export async function getStudentCourses(studentId: number, signal?: AbortSignal): Promise<CourseSummary[]> {
+  return await solicitud<CourseSummary[]>(`/courses?alumno_id=${studentId}`, { signal });
+}
+
+/**
+ * Poner a un alumno en un curso. Si ya tenía otro curso en el año, el back lo pasa en una sola operación
+ */
+export async function moveStudent(courseId: number, studentId: number) {
+  return await solicitud<{ message: string }>(`/courses/${courseId}/students/${studentId}`, {
+    method: 'PUT',
+  });
+}
+
+/**
+ * Quitar a un alumno de un curso
+ */
+export async function unenrollStudent(courseId: number, studentId: number) {
+  return await solicitud<{ message: string }>(`/courses/${courseId}/students/${studentId}`, {
     method: 'DELETE',
   });
 }
@@ -182,4 +207,14 @@ export async function getAsignacionesAnteriores(
   return await solicitud<PreviousAssignment[]>(
     `/courses/${cursoId}/books/${libroId}/previous-assignments`
   );
+}
+
+/**
+ * Alumnos inscriptos en un curso (solo el administrador o el docente del curso) (SAB-135)
+ */
+export async function getCourseStudents(
+  courseId: number,
+  signal?: AbortSignal
+): Promise<CourseStudent[]> {
+  return await solicitud<CourseStudent[]>(`/courses/${courseId}/students`, { signal });
 }

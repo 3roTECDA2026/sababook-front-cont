@@ -36,6 +36,9 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import TeacherCoursesSelect from '@/components/users/TeacherCoursesSelect';
 import { useTeacherCourses } from '@/hooks/useTeacherCourses';
 import type { TeacherCoursesSaveResult } from '@/hooks/useTeacherCourses';
+import StudentCourseSelect from '@/components/users/StudentCourseSelect';
+import { useStudentCourse } from '@/hooks/useStudentCourse';
+import { useAuth } from '@/hooks/useAuth';
 import type { ListFilters, User } from '@/types';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { downloadCsv } from '@/utils/downloadCsv';
@@ -90,6 +93,9 @@ export default function UserTable({
   filters,
   searchQuery,
 }: UserTableProps) {
+  // SAB-136: el admin no puede eliminar su propia cuenta
+  const { user: currentUser } = useAuth();
+
   const hasFilters =
     Boolean(searchQuery.trim()) ||
     Object.values(filters).some((value) => value !== undefined && value !== '');
@@ -107,6 +113,14 @@ export default function UserTable({
   const teacherCourses = useTeacherCourses(
     userToEdit?.rol === 'DOCENTE' ? userToEdit.usuario_id : null,
     CURRENT_SCHOOL_YEAR
+  );
+
+  // SAB-116: curso del alumno que se está editando (según el rol guardado)
+  const isEditingStudent = userToEdit?.rol === 'ALUMNO';
+  const studentCourse = useStudentCourse(
+    isEditingStudent && userToEdit ? userToEdit.usuario_id : null,
+    CURRENT_SCHOOL_YEAR,
+    isEditingStudent
   );
 
   const [isSaving, setIsSaving] =
@@ -256,6 +270,35 @@ export default function UserTable({
       return;
     }
 
+    // SAB-116: no se guarda mientras se cargan los cursos del alumno, ni si no se pudieron cargar
+    if (userToEdit.rol === 'ALUMNO' && studentCourse.isLoading) {
+      showNotification('Esperá a que terminen de cargarse los cursos del alumno.', 'warning');
+      return;
+    }
+    if (userToEdit.rol === 'ALUMNO' && studentCourse.error) {
+      showNotification(
+        `No se pudieron cargar los cursos del alumno: ${studentCourse.error} Reintentá antes de guardar.`,
+        'error'
+      );
+      return;
+    }
+
+    // SAB-116: un alumno inscripto en un curso (de cualquier año) no puede cambiar de rol.
+    // El back también lo valida.
+    if (
+      userToEdit.rol === 'ALUMNO' &&
+      dataToSend.rol !== 'ALUMNO' &&
+      studentCourse.totalEnrollments > 0
+    ) {
+      showNotification(
+        studentCourse.currentId !== null
+          ? `Este alumno está inscripto en ${studentCourse.currentLabel}. Quitalo del curso antes de cambiar el rol.`
+          : 'Este alumno está inscripto en un curso de otro año. Quitalo del curso antes de cambiar el rol.',
+        'error'
+      );
+      return;
+    }
+
     dataToSend.contrasena = dataToSend.password;
 
     delete dataToSend.password;
@@ -265,7 +308,7 @@ export default function UserTable({
     }
 
     // Quitar cursos pide confirmación antes de guardar
-    if (teacherCourses.toRemoveLabels.length > 0) {
+    if (teacherCourses.toRemoveLabels.length > 0 || studentCourse.needsConfirmation) {
       setPendingUserData(dataToSend);
       return;
     }
@@ -296,9 +339,13 @@ export default function UserTable({
       );
 
       if (!response.ok) {
-        throw new Error(
-          'Error al actualizar el usuario'
-        );
+        // SAB-116: se muestra el mensaje del back (por ejemplo, el 409 por cambio de rol)
+        const body: unknown = await response.json().catch(() => null);
+        const message =
+          body && typeof body === 'object' && 'error' in body
+            ? String((body as { error: unknown }).error)
+            : 'Error al actualizar el usuario';
+        throw new Error(message);
       }
 
       // SAB-117: después de guardar el usuario, se aplican los cambios de cursos
@@ -307,11 +354,21 @@ export default function UserTable({
           ? await teacherCourses.save()
           : null;
       const coursesText = coursesResult ? describeCoursesResult(coursesResult) : '';
-      const hasFailures = !!coursesResult && coursesResult.failed.length > 0;
+
+      // SAB-116: después de guardar el usuario, se aplica el cambio de curso del alumno
+      const studentResult =
+        userToEdit.rol === 'ALUMNO' && studentCourse.hasChanges
+          ? await studentCourse.save()
+          : null;
+
+      const hasFailures =
+        (!!coursesResult && coursesResult.failed.length > 0) || !!studentResult?.failed;
 
       onUserUpdate();
       showNotification(
-        ['Usuario actualizado correctamente.', coursesText].filter(Boolean).join(' '),
+        ['Usuario actualizado correctamente.', coursesText, studentResult?.text ?? '']
+          .filter(Boolean)
+          .join(' '),
         hasFailures ? 'warning' : 'success'
       );
 
@@ -324,7 +381,10 @@ export default function UserTable({
         error
       );
 
-      showNotification('Error al guardar el usuario', 'error');
+      showNotification(
+        error instanceof Error ? error.message : 'Error al guardar el usuario',
+        'error'
+      );
     } finally {
       setIsSaving(false);
       setPendingUserData(null);
@@ -362,9 +422,13 @@ export default function UserTable({
       );
 
       if (!response.ok) {
-        throw new Error(
-          'Error al eliminar el usuario'
-        );
+        // SAB-136: se muestra el mensaje del back (por ejemplo, el 409 al intentar eliminarse a sí mismo)
+        const body: unknown = await response.json().catch(() => null);
+        const message =
+          body && typeof body === 'object' && 'error' in body
+            ? String((body as { error: unknown }).error)
+            : 'Error al eliminar el usuario';
+        throw new Error(message);
       }
 
       onUserUpdate();
@@ -383,7 +447,7 @@ export default function UserTable({
 
       setSnackbar({
         open: true,
-        message: 'Error al eliminar el usuario',
+        message: error instanceof Error ? error.message : 'Error al eliminar el usuario',
         severity: 'error',
       });
 
@@ -565,7 +629,12 @@ export default function UserTable({
                         onClick={() =>
                           handleDelete(user)
                         }
-                        title="Eliminar"
+                        title={
+                          user.usuario_id === currentUser?.usuario_id
+                            ? 'No podés eliminar tu propia cuenta'
+                            : 'Eliminar'
+                        }
+                        disabled={user.usuario_id === currentUser?.usuario_id}
                         size="small"
                       >
                         <DeleteIcon
@@ -627,13 +696,25 @@ export default function UserTable({
                   onRetry={teacherCourses.reload}
                   disabled={isSaving}
                 />
+              ) : isEditingStudent ? (
+                // SAB-116: curso del alumno (según el rol guardado)
+                <StudentCourseSelect
+                  courses={studentCourse.courses}
+                  selectedId={studentCourse.selectedId}
+                  onChange={studentCourse.setSelectedId}
+                  schoolYear={CURRENT_SCHOOL_YEAR}
+                  isLoading={studentCourse.isLoading}
+                  error={studentCourse.error}
+                  onRetry={studentCourse.reload}
+                  disabled={isSaving}
+                />
               ) : null
             }
           />
         </Box>
       </Modal>
 
-      {/* SAB-117: CONFIRMAR QUITAR CURSOS */}
+      {/* SAB-117 / SAB-116: CONFIRMAR QUITAR CURSOS */}
 
       <ConfirmationModal
         open={pendingUserData !== null}
@@ -642,8 +723,14 @@ export default function UserTable({
           if (pendingUserData) void saveUserAndCourses(pendingUserData);
         }}
         loading={isSaving}
-        title="Quitar cursos"
-        message={`¿Querés quitar a "${userToEdit?.nombre ?? ''}" de ${teacherCourses.toRemoveLabels.join(', ')}?`}
+        title={studentCourse.needsConfirmation ? 'Cambiar curso' : 'Quitar cursos'}
+        message={
+          studentCourse.needsConfirmation
+            ? studentCourse.selectedId === null
+              ? `¿Querés quitar a "${userToEdit?.nombre ?? ''}" de ${studentCourse.currentLabel}?`
+              : `¿Querés pasar a "${userToEdit?.nombre ?? ''}" de ${studentCourse.currentLabel} a ${studentCourse.selectedLabel}?`
+            : `¿Querés quitar a "${userToEdit?.nombre ?? ''}" de ${teacherCourses.toRemoveLabels.join(', ')}?`
+        }
       />
 
       {/* NOTIFICACIONES */}

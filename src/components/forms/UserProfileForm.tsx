@@ -40,6 +40,9 @@ interface UserProfileFormProps {
   onCancel: () => void;
   onSave: (formData: UserProfileFormData) => void;
   onAvatarChange?: (url: string) => void;
+  // SAB-136: solo el administrador puede cambiar el email; para el resto queda de solo lectura
+  canEditEmail?: boolean;
+  isSaving?: boolean;
 }
 
 export default function UserProfileForm({
@@ -49,6 +52,8 @@ export default function UserProfileForm({
   onCancel,
   onSave,
   onAvatarChange,
+  canEditEmail = false,
+  isSaving = false,
 }: UserProfileFormProps) {
   // Usamos el primer avatar por defecto si no se proporciona uno actual
   const [formData, setFormData] = useState<UserProfileFormData>({
@@ -71,6 +76,7 @@ export default function UserProfileForm({
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSaving) return;
     onSave(formData);
   };
 
@@ -229,8 +235,10 @@ export default function UserProfileForm({
           fullWidth
           type="email"
           variant="outlined"
+          helperText={canEditEmail ? undefined : 'Para cambiar el email, pedíselo a un administrador.'}
           slotProps={{
             input: {
+              readOnly: !canEditEmail,
               startAdornment: (
                 <InputAdornment position="start">
                   <MailOutlineIcon sx={{ color: 'text.secondary' }} />
@@ -267,6 +275,7 @@ export default function UserProfileForm({
           type="submit"
           variant="contained"
           fullWidth
+          disabled={isSaving}
           sx={{
             borderRadius: '24px',
             py: 1.2,
@@ -280,7 +289,7 @@ export default function UserProfileForm({
             },
           }}
         >
-          Guardar Cambios
+          {isSaving ? 'Guardando...' : 'Guardar Cambios'}
         </Button>
       </Box>
     </Paper>

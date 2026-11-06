@@ -17,6 +17,7 @@ import AbandonedReadingsTable from '@/components/teacherPanel/AbandonedReadingsT
 import StudentScoresTable from '@/components/teacherPanel/StudentScoresTable';
 import TeacherPanelRankings from '@/components/teacherPanel/TeacherPanelRankings';
 import TeacherPanelStats from '@/components/teacherPanel/TeacherPanelStats';
+import CourseStudentsCard from '@/components/teacherPanel/CourseStudentsCard';
 import { useTeacherPanel } from '@/hooks/useTeacherPanel';
 import { etiquetaCursoPanel } from '@/utils/course';
 
@@ -67,6 +68,8 @@ export default function TeacherPanelPage() {
         <Box mb={3}>
           <StudentScoresTable cursoId={cursoId} />
         </Box>
+        {/* Alumnos del curso: solo con un curso elegido, no con "Todos mis cursos" (SAB-135) */}
+        {cursoId !== null && <CourseStudentsCard key={cursoId} courseId={cursoId} />}
         <TeacherPanelRankings
           libros={panel.libros_mas_elegidos}
           generos={panel.generos_mas_elegidos}

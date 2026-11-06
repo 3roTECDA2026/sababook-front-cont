@@ -67,10 +67,12 @@ export default function ItinerariesPage() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 6 }}>
-      <AppHeader
-        onMenuClick={() => setMenuOpen(true)}
-        onBack={selectedItinerary ? () => setSelectedItinerary(null) : undefined}
-      />
+      <Container maxWidth="lg">
+        <AppHeader
+          onMenuClick={() => setMenuOpen(true)}
+          onBack={selectedItinerary ? () => setSelectedItinerary(null) : undefined}
+        />
+      </Container>
       <SideMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
