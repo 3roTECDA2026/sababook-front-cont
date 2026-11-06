@@ -1,5 +1,6 @@
 
 import { Box, Button, styled, Typography } from '@mui/material';
+import type { Theme } from '@mui/material';
 import NavButton from '@/components/ui/NavButton';
 import ReadingStreak from './ReadingStreak';
 import { useReadingStreak } from '@/hooks/useReadingStreak';
@@ -28,6 +29,22 @@ const StyledAddButton = styled(Button)(({ theme }) => ({
   padding: '10px 20px',
   textTransform: 'none',
 }));
+
+// En el celular, los botones de secciones van de a dos por fila y ocupan todo el ancho
+// de su columna (SAB-142). Solo se ajusta por debajo de 'sm': desde ahí se usan los
+// estilos de NavButton sin repetirlos. Se hace acá y no en NavButton porque
+// NavButton también se usa en otras pantallas.
+const navButtonSx = (theme: Theme) => ({
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+    minWidth: 0,
+    margin: 0,
+    paddingLeft: theme.spacing(1),
+    paddingRight: theme.spacing(1),
+    // Para que "Moderación IA" entre en una línea también en pantallas de 320 px
+    fontSize: '0.9rem',
+  },
+});
 
 const getAddButtonText = (activeView: DashboardView): string => {
   switch (activeView) {
@@ -72,20 +89,32 @@ const HeaderDashboard = ({
   return (
     <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto', mb: 4 }}>
       {/* BARRA DE NAVEGACIÓN */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, marginBottom: 4 }}>
-        <NavButton onClick={() => onNavigate('users')} isActive={activeView === 'users'}>
+      <Box
+        sx={{
+          display: { xs: 'grid', sm: 'flex' },
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          flexWrap: 'wrap',
+          gap: { xs: 1.5, sm: 2 },
+          marginBottom: 4,
+        }}
+      >
+        <NavButton onClick={() => onNavigate('users')} isActive={activeView === 'users'} sx={navButtonSx}>
           Usuarios
         </NavButton>
 
-        <NavButton onClick={() => onNavigate('books')} isActive={activeView === 'books'}>
+        <NavButton onClick={() => onNavigate('books')} isActive={activeView === 'books'} sx={navButtonSx}>
           Libros
         </NavButton>
 
-        <NavButton onClick={() => onNavigate('forums')} isActive={activeView === 'forums'}>
+        <NavButton onClick={() => onNavigate('forums')} isActive={activeView === 'forums'} sx={navButtonSx}>
           Foros
         </NavButton>
 
-        <NavButton onClick={() => onNavigate('moderation')} isActive={activeView === 'moderation'}>
+        <NavButton
+          onClick={() => onNavigate('moderation')}
+          isActive={activeView === 'moderation'}
+          sx={navButtonSx}
+        >
           Moderación IA
         </NavButton>
       </Box>
