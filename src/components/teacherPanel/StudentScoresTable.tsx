@@ -66,14 +66,15 @@ export default function StudentScoresTable({ cursoId }: StudentScoresTableProps)
           <Table>
             <TableHead>
               <TableRow>
-                <StyledTableCellHeader>Alumno · Puntaje</StyledTableCellHeader>
+                <StyledTableCellHeader>Alumno</StyledTableCellHeader>
+                <StyledTableCellHeader align="center">Puntaje</StyledTableCellHeader>
                 <StyledTableCellHeader align="center">Estado</StyledTableCellHeader>
               </TableRow>
             </TableHead>
             <TableBody>
                 {!puntajes || puntajes.alumnos.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
                       <Typography color="text.secondary">
                         Este curso todavía no tiene alumnos inscriptos.
                       </Typography>
@@ -83,20 +84,14 @@ export default function StudentScoresTable({ cursoId }: StudentScoresTableProps)
                   puntajes.alumnos.map((alumno) => (
                     <TableRow key={alumno.usuario_id} hover>
                       <TableCell>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography variant="body2" fontWeight="bold">
-                            {alumno.nombre}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {alumno.puntaje_acumulado} / {alumno.minimo_requerido}
-                          </Typography>
-                        </Box>
+                        <Typography variant="body2" fontWeight="bold">
+                          {alumno.nombre}
+                        </Typography>
                       </TableCell>
                       <TableCell align="center">
+                        <Typography variant="body2" fontWeight="bold" color="text.secondary">
+                          {alumno.puntaje_acumulado} / {alumno.minimo_requerido}
+                        </Typography>
                         <LinearProgress
                           variant="determinate"
                           value={Math.min(
