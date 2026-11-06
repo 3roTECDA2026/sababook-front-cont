@@ -1,5 +1,5 @@
 // src/pages/CourseBooksPage.tsx
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Autocomplete,
@@ -47,9 +47,11 @@ import {
   getLibrosDelCurso,
   asignarLibroACurso,
   actualizarPuntajeLibro,
+  actualizarPuntajeAnual,
   quitarLibroDeCurso,
   getAsignacionesAnteriores,
 } from '@/services/courseService';
+import StudentScoresTable from '@/components/teacherPanel/StudentScoresTable';
 import type { Book, CourseBook, CourseSummary, PreviousAssignment } from '@/types';
 
 const StyledTableContainer = styled(Paper)(({ theme }) => ({
@@ -85,7 +87,7 @@ const estiloBotonPrincipal = {
 // Cantidad de libros por página en la tabla del curso
 const BOOKS_PER_PAGE = 10;
 
-type Pestana = 'libros' | 'historial';
+type Pestana = 'libros' | 'historial' | 'puntajes';
 
 interface SnackbarState {
   open: boolean;
@@ -97,11 +99,19 @@ interface SnackbarState {
 const etiquetaCurso = (curso: CourseSummary) =>
   `${curso.anio}°${curso.division} · ${curso.anio_lectivo} · ${curso.materia.nombre}`;
 
-// Devuelve el puntaje como entero entre 1 y 100 (misma regla que el back), o null si no es válido
-const parsearPuntaje = (valor: string): number | null => {
-  if (valor.trim() === '') return null;
+const parsearPuntaje = (valor: string): { valido: boolean; puntaje: number | null } => {
+  if (valor.trim() === '') return { valido: true, puntaje: null };
+  if (!/^\d+$/.test(valor.trim())) return { valido: false, puntaje: null };
   const numero = Number(valor);
-  return Number.isInteger(numero) && numero >= 1 && numero <= 100 ? numero : null;
+  if (numero < 1 || numero > 100) {
+    return { valido: false, puntaje: null };
+  }
+  return { valido: true, puntaje: numero };
+};
+
+const parsearPuntajeAnual = (valor: string): number | null => {
+  const numero = Number(valor);
+  return Number.isInteger(numero) && numero >= 140 && numero <= 200 ? numero : null;
 };
 
 const mensajeDeError = (error: unknown) =>
@@ -109,7 +119,7 @@ const mensajeDeError = (error: unknown) =>
 
 export default function CourseBooksPage() {
   // El rol sale del contexto de autenticación, no del localStorage
-  const { isAdmin: esAdmin, loading: cargandoUsuario } = useAuth();
+  const { isAdmin: esAdmin, isTeacher: esDocente, loading: cargandoUsuario } = useAuth();
 
   const [menuAbierto, setMenuAbierto] = useState<boolean>(false);
   const [pestana, setPestana] = useState<Pestana>('libros');
@@ -139,6 +149,12 @@ export default function CourseBooksPage() {
   const [libroAEditar, setLibroAEditar] = useState<CourseBook | null>(null);
   const [puntajeEditado, setPuntajeEditado] = useState<string>('');
   const [libroAQuitar, setLibroAQuitar] = useState<CourseBook | null>(null);
+
+  const [dialogoPuntajeAnualAbierto, setDialogoPuntajeAnualAbierto] = useState<boolean>(false);
+  const [puntajeAnualEditado, setPuntajeAnualEditado] = useState<string>('');
+  const [puntajeAnualKey, setPuntajeAnualKey] = useState<number>(0);
+  const puntajeNuevoRef = useRef<HTMLInputElement>(null);
+  const puntajeEditadoRef = useRef<HTMLInputElement>(null);
 
   // Lector de PDF para material de lectura (SAB-67)
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
@@ -207,6 +223,8 @@ export default function CourseBooksPage() {
     (libro) => !libros.some((asignado) => asignado.libro_id === libro.libro_id)
   );
 
+  const cursoSeleccionado = cursos.find((curso) => curso.curso_id === cursoId) ?? null;
+
   const abrirDialogoAsignar = async () => {
     setLibroElegido(null);
     setPuntajeNuevo('');
@@ -225,8 +243,8 @@ export default function CourseBooksPage() {
   const realizarAsignacion = async () => {
     if (cursoId === null || !libroElegido) return;
 
-    const puntaje = parsearPuntaje(puntajeNuevo);
-    if (puntaje === null) return;
+    const { valido, puntaje } = parsearPuntaje(puntajeNuevo);
+    if (!valido) return;
 
     setGuardando(true);
     try {
@@ -246,9 +264,13 @@ export default function CourseBooksPage() {
   // en años anteriores: si es así, muestra la alerta para confirmar
   const confirmarAsignacion = async () => {
     if (cursoId === null || !libroElegido) return;
+    if (puntajeNuevoRef.current?.validity.badInput) {
+      mostrarMensaje('El puntaje debe ser un número entero entre 1 y 100.', 'warning');
+      return;
+    }
 
-    const puntaje = parsearPuntaje(puntajeNuevo);
-    if (puntaje === null) {
+    const { valido } = parsearPuntaje(puntajeNuevo);
+    if (!valido) {
       mostrarMensaje('El puntaje debe ser un número entero entre 1 y 100.', 'warning');
       return;
     }
@@ -271,14 +293,18 @@ export default function CourseBooksPage() {
 
   const abrirDialogoEditar = (libro: CourseBook) => {
     setLibroAEditar(libro);
-    setPuntajeEditado(String(libro.puntaje));
+    setPuntajeEditado(libro.puntaje === null ? '' : String(libro.puntaje));
   };
 
   const confirmarEdicion = async () => {
     if (cursoId === null || !libroAEditar) return;
+    if (puntajeEditadoRef.current?.validity.badInput) {
+      mostrarMensaje('El puntaje debe ser un número entero entre 1 y 100.', 'warning');
+      return;
+    }
 
-    const puntaje = parsearPuntaje(puntajeEditado);
-    if (puntaje === null) {
+    const { valido, puntaje } = parsearPuntaje(puntajeEditado);
+    if (!valido) {
       mostrarMensaje('El puntaje debe ser un número entero entre 1 y 100.', 'warning');
       return;
     }
@@ -312,6 +338,38 @@ export default function CourseBooksPage() {
     }
   };
 
+  const abrirDialogoPuntajeAnual = () => {
+    setPuntajeAnualEditado(String(cursoSeleccionado?.puntaje_anual ?? 140));
+    setDialogoPuntajeAnualAbierto(true);
+  };
+
+  const confirmarPuntajeAnual = async () => {
+    if (cursoId === null) return;
+
+    const puntajeAnual = parsearPuntajeAnual(puntajeAnualEditado);
+    if (puntajeAnual === null) {
+      mostrarMensaje('El puntaje anual debe ser un número entero entre 140 y 200.', 'warning');
+      return;
+    }
+
+    setGuardando(true);
+    try {
+      const curso = await actualizarPuntajeAnual(cursoId, puntajeAnual);
+      setCursos((prev) =>
+        prev.map((c) =>
+          c.curso_id === curso.curso_id ? { ...c, puntaje_anual: curso.puntaje_anual } : c
+        )
+      );
+      setDialogoPuntajeAnualAbierto(false);
+      setPuntajeAnualKey((prev) => prev + 1);
+      mostrarMensaje('Puntaje anual actualizado correctamente.', 'success');
+    } catch (error) {
+      mostrarMensaje(mensajeDeError(error), 'error');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   return (
     <Box py={2} px={1} sx={{ width: '100%', maxWidth: 1000, margin: '0 auto' }}>
       <AppHeader
@@ -321,63 +379,90 @@ export default function CourseBooksPage() {
       />
       <SideMenu open={menuAbierto} onClose={() => setMenuAbierto(false)} active="Libros por curso" />
 
-      {cargandoCursos ? (
-        <Box display="flex" justifyContent="center" mt={4}>
-          <CircularProgress sx={{ color: '#f25600' }} />
-        </Box>
-      ) : cursos.length === 0 ? (
-        <Typography color="text.secondary" textAlign="center" mt={4}>
-          {esAdmin ? 'Todavía no hay cursos creados.' : 'No tenés cursos asignados.'}
-        </Typography>
-      ) : (
-        <>
-          <Tabs
-            value={pestana}
-            onChange={(_, valor: Pestana) => setPestana(valor)}
-            sx={{
-              mt: 2,
-              mb: 3,
-              '& .MuiTabs-indicator': { backgroundColor: '#f25600' },
-              '& .MuiTab-root.Mui-selected': { color: '#f25600' },
-            }}
-          >
-            <Tab value="libros" label="Libros del curso" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
-            <Tab value="historial" label="Historial" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
-          </Tabs>
-
-          {pestana === 'historial' ? (
-            <AssignmentHistoryTable
-              cursos={cursos}
-              onError={(mensaje) => mostrarMensaje(mensaje, 'error')}
-            />
+          {cargandoCursos ? (
+            <Box display="flex" justifyContent="center" mt={4}>
+              <CircularProgress sx={{ color: '#f25600' }} />
+            </Box>
+          ) : cursos.length === 0 ? (
+            <Typography color="text.secondary" textAlign="center" mt={4}>
+              {esAdmin ? 'Todavía no hay cursos creados.' : 'No tenés cursos asignados.'}
+            </Typography>
           ) : (
             <>
-              <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
-                <TextField
-                  select
-                  id="curso"
-                  name="curso"
-                  label="Curso"
-                  value={cursoId ?? ''}
-                  onChange={(e) => setCursoId(Number(e.target.value))}
-                  sx={{ minWidth: 260, flexGrow: 1 }}
-                >
-                  {cursos.map((curso) => (
-                    <MenuItem key={curso.curso_id} value={curso.curso_id}>
-                      {etiquetaCurso(curso)}
-                    </MenuItem>
-                  ))}
-                </TextField>
+              {cursoSeleccionado && pestana !== 'historial' && (
+                <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
+                  <TextField
+                    select
+                    id="curso"
+                    name="curso"
+                    label="Curso"
+                    value={cursoId ?? ''}
+                    onChange={(e) => setCursoId(Number(e.target.value))}
+                    sx={{ minWidth: 260, flexGrow: 1 }}
+                  >
+                    {cursos.map((curso) => (
+                      <MenuItem key={curso.curso_id} value={curso.curso_id}>
+                        {etiquetaCurso(curso)}
+                      </MenuItem>
+                    ))}
+                  </TextField>
 
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={abrirDialogoAsignar}
-                  sx={estiloBotonPrincipal}
-                >
-                  Asignar libro
-                </Button>
-              </Box>
+                  {(esAdmin || esDocente) && (
+                    <Button
+                      variant="outlined"
+                      startIcon={<EditIcon />}
+                      onClick={abrirDialogoPuntajeAnual}
+                      sx={estiloBotonPrincipal}
+                    >
+                      Puntaje anual: {cursoSeleccionado?.puntaje_anual ?? 140}
+                    </Button>
+                  )}
+                </Box>
+              )}
+
+              <Tabs
+                value={pestana}
+                onChange={(_, valor: Pestana) => setPestana(valor)}
+                sx={{
+                  mt: 2,
+                  mb: 3,
+                  '& .MuiTabs-indicator': { backgroundColor: '#f25600' },
+                  '& .MuiTab-root.Mui-selected': { color: '#f25600' },
+                }}
+              >
+                <Tab value="libros" label="Libros del curso" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+                <Tab value="historial" label="Historial" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+                <Tab value="puntajes" label="Puntajes de alumnos" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+              </Tabs>
+
+              {pestana === 'historial' ? (
+                <AssignmentHistoryTable
+                  cursos={cursos}
+                  onError={(mensaje) => mostrarMensaje(mensaje, 'error')}
+                />
+              ) : pestana === 'puntajes' ? (
+                <>
+                  {cursoSeleccionado && (
+                    <Box p={2}>
+                      <Typography variant="body2" color="text.secondary" mt={1}>
+                        Curso: {etiquetaCurso(cursoSeleccionado)}
+                      </Typography>
+                    </Box>
+                  )}
+                  <StudentScoresTable key={puntajeAnualKey} cursoId={cursoId} />
+                </>
+              ) : (
+                <>
+                  <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={abrirDialogoAsignar}
+                      sx={estiloBotonPrincipal}
+                    >
+                      Asignar libro
+                    </Button>
+                  </Box>
 
               <StyledTableContainer>
                 <TableContainer>
@@ -448,7 +533,9 @@ export default function CourseBooksPage() {
                               </Box>
                             </TableCell>
                             <TableCell>{libro.autor}</TableCell>
-                            <TableCell align="center">{libro.puntaje}</TableCell>
+                            <TableCell align="center">
+                              {libro.puntaje ?? 'Sin puntaje'}
+                            </TableCell>
                             <TableCell align="center">
                               <Box display="flex" gap={1} justifyContent="center">
                                 {libro.pdf_path && (
@@ -521,8 +608,10 @@ export default function CourseBooksPage() {
               name="puntaje"
               label="Puntaje"
               type="number"
+              inputRef={puntajeNuevoRef}
               value={puntajeNuevo}
               onChange={(e) => setPuntajeNuevo(e.target.value)}
+              helperText="Dejalo vacío para dejarlo sin puntaje."
               slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
             />
           </Box>
@@ -590,6 +679,48 @@ export default function CourseBooksPage() {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={dialogoPuntajeAnualAbierto}
+        onClose={() => !guardando && setDialogoPuntajeAnualAbierto(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Puntaje anual del curso</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            {cursoSeleccionado ? etiquetaCurso(cursoSeleccionado) : ''}
+          </Typography>
+          <TextField
+            id="puntaje-anual"
+            name="puntaje_anual"
+            label="Puntaje anual"
+            type="number"
+            fullWidth
+            value={puntajeAnualEditado}
+            onChange={(e) => setPuntajeAnualEditado(e.target.value)}
+            helperText="Entre 140 y 200 puntos."
+            slotProps={{ htmlInput: { min: 140, max: 200, step: 1 } }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setDialogoPuntajeAnualAbierto(false)}
+            disabled={guardando}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={confirmarPuntajeAnual}
+            disabled={guardando}
+            sx={estiloBotonPrincipal}
+          >
+            {guardando ? <CircularProgress size={22} color="inherit" /> : 'Guardar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Diálogo para editar el puntaje */}
       <Dialog
         open={libroAEditar !== null}
@@ -607,9 +738,11 @@ export default function CourseBooksPage() {
             name="puntaje"
             label="Puntaje"
             type="number"
+            inputRef={puntajeEditadoRef}
             fullWidth
             value={puntajeEditado}
             onChange={(e) => setPuntajeEditado(e.target.value)}
+            helperText="Dejalo vacío para dejarlo sin puntaje."
             slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
           />
         </DialogContent>

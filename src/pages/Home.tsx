@@ -37,10 +37,11 @@ import { recomendacionService } from "@/services/recomendacionService";
 import { usePagination } from "@/hooks/usePagination";
 import InfiniteScroll from "@/components/ui/InfiniteScroll";
 
+import { getProgresoAlumno } from "@/services/courseService";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useReadingStatus } from "@/hooks/useReadingStatus";
-
 import type { Book, BookFilters } from "@/types";
 import type { LibroDestacado } from "@/components/ui/FeaturedBookSection";
 
@@ -124,6 +125,44 @@ export default function Home() {
   const rol = String(
     authUser?.rol ?? authUser?.role ?? ""
   ).toUpperCase();
+
+  // --------------------------------------------------
+  // PUNTAJE ANUAL DEL ALUMNO (cabecera)
+  // --------------------------------------------------
+
+  const [puntajeAlumno, setPuntajeAlumno] = useState<{
+    acumulado: number;
+    minimo: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const alumnoId = user?.usuario_id;
+    if (!alumnoId || rol !== "ALUMNO") return;
+
+    let cancelado = false;
+    getProgresoAlumno(alumnoId, new Date().getFullYear())
+      .then((data) => {
+        if (cancelado) return;
+        // SAB-144: el puntaje se muestra solo si el docente lo habilitó para el curso
+        const canShowScore =
+          data.curso &&
+          data.score_visible &&
+          data.puntaje_acumulado !== null &&
+          data.minimo_requerido !== null;
+        setPuntajeAlumno(
+          canShowScore
+            ? { acumulado: data.puntaje_acumulado as number, minimo: data.minimo_requerido as number }
+            : null
+        );
+      })
+      .catch(() => {
+        // silencioso: si falla, no se muestra puntaje
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [user?.usuario_id, rol]);
 
   const puedeRecomendar =
     rol === "ADMINISTRADOR" || rol === "DOCENTE";
@@ -610,15 +649,25 @@ export default function Home() {
         title={`Hola, ${
           user?.nombre || "Usuario"
         }`}
-        subtitle={new Date().toLocaleDateString(
-          "es-ES",
-          {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }
-        )}
+        subtitle={puntajeAlumno
+          ? `${new Date().toLocaleDateString(
+              "es-ES",
+              {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }
+            )} · Puntaje anual: ${puntajeAlumno.acumulado} / ${puntajeAlumno.minimo} pts`
+          : new Date().toLocaleDateString(
+              "es-ES",
+              {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }
+            )}
       />
 
       {/* MENÚ LATERAL */}

@@ -1,6 +1,15 @@
 // src/services/courseService.ts
 import { API_BASE_URL } from '@/environments/api';
-import type { CourseSummary, CourseBook, TeacherPanel, AssignmentHistoryEntry, PreviousAssignment, CourseStudent } from '@/types';
+import type {
+  CourseSummary,
+  CourseBook,
+  TeacherPanel,
+  AssignmentHistoryEntry,
+  PreviousAssignment,
+  CourseStudent,
+  StudentProgress,
+  CourseScores,
+} from '@/types';
 
 // Hace la petición con el token y devuelve el mensaje de error real del back si falla
 async function solicitud<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -101,7 +110,11 @@ export async function getLibrosDelCurso(cursoId: number, signal?: AbortSignal): 
 /**
  * Asignar un libro a un curso con su puntaje
  */
-export async function asignarLibroACurso(cursoId: number, libroId: number, puntaje: number) {
+export async function asignarLibroACurso(
+  cursoId: number,
+  libroId: number,
+  puntaje: number | null
+) {
   return await solicitud(`/courses/${cursoId}/books`, {
     method: 'POST',
     body: JSON.stringify({ libro_id: libroId, puntaje }),
@@ -111,11 +124,38 @@ export async function asignarLibroACurso(cursoId: number, libroId: number, punta
 /**
  * Cambiar el puntaje de un libro ya asignado
  */
-export async function actualizarPuntajeLibro(cursoId: number, libroId: number, puntaje: number) {
+export async function actualizarPuntajeLibro(
+  cursoId: number,
+  libroId: number,
+  puntaje: number | null
+) {
   return await solicitud(`/courses/${cursoId}/books/${libroId}`, {
     method: 'PUT',
     body: JSON.stringify({ puntaje }),
   });
+}
+
+export async function actualizarPuntajeAnual(cursoId: number, puntajeAnual: number) {
+  return await solicitud<{ curso_id: number; puntaje_anual: number }>(
+    `/courses/${cursoId}/annual-score`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ puntaje_anual: puntajeAnual }),
+    }
+  );
+}
+
+/**
+ * Mostrar u ocultar a los alumnos del curso su puntaje anual en Inicio (SAB-144)
+ */
+export async function updateAnnualScoreVisibility(courseId: number, visible: boolean) {
+  return await solicitud<{ curso_id: number; show_annual_score: boolean }>(
+    `/courses/${courseId}/annual-score-visibility`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ visible }),
+    }
+  );
 }
 
 /**
@@ -134,6 +174,24 @@ export async function getPanelDocente(cursoId: number | null, dias: number): Pro
   const params = new URLSearchParams({ dias: String(dias) });
   if (cursoId !== null) params.set('curso_id', String(cursoId));
   return await solicitud<TeacherPanel>(`/teacher-panel?${params}`);
+}
+
+export async function getProgresoAlumno(
+  alumnoId: number,
+  anioLectivo: number,
+  signal?: AbortSignal
+): Promise<StudentProgress> {
+  return await solicitud<StudentProgress>(
+    `/courses/students/${alumnoId}/progress?anio_lectivo=${anioLectivo}`,
+    { signal }
+  );
+}
+
+export async function getPuntajesCurso(
+  cursoId: number,
+  signal?: AbortSignal
+): Promise<CourseScores> {
+  return await solicitud<CourseScores>(`/courses/${cursoId}/students/progress`, { signal });
 }
 
 /**

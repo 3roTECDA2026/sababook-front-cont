@@ -17,6 +17,7 @@ export interface CourseSummary {
   division: string;
   anio_lectivo: number;
   materia: Subject;
+  puntaje_anual: number;
   cantidad_docentes: number;
   cantidad_libros: number;
   // SAB-117: cada curso tiene un solo docente (null si todavía no tiene)
@@ -29,7 +30,7 @@ export interface CourseBook {
   autor: string;
   portada_url: string | null;
   pdf_path?: string | null;
-  puntaje: number;
+  puntaje: number | null;
 }
 
 export type AccionAsignacion = 'ASIGNADO' | 'PUNTAJE_ACTUALIZADO' | 'QUITADO';
@@ -49,6 +50,18 @@ export interface AssignmentHistoryEntry {
 export interface PreviousAssignment {
   anio_lectivo: number;
   curso: { curso_id: number; anio: number; division: string };
+}
+
+// Puntaje acumulado del alumno en un curso (SAB-120)
+export interface StudentProgress {
+  anio_lectivo: number;
+  curso: { curso_id: number; anio: number; division: string } | null;
+  // SAB-144: si es false, el alumno recibe los puntajes en null
+  score_visible: boolean;
+  puntaje_acumulado: number | null;
+  minimo_requerido: number | null;
+  faltante: number | null;
+  cumplido: boolean | null;
 }
 
 // Alumno inscripto en un curso (SAB-135)

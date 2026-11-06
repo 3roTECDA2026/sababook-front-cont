@@ -14,6 +14,7 @@ import {
 import AppHeader from '@/components/layout/AppHeader';
 import SideMenu from '@/components/layout/SideMenu';
 import AbandonedReadingsTable from '@/components/teacherPanel/AbandonedReadingsTable';
+import StudentScoresTable from '@/components/teacherPanel/StudentScoresTable';
 import TeacherPanelRankings from '@/components/teacherPanel/TeacherPanelRankings';
 import TeacherPanelStats from '@/components/teacherPanel/TeacherPanelStats';
 import CourseStudentsCard from '@/components/teacherPanel/CourseStudentsCard';
@@ -64,6 +65,9 @@ export default function TeacherPanelPage() {
     return (
       <Box sx={{ opacity: cargando ? 0.5 : 1, transition: 'opacity 0.2s' }} aria-busy={cargando}>
         <TeacherPanelStats resumen={panel.resumen} />
+        <Box mb={3}>
+          <StudentScoresTable cursoId={cursoId} />
+        </Box>
         {/* Alumnos del curso: solo con un curso elegido, no con "Todos mis cursos" (SAB-135) */}
         {cursoId !== null && <CourseStudentsCard key={cursoId} courseId={cursoId} />}
         <TeacherPanelRankings

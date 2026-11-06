@@ -49,3 +49,24 @@ export interface TeacherPanel {
   generos_mas_elegidos: MostChosenGenre[];
   abandonados: AbandonedBook[];
 }
+
+export interface StudentScore {
+  usuario_id: number;
+  nombre: string;
+  puntaje_acumulado: number;
+  minimo_requerido: number;
+  faltante: number;
+  cumplido: boolean;
+}
+
+export interface CourseScores {
+  curso: {
+    curso_id: number;
+    anio: number;
+    division: string;
+    anio_lectivo: number;
+    puntaje_anual: number;
+    show_annual_score: boolean;
+  };
+  alumnos: StudentScore[];
+}
