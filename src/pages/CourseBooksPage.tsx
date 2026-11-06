@@ -152,6 +152,9 @@ export default function CourseBooksPage() {
 
   const [dialogoPuntajeAnualAbierto, setDialogoPuntajeAnualAbierto] = useState<boolean>(false);
   const [puntajeAnualEditado, setPuntajeAnualEditado] = useState<string>('');
+  const [puntajeAnualKey, setPuntajeAnualKey] = useState<number>(0);
+  const [puntajeNuevoValido, setPuntajeNuevoValido] = useState<boolean>(true);
+  const [puntajeEditadoValido, setPuntajeEditadoValido] = useState<boolean>(true);
 
   // Lector de PDF para material de lectura (SAB-67)
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
@@ -261,6 +264,7 @@ export default function CourseBooksPage() {
   // en años anteriores: si es así, muestra la alerta para confirmar
   const confirmarAsignacion = async () => {
     if (cursoId === null || !libroElegido) return;
+    if (!puntajeNuevoValido) return;
 
     const { valido } = parsearPuntaje(puntajeNuevo);
     if (!valido) {
@@ -291,6 +295,7 @@ export default function CourseBooksPage() {
 
   const confirmarEdicion = async () => {
     if (cursoId === null || !libroAEditar) return;
+    if (!puntajeEditadoValido) return;
 
     const { valido, puntaje } = parsearPuntaje(puntajeEditado);
     if (!valido) {
@@ -350,6 +355,7 @@ export default function CourseBooksPage() {
         )
       );
       setDialogoPuntajeAnualAbierto(false);
+      setPuntajeAnualKey((prev) => prev + 1);
       mostrarMensaje('Puntaje anual actualizado correctamente.', 'success');
     } catch (error) {
       mostrarMensaje(mensajeDeError(error), 'error');
@@ -430,23 +436,6 @@ export default function CourseBooksPage() {
                 />
               ) : pestana === 'puntajes' ? (
                 <>
-                  <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
-                    <TextField
-                      select
-                      id="curso-puntajes"
-                      name="curso"
-                      label="Curso"
-                      value={cursoId ?? ''}
-                      onChange={(e) => setCursoId(Number(e.target.value))}
-                      sx={{ minWidth: 260, flexGrow: 1 }}
-                    >
-                      {cursos.map((curso) => (
-                        <MenuItem key={curso.curso_id} value={curso.curso_id}>
-                          {etiquetaCurso(curso)}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Box>
                   {cursoSeleccionado && (
                     <Box p={2}>
                       <Typography variant="body2" color="text.secondary" mt={1}>
@@ -454,7 +443,7 @@ export default function CourseBooksPage() {
                       </Typography>
                     </Box>
                   )}
-                  <StudentScoresTable cursoId={cursoId} />
+                  <StudentScoresTable key={puntajeAnualKey} cursoId={cursoId} />
                 </>
               ) : (
                 <>
@@ -614,7 +603,10 @@ export default function CourseBooksPage() {
               label="Puntaje"
               type="number"
               value={puntajeNuevo}
-              onChange={(e) => setPuntajeNuevo(e.target.value)}
+              onChange={(e) => {
+                setPuntajeNuevo(e.target.value);
+                setPuntajeNuevoValido(!e.target.validity.badInput);
+              }}
               helperText="Dejalo vacío para dejarlo sin puntaje."
               slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
             />
@@ -744,7 +736,10 @@ export default function CourseBooksPage() {
             type="number"
             fullWidth
             value={puntajeEditado}
-            onChange={(e) => setPuntajeEditado(e.target.value)}
+              onChange={(e) => {
+                setPuntajeEditado(e.target.value);
+                setPuntajeEditadoValido(!e.target.validity.badInput);
+              }}
             helperText="Dejalo vacío para dejarlo sin puntaje."
             slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
           />

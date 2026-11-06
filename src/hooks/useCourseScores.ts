@@ -7,7 +7,7 @@ export function useCourseScores(cursoId: number | null) {
   const [puntajes, setPuntajes] = useState<CourseScores | null>(null);
   const [cargando, setCargando] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const canceladoRef = useRef<boolean>(false);
+  const cargaIdRef = useRef<number>(0);
 
   const cargarPuntajes = useCallback(() => {
     if (cursoId === null) {
@@ -17,29 +17,27 @@ export function useCourseScores(cursoId: number | null) {
       return;
     }
 
-    canceladoRef.current = false;
+    const miCarga = ++cargaIdRef.current;
     setCargando(true);
     setError(null);
 
     getPuntajesCurso(cursoId)
       .then((data) => {
-        if (!canceladoRef.current) setPuntajes(data);
+        if (miCarga === cargaIdRef.current) setPuntajes(data);
       })
       .catch((err) => {
-        if (canceladoRef.current) return;
-        setPuntajes(null);
-        setError(err instanceof Error ? err.message : 'No se pudieron cargar los puntajes.');
+        if (miCarga === cargaIdRef.current) {
+          setPuntajes(null);
+          setError(err instanceof Error ? err.message : 'No se pudieron cargar los puntajes.');
+        }
       })
       .finally(() => {
-        if (!canceladoRef.current) setCargando(false);
+        if (miCarga === cargaIdRef.current) setCargando(false);
       });
   }, [cursoId]);
 
   useEffect(() => {
     cargarPuntajes();
-    return () => {
-      canceladoRef.current = true;
-    };
   }, [cargarPuntajes]);
 
   const recargar = useCallback(() => {
