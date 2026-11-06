@@ -119,7 +119,7 @@ const mensajeDeError = (error: unknown) =>
 
 export default function CourseBooksPage() {
   // El rol sale del contexto de autenticación, no del localStorage
-  const { isAdmin: esAdmin, loading: cargandoUsuario } = useAuth();
+  const { isAdmin: esAdmin, isTeacher: esDocente, loading: cargandoUsuario } = useAuth();
 
   const [menuAbierto, setMenuAbierto] = useState<boolean>(false);
   const [pestana, setPestana] = useState<Pestana>('libros');
@@ -377,7 +377,7 @@ export default function CourseBooksPage() {
             </Typography>
           ) : (
             <>
-              {cursoSeleccionado && (
+              {cursoSeleccionado && pestana !== 'historial' && (
                 <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
                   <TextField
                     select
@@ -395,14 +395,16 @@ export default function CourseBooksPage() {
                     ))}
                   </TextField>
 
-                  <Button
-                    variant="outlined"
-                    startIcon={<EditIcon />}
-                    onClick={abrirDialogoPuntajeAnual}
-                    sx={estiloBotonPrincipal}
-                  >
-                    Puntaje anual: {cursoSeleccionado?.puntaje_anual ?? 140}
-                  </Button>
+                  {(esAdmin || esDocente) && (
+                    <Button
+                      variant="outlined"
+                      startIcon={<EditIcon />}
+                      onClick={abrirDialogoPuntajeAnual}
+                      sx={estiloBotonPrincipal}
+                    >
+                      Puntaje anual: {cursoSeleccionado?.puntaje_anual ?? 140}
+                    </Button>
+                  )}
                 </Box>
               )}
 
