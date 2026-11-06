@@ -42,6 +42,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useReadingStatus } from "@/hooks/useReadingStatus";
 
+import { getProgresoAlumno } from "@/services/courseService";
+
 import type { Book, BookFilters } from "@/types";
 import type { LibroDestacado } from "@/components/ui/FeaturedBookSection";
 
@@ -125,6 +127,35 @@ export default function Home() {
   const rol = String(
     authUser?.rol ?? authUser?.role ?? ""
   ).toUpperCase();
+
+  // --------------------------------------------------
+  // PUNTAJE ANUAL DEL ALUMNO (cabecera)
+  // --------------------------------------------------
+
+  const [puntajeAlumno, setPuntajeAlumno] = useState<{
+    acumulado: number;
+    minimo: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const alumnoId = user?.usuario_id;
+    if (!alumnoId || rol !== "ALUMNO") return;
+
+    let cancelado = false;
+    getProgresoAlumno(alumnoId, new Date().getFullYear())
+      .then((data) => {
+        if (!cancelado && data.curso) {
+          setPuntajeAlumno({ acumulado: data.puntaje_acumulado, minimo: data.minimo_requerido });
+        }
+      })
+      .catch(() => {
+        // silencioso: si falla, no se muestra puntaje
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [user?.usuario_id, rol]);
 
   const puedeRecomendar =
     rol === "ADMINISTRADOR" || rol === "DOCENTE";
@@ -611,15 +642,25 @@ export default function Home() {
         title={`Hola, ${
           user?.nombre || "Usuario"
         }`}
-        subtitle={new Date().toLocaleDateString(
-          "es-ES",
-          {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }
-        )}
+        subtitle={puntajeAlumno
+          ? `${new Date().toLocaleDateString(
+              "es-ES",
+              {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }
+            )} · Puntaje anual: ${puntajeAlumno.acumulado} / ${puntajeAlumno.minimo} pts`
+          : new Date().toLocaleDateString(
+              "es-ES",
+              {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }
+            )}
       />
 
       {/* MENÚ LATERAL */}
