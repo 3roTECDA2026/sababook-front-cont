@@ -41,6 +41,7 @@ import AssignmentHistoryTable from '@/components/tables/AssignmentHistoryTable';
 import PdfReaderModal from '@/components/ui/PdfReaderModal';
 import { getCatalogoLibros } from '@/services/apiService';
 import { useAuth } from '@/hooks/useAuth';
+import { useCourseScores } from '@/hooks/useCourseScores';
 import {
   getCursos,
   getLibrosDelCurso,
@@ -50,6 +51,7 @@ import {
   quitarLibroDeCurso,
   getAsignacionesAnteriores,
 } from '@/services/courseService';
+import StudentScoresTable from '@/components/teacherPanel/StudentScoresTable';
 import type { Book, CourseBook, CourseSummary, PreviousAssignment } from '@/types';
 
 const StyledTableContainer = styled(Paper)(({ theme }) => ({
@@ -82,7 +84,7 @@ const estiloBotonPrincipal = {
   borderRadius: '8px',
 };
 
-type Pestana = 'libros' | 'historial';
+type Pestana = 'libros' | 'historial' | 'puntajes';
 
 interface SnackbarState {
   open: boolean;
@@ -371,6 +373,7 @@ export default function CourseBooksPage() {
           >
             <Tab value="libros" label="Libros del curso" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
             <Tab value="historial" label="Historial" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+            <Tab value="puntajes" label="Puntajes de alumnos" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
           </Tabs>
 
           {pestana === 'historial' ? (
@@ -378,6 +381,8 @@ export default function CourseBooksPage() {
               cursos={cursos}
               onError={(mensaje) => mostrarMensaje(mensaje, 'error')}
             />
+          ) : pestana === 'puntajes' ? (
+            <StudentScoresTable cursoId={cursoId} />
           ) : (
             <>
               <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
