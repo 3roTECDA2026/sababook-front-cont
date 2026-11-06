@@ -142,9 +142,18 @@ export default function Home() {
     let cancelado = false;
     getProgresoAlumno(alumnoId, new Date().getFullYear())
       .then((data) => {
-        if (!cancelado && data.curso) {
-          setPuntajeAlumno({ acumulado: data.puntaje_acumulado, minimo: data.minimo_requerido });
-        }
+        if (cancelado) return;
+        // SAB-144: el puntaje se muestra solo si el docente lo habilitó para el curso
+        const canShowScore =
+          data.curso &&
+          data.score_visible &&
+          data.puntaje_acumulado !== null &&
+          data.minimo_requerido !== null;
+        setPuntajeAlumno(
+          canShowScore
+            ? { acumulado: data.puntaje_acumulado as number, minimo: data.minimo_requerido as number }
+            : null
+        );
       })
       .catch(() => {
         // silencioso: si falla, no se muestra puntaje

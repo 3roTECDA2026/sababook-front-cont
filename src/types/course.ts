@@ -56,10 +56,12 @@ export interface PreviousAssignment {
 export interface StudentProgress {
   anio_lectivo: number;
   curso: { curso_id: number; anio: number; division: string } | null;
-  puntaje_acumulado: number;
-  minimo_requerido: number;
-  faltante: number;
-  cumplido: boolean;
+  // SAB-144: si es false, el alumno recibe los puntajes en null
+  score_visible: boolean;
+  puntaje_acumulado: number | null;
+  minimo_requerido: number | null;
+  faltante: number | null;
+  cumplido: boolean | null;
 }
 
 // Alumno inscripto en un curso (SAB-135)
