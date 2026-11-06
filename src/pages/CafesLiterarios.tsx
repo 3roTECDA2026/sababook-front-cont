@@ -406,12 +406,9 @@ export default function CafesLiterarios() {
                     {/* Botón de acceso al Foro de Debate */}
                     {cafe.foro_id && (
                       <Button
-                        variant="outlined"
                         startIcon={<ForumIcon />}
                         onClick={() => navigate(`/foro/detalle/${cafe.foro_id}`)}
                         sx={{
-                          borderColor: theme.palette.button.main,
-                          color: theme.palette.button.main,
                           borderRadius: 2,
                           textTransform: 'none',
                         }}
