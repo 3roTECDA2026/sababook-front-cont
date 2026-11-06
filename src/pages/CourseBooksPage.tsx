@@ -42,7 +42,6 @@ import PdfReaderModal from '@/components/ui/PdfReaderModal';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { getCatalogoLibros } from '@/services/apiService';
 import { useAuth } from '@/hooks/useAuth';
-import { useCourseScores } from '@/hooks/useCourseScores';
 import {
   getCursos,
   getLibrosDelCurso,
@@ -367,75 +366,91 @@ export default function CourseBooksPage() {
       />
       <SideMenu open={menuAbierto} onClose={() => setMenuAbierto(false)} active="Libros por curso" />
 
-      {cargandoCursos ? (
-        <Box display="flex" justifyContent="center" mt={4}>
-          <CircularProgress sx={{ color: '#f25600' }} />
-        </Box>
-      ) : cursos.length === 0 ? (
-        <Typography color="text.secondary" textAlign="center" mt={4}>
-          {esAdmin ? 'Todavía no hay cursos creados.' : 'No tenés cursos asignados.'}
-        </Typography>
-      ) : (
-        <>
-          <Tabs
-            value={pestana}
-            onChange={(_, valor: Pestana) => setPestana(valor)}
-            sx={{
-              mt: 2,
-              mb: 3,
-              '& .MuiTabs-indicator': { backgroundColor: '#f25600' },
-              '& .MuiTab-root.Mui-selected': { color: '#f25600' },
-            }}
-          >
-            <Tab value="libros" label="Libros del curso" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
-            <Tab value="historial" label="Historial" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
-            <Tab value="puntajes" label="Puntajes de alumnos" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
-          </Tabs>
-
-          {pestana === 'historial' ? (
-            <AssignmentHistoryTable
-              cursos={cursos}
-              onError={(mensaje) => mostrarMensaje(mensaje, 'error')}
-            />
-          ) : pestana === 'puntajes' ? (
-            <StudentScoresTable cursoId={cursoId} />
+          {cargandoCursos ? (
+            <Box display="flex" justifyContent="center" mt={4}>
+              <CircularProgress sx={{ color: '#f25600' }} />
+            </Box>
+          ) : cursos.length === 0 ? (
+            <Typography color="text.secondary" textAlign="center" mt={4}>
+              {esAdmin ? 'Todavía no hay cursos creados.' : 'No tenés cursos asignados.'}
+            </Typography>
           ) : (
             <>
-              <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
-                <TextField
-                  select
-                  id="curso"
-                  name="curso"
-                  label="Curso"
-                  value={cursoId ?? ''}
-                  onChange={(e) => setCursoId(Number(e.target.value))}
-                  sx={{ minWidth: 260, flexGrow: 1 }}
-                >
-                  {cursos.map((curso) => (
-                    <MenuItem key={curso.curso_id} value={curso.curso_id}>
-                      {etiquetaCurso(curso)}
-                    </MenuItem>
-                  ))}
-                </TextField>
+              {cursoSeleccionado && (
+                <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
+                  <TextField
+                    select
+                    id="curso"
+                    name="curso"
+                    label="Curso"
+                    value={cursoId ?? ''}
+                    onChange={(e) => setCursoId(Number(e.target.value))}
+                    sx={{ minWidth: 260, flexGrow: 1 }}
+                  >
+                    {cursos.map((curso) => (
+                      <MenuItem key={curso.curso_id} value={curso.curso_id}>
+                        {etiquetaCurso(curso)}
+                      </MenuItem>
+                    ))}
+                  </TextField>
 
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={abrirDialogoAsignar}
-                  sx={estiloBotonPrincipal}
-                >
-                  Asignar libro
-                </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<EditIcon />}
+                    onClick={abrirDialogoPuntajeAnual}
+                    sx={estiloBotonPrincipal}
+                  >
+                    Puntaje anual: {cursoSeleccionado?.puntaje_anual ?? 140}
+                  </Button>
+                </Box>
+              )}
 
-                <Button
-                  variant="outlined"
-                  startIcon={<EditIcon />}
-                  onClick={abrirDialogoPuntajeAnual}
-                  sx={estiloBotonPrincipal}
-                >
-                  Puntaje anual: {cursoSeleccionado?.puntaje_anual ?? 140}
-                </Button>
-              </Box>
+              <Tabs
+                value={pestana}
+                onChange={(_, valor: Pestana) => setPestana(valor)}
+                sx={{
+                  mt: 2,
+                  mb: 3,
+                  '& .MuiTabs-indicator': { backgroundColor: '#f25600' },
+                  '& .MuiTab-root.Mui-selected': { color: '#f25600' },
+                }}
+              >
+                <Tab value="libros" label="Libros del curso" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+                <Tab value="historial" label="Historial" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+                <Tab value="puntajes" label="Puntajes de alumnos" sx={{ textTransform: 'none', fontWeight: 'bold' }} />
+              </Tabs>
+
+              {pestana === 'historial' ? (
+                <AssignmentHistoryTable
+                  cursos={cursos}
+                  onError={(mensaje) => mostrarMensaje(mensaje, 'error')}
+                />
+              ) : pestana === 'puntajes' ? (
+                <>
+                  <Box p={2}>
+                    <Typography variant="h6" fontWeight="bold">
+                      Puntajes de los alumnos
+                    </Typography>
+                    {cursoSeleccionado && (
+                      <Typography variant="body2" color="text.secondary" mt={1}>
+                        Curso: {etiquetaCurso(cursoSeleccionado)}
+                      </Typography>
+                    )}
+                  </Box>
+                  <StudentScoresTable cursoId={cursoId} />
+                </>
+              ) : (
+                <>
+                  <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mb={3}>
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={abrirDialogoAsignar}
+                      sx={estiloBotonPrincipal}
+                    >
+                      Asignar libro
+                    </Button>
+                  </Box>
 
               <StyledTableContainer>
                 <TableContainer>

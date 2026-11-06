@@ -2,9 +2,9 @@
 import {
   Alert,
   Box,
+  Button,
   Chip,
   CircularProgress,
-  LinearProgress,
   Table,
   TableBody,
   TableCell,
@@ -54,8 +54,11 @@ export default function StudentScoresTable({ cursoId }: StudentScoresTableProps)
       </Box>
 
       {error ? (
-        <Box p={2}>
+        <Box p={2} display="flex" flexDirection="column" gap={1} alignItems="center">
           <Alert severity="error">{error}</Alert>
+          <Button variant="outlined" onClick={() => window.location.reload()}>
+            Reintentar
+          </Button>
         </Box>
       ) : cargando ? (
         <Box display="flex" justifyContent="center" py={4}>
