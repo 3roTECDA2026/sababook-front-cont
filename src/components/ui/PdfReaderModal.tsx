@@ -111,14 +111,23 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
             rel="noopener noreferrer"
             size="small"
             disabled={!fullUrl}
+            aria-label="Abrir en pestaña"
             startIcon={<OpenInNewIcon />}
+            // SAB-145: en muchos celulares el visor integrado no muestra bien el PDF,
+            // así que esta opción también tiene que estar disponible ahí
             sx={{
-              display: { xs: 'none', sm: 'inline-flex' },
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
               textTransform: 'none',
               fontWeight: 600,
             }}
           >
-            Abrir en pestaña
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+              Abrir
+            </Box>
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Abrir en pestaña
+            </Box>
           </Button>
           <IconButton aria-label="cerrar" onClick={onClose} edge="end">
             <CloseIcon />
