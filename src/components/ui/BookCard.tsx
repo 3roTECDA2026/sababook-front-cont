@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardMedia,
@@ -120,16 +119,19 @@ export default function BookCard({
       <Card
         sx={{
           display: 'flex',
-          alignItems: 'center',
+          // En el celular, la tarjeta destacada pone la portada arriba y el texto abajo,
+          // porque al lado de la portada no queda lugar para el título (SAB-141)
+          flexDirection: featured ? { xs: 'column', sm: 'row' } : 'row',
+          alignItems: featured ? { xs: 'stretch', sm: 'center' } : 'center',
           borderRadius: 3,
           boxShadow: '0 3px 10px rgba(0,0,0,0.1)',
           bgcolor: '#ffffff',
-          px: 3,
-          py: 1.5,
+          px: featured ? { xs: 2, sm: 3 } : 3,
+          py: featured ? { xs: 2, sm: 1.5 } : 1.5,
           width: featured
             ? { xs: '100%', sm: 500 }
             : { xs: '100%', md: '48%' },
-          minWidth: featured ? { xs: '100%', sm: 400 } : 0,
+          minWidth: featured ? { xs: 0, sm: 400 } : 0,
           transition: 'transform 0.2s, box-shadow 0.2s',
           '&:hover': {
             transform: 'translateY(-3px)',
@@ -144,7 +146,9 @@ export default function BookCard({
             position: 'relative',
             width: featured ? 145 : 110,
             height: featured ? 200 : 155,
-            mr: 2,
+            mr: featured ? { xs: 0, sm: 2 } : 2,
+            mb: featured ? { xs: 2, sm: 0 } : 0,
+            alignSelf: featured ? { xs: 'center', sm: 'auto' } : 'auto',
             flexShrink: 0,
           }}
         >
@@ -273,13 +277,18 @@ export default function BookCard({
             sx={{
               px: HORIZONTAL_PADDING,
               pb: 1,
-              pt: featured ? 4 : 6,
+              pt: featured ? { xs: 0, sm: 4 } : 6,
             }}
           >
             <Typography
               variant={featured ? 'h5' : 'subtitle1'}
               fontWeight="bold"
-              sx={{ mb: 0.5 }}
+              sx={{
+                mb: 0.5,
+                // Un título largo baja de línea en vez de cortarse
+                overflowWrap: 'anywhere',
+                ...(featured && { fontSize: { xs: '1.25rem', sm: '1.5rem' } }),
+              }}
             >
               {title}
             </Typography>
