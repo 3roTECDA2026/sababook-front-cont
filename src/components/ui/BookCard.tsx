@@ -119,15 +119,12 @@ export default function BookCard({
       <Card
         sx={{
           display: 'flex',
-          // En el celular, la tarjeta destacada pone la portada arriba y el texto abajo,
-          // porque al lado de la portada no queda lugar para el título (SAB-141)
-          flexDirection: featured ? { xs: 'column', sm: 'row' } : 'row',
-          alignItems: featured ? { xs: 'stretch', sm: 'center' } : 'center',
+          alignItems: 'center',
           borderRadius: 3,
           boxShadow: '0 3px 10px rgba(0,0,0,0.1)',
           bgcolor: '#ffffff',
-          px: featured ? { xs: 2, sm: 3 } : 3,
-          py: featured ? { xs: 2, sm: 1.5 } : 1.5,
+          px: 3,
+          py: 1.5,
           width: featured
             ? { xs: '100%', sm: 500 }
             : { xs: '100%', md: '48%' },
@@ -138,6 +135,14 @@ export default function BookCard({
             boxShadow: '0 6px 14px rgba(0,0,0,0.15)',
           },
           mb: 2,
+          // Tarjeta destacada en el celular: portada arriba y texto abajo, porque al lado
+          // de la portada no queda lugar para el título. Desde 'sm' queda como antes (SAB-141)
+          ...(featured && {
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            px: { xs: 2, sm: 3 },
+            py: { xs: 2, sm: 1.5 },
+          }),
         }}
       >
         {/* Imagen del libro */}
@@ -146,10 +151,14 @@ export default function BookCard({
             position: 'relative',
             width: featured ? 145 : 110,
             height: featured ? 200 : 155,
-            mr: featured ? { xs: 0, sm: 2 } : 2,
-            mb: featured ? { xs: 2, sm: 0 } : 0,
-            alignSelf: featured ? { xs: 'center', sm: 'auto' } : 'auto',
+            mr: 2,
             flexShrink: 0,
+            // En el celular, la portada de la tarjeta destacada va centrada arriba del texto
+            ...(featured && {
+              mr: { xs: 0, sm: 2 },
+              mb: { xs: 2, sm: 0 },
+              alignSelf: { xs: 'center', sm: 'auto' },
+            }),
           }}
         >
           <CardMedia
@@ -271,13 +280,22 @@ export default function BookCard({
             flexDirection: 'column',
             height: '100%',
             minWidth: 0,
+            // CardContent suma 24 px abajo por ser el último hijo; en el celular sobran
+            ...(featured && { '&:last-child': { pb: { xs: 0, sm: 3 } } }),
           }}
         >
           <Box
             sx={{
               px: HORIZONTAL_PADDING,
               pb: 1,
-              pt: featured ? { xs: 0, sm: 4 } : 6,
+              pt: featured ? 4 : 6,
+              // En el celular, la tarjeta destacada ya tiene su propio margen, y el título,
+              // el autor y el género bajan de línea en vez de cortarse
+              ...(featured && {
+                px: { xs: 0, sm: HORIZONTAL_PADDING },
+                pt: { xs: 0, sm: 4 },
+                overflowWrap: 'anywhere',
+              }),
             }}
           >
             <Typography
@@ -285,9 +303,11 @@ export default function BookCard({
               fontWeight="bold"
               sx={{
                 mb: 0.5,
-                // Un título largo baja de línea en vez de cortarse
-                overflowWrap: 'anywhere',
-                ...(featured && { fontSize: { xs: '1.25rem', sm: '1.5rem' } }),
+                // Título de la tarjeta destacada un poco más chico en el celular, con los tamaños del tema
+                ...(featured && {
+                  typography: { xs: 'h6', sm: 'h5' },
+                  fontWeight: 'bold',
+                }),
               }}
             >
               {title}
@@ -354,6 +374,7 @@ export default function BookCard({
               px: HORIZONTAL_PADDING,
               pt: 1,
               pb: 0,
+              ...(featured && { px: { xs: 0, sm: HORIZONTAL_PADDING } }),
             }}
           >
             {/* Recomendar / quitar recomendación.
