@@ -30,7 +30,6 @@ import type { FilterChipsHandle } from "@/components/ui/FilterChips";
 import SearchBar from "@/components/ui/SearchBar";
 import type { SearchBarHandle } from "@/components/ui/SearchBar";
 import SideMenu from "@/components/layout/SideMenu";
-import AnnualProgressCard from "@/components/ui/AnnualProgressCard";
 
 import { normalizarTexto } from "@/utils/normalize";
 import { buscarLibrosPaginado } from "@/services/apiService";
@@ -38,12 +37,11 @@ import { recomendacionService } from "@/services/recomendacionService";
 import { usePagination } from "@/hooks/usePagination";
 import InfiniteScroll from "@/components/ui/InfiniteScroll";
 
+import { getProgresoAlumno } from "@/services/courseService";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useReadingStatus } from "@/hooks/useReadingStatus";
-
-import { getProgresoAlumno } from "@/services/courseService";
-
 import type { Book, BookFilters } from "@/types";
 import type { LibroDestacado } from "@/components/ui/FeaturedBookSection";
 
@@ -672,8 +670,6 @@ export default function Home() {
         }
         active="Inicio"
       />
-
-      {rol === "ALUMNO" && <AnnualProgressCard />}
 
       {/* BUSCADOR */}
 
