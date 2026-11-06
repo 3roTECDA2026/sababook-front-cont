@@ -66,51 +66,60 @@ export default function StudentScoresTable({ cursoId }: StudentScoresTableProps)
           <Table>
             <TableHead>
               <TableRow>
-                <StyledTableCellHeader>Alumno</StyledTableCellHeader>
-                <StyledTableCellHeader align="center">Puntaje</StyledTableCellHeader>
+                <StyledTableCellHeader>Alumno · Puntaje</StyledTableCellHeader>
                 <StyledTableCellHeader align="center">Estado</StyledTableCellHeader>
               </TableRow>
             </TableHead>
             <TableBody>
-              {!puntajes || puntajes.alumnos.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
-                    <Typography color="text.secondary">
-                      Este curso todavía no tiene alumnos inscriptos.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                puntajes.alumnos.map((alumno) => (
-                  <TableRow key={alumno.usuario_id} hover>
-                    <TableCell>{alumno.nombre}</TableCell>
-                    <TableCell align="center">
-                      <Typography variant="body2" fontWeight="bold">
-                        {alumno.puntaje_acumulado} / {alumno.minimo_requerido}
+                {!puntajes || puntajes.alumnos.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2} align="center" sx={{ py: 4 }}>
+                      <Typography color="text.secondary">
+                        Este curso todavía no tiene alumnos inscriptos.
                       </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={Math.min(
-                          (alumno.puntaje_acumulado / alumno.minimo_requerido) * 100,
-                          100
-                        )}
-                        sx={{ mt: 0.5, height: 6, borderRadius: 3 }}
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      {alumno.cumplido ? (
-                        <Chip label="Cumplido" color="success" size="small" />
-                      ) : (
-                        <Chip
-                          label={`Faltan ${alumno.faltante}`}
-                          color="warning"
-                          size="small"
-                        />
-                      )}
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+                ) : (
+                  puntajes.alumnos.map((alumno) => (
+                    <TableRow key={alumno.usuario_id} hover>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography variant="body2" fontWeight="bold">
+                            {alumno.nombre}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ fontWeight: 500 }}
+                          >
+                            {alumno.puntaje_acumulado} / {alumno.minimo_requerido}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">
+                        <LinearProgress
+                          variant="determinate"
+                          value={Math.min(
+                            (alumno.puntaje_acumulado / alumno.minimo_requerido) * 100,
+                            100
+                          )}
+                          sx={{ mt: 0.5, height: 6, borderRadius: 3 }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        {alumno.cumplido ? (
+                          <Chip label="Cumplido" color="success" size="small" />
+                        ) : (
+                          <Chip
+                            label={`Faltan ${alumno.faltante}`}
+                            color="warning"
+                            size="small"
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
             </TableBody>
           </Table>
         </TableContainer>

@@ -32,7 +32,7 @@ export default function AnnualProgressCard() {
 
   if (!alumnoId || !progreso) return null;
 
-  const { curso, puntaje_acumulado } = progreso;
+  const { curso, puntaje_acumulado, minimo_requerido } = progreso;
 
   return (
     <StyledCard sx={{ mt: 2, mb: 2 }}>
@@ -40,6 +40,9 @@ export default function AnnualProgressCard() {
         {curso ? `${curso.anio}°${curso.division} · ${anioLectivo}` : anioLectivo}
       </Typography>
       <Box display="flex" alignItems="baseline" gap={1}>
+        <Typography variant="body2" fontWeight="bold" color="text.secondary">
+          {user?.nombre}
+        </Typography>
         <Typography
           variant="h4"
           fontWeight="bold"
@@ -48,7 +51,7 @@ export default function AnnualProgressCard() {
           {puntaje_acumulado}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          puntos acumulados en el año
+          puntos acumulados en el año ({puntaje_acumulado} / {minimo_requerido})
         </Typography>
       </Box>
     </StyledCard>
