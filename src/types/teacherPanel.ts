@@ -66,6 +66,7 @@ export interface CourseScores {
     division: string;
     anio_lectivo: number;
     puntaje_anual: number;
+    show_annual_score: boolean;
   };
   alumnos: StudentScore[];
 }

@@ -5,6 +5,8 @@ import {
   Button,
   Chip,
   CircularProgress,
+  FormControlLabel,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -16,6 +18,7 @@ import {
 } from '@mui/material';
 import { StyledTableCellHeader, StyledTableContainer } from '@/components/ui/StyledTable';
 import { useCourseScores } from '@/hooks/useCourseScores';
+import { useNotification } from '@/contexts/NotificationContext';
 
 interface StudentScoresTableProps {
   cursoId: number | null;
@@ -23,7 +26,29 @@ interface StudentScoresTableProps {
 
 export default function StudentScoresTable({ cursoId }: StudentScoresTableProps) {
   const theme = useTheme();
-  const { puntajes, cargando, error, recargar } = useCourseScores(cursoId);
+  const { showNotification } = useNotification();
+  const { puntajes, cargando, error, recargar, isSavingVisibility, updateScoreVisibility } =
+    useCourseScores(cursoId);
+
+  // No se muestra con los datos de otro curso: mientras carga, un clic cambiaría el curso nuevo
+  const currentCourse = !cargando && puntajes?.curso.curso_id === cursoId ? puntajes.curso : null;
+
+  const handleVisibilityChange = async (courseId: number, visible: boolean) => {
+    try {
+      await updateScoreVisibility(courseId, visible);
+      showNotification(
+        visible
+          ? 'Los alumnos de este curso ahora ven su puntaje en Inicio.'
+          : 'Los alumnos de este curso ya no ven su puntaje en Inicio.',
+        'success'
+      );
+    } catch (err) {
+      showNotification(
+        err instanceof Error ? err.message : 'No se pudo cambiar la visibilidad del puntaje.',
+        'error'
+      );
+    }
+  };
 
   if (cursoId === null) {
     return (
@@ -39,12 +64,38 @@ export default function StudentScoresTable({ cursoId }: StudentScoresTableProps)
 
   return (
     <StyledTableContainer>
-      <Box p={2} pb={1}>
+      <Box
+        p={2}
+        pb={1}
+        display="flex"
+        flexWrap="wrap"
+        alignItems="center"
+        justifyContent="space-between"
+        gap={1}
+      >
         <Typography variant="body2" color="text.secondary">
           {puntajes
             ? `Puntaje anual del curso: ${puntajes.curso.puntaje_anual} puntos.`
             : 'Progreso de cada alumno en el año.'}
         </Typography>
+        {currentCourse && (
+          <FormControlLabel
+            label="Mostrar el puntaje a los alumnos en Inicio"
+            control={
+              <Switch
+                checked={currentCourse.show_annual_score}
+                disabled={isSavingVisibility}
+                onChange={(e) => handleVisibilityChange(currentCourse.curso_id, e.target.checked)}
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': { color: theme.palette.button.main },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: theme.palette.button.main,
+                  },
+                }}
+              />
+            }
+          />
+        )}
       </Box>
 
       {error ? (

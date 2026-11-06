@@ -146,6 +146,19 @@ export async function actualizarPuntajeAnual(cursoId: number, puntajeAnual: numb
 }
 
 /**
+ * Mostrar u ocultar a los alumnos del curso su puntaje anual en Inicio (SAB-144)
+ */
+export async function updateAnnualScoreVisibility(courseId: number, visible: boolean) {
+  return await solicitud<{ curso_id: number; show_annual_score: boolean }>(
+    `/courses/${courseId}/annual-score-visibility`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ visible }),
+    }
+  );
+}
+
+/**
  * Quitar un libro de un curso
  */
 export async function quitarLibroDeCurso(cursoId: number, libroId: number) {
