@@ -1,4 +1,6 @@
+
 import { Box, Button, styled, Typography } from '@mui/material';
+import type { Theme } from '@mui/material';
 import NavButton from '@/components/ui/NavButton';
 import ReadingStreak from './ReadingStreak';
 import { useReadingStreak } from '@/hooks/useReadingStreak';
@@ -29,14 +31,20 @@ const StyledAddButton = styled(Button)(({ theme }) => ({
 }));
 
 // En el celular, los botones de secciones van de a dos por fila y ocupan todo el ancho
-// de su columna. Desde 'sm' se ven como antes (SAB-142).
-// Se ajusta acá y no en NavButton porque NavButton también se usa en otras pantallas.
-const navButtonSx = {
-  width: { xs: '100%', sm: 'auto' },
-  minWidth: { xs: 0, sm: '150px' },
-  m: { xs: 0, sm: 1 },
-  px: { xs: 1, sm: '30px' },
-};
+// de su columna (SAB-142). Solo se ajusta por debajo de 'sm': desde ahí se usan los
+// estilos de NavButton sin repetirlos. Se hace acá y no en NavButton porque
+// NavButton también se usa en otras pantallas.
+const navButtonSx = (theme: Theme) => ({
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+    minWidth: 0,
+    margin: 0,
+    paddingLeft: theme.spacing(1),
+    paddingRight: theme.spacing(1),
+    // Para que "Moderación IA" entre en una línea también en pantallas de 320 px
+    fontSize: '0.9rem',
+  },
+});
 
 const getAddButtonText = (activeView: DashboardView): string => {
   switch (activeView) {
